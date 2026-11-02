@@ -226,12 +226,56 @@ class BioRxivSearcher:
 
         return {}
 
+    EUROPEPMC_URL = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
+
+    @staticmethod
+    def europepmc_author_query(author_name: str, start_date: str, end_date: str) -> str:
+        """Europe PMC query for one author's bioRxiv preprints first posted in a date range."""
+        name = author_name.replace('"', "").strip()
+        return (f'AUTH:"{name}" AND PUBLISHER:"bioRxiv" '
+                f"AND FIRST_PDATE:[{start_date} TO {end_date}]")
+
+    def _search_author_europepmc(self, author_name: str, start_date: str,
+                                 end_date: str) -> Optional[List[Dict]]:
+        """Author search through Europe PMC, which indexes bioRxiv preprints and filters by
+        author server-side (keyless). Returns None if Europe PMC could not be queried."""
+        query = self.europepmc_author_query(author_name, start_date, end_date)
+        papers: List[Dict] = []
+        cursor = "*"
+        while True:
+            params = {"query": query, "format": "json", "resultType": "core",
+                      "pageSize": 1000, "cursorMark": cursor}
+            self._log(f"Europe PMC: {query} (cursor {cursor})")
+            try:
+                r = self.session.get(self.EUROPEPMC_URL, params=params, timeout=60)
+                r.raise_for_status()
+                data = r.json()
+            except (requests.exceptions.RequestException, ValueError) as e:
+                self._log(f"Europe PMC error: {e}")
+                return None
+            for rec in data.get("resultList", {}).get("result", []):
+                papers.append({
+                    "doi": rec.get("doi", ""),
+                    "title": rec.get("title", ""),
+                    "authors": rec.get("authorString", ""),
+                    "date": rec.get("firstPublicationDate", ""),
+                    "abstract": rec.get("abstractText", ""),
+                    "server": "biorxiv",
+                    "source": "europepmc",
+                })
+            nxt = data.get("nextCursorMark")
+            if not nxt or nxt == cursor or not data.get("resultList", {}).get("result"):
+                break
+            cursor = nxt
+        return papers
+
     def search_by_author(
         self,
         author_name: str,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
-        category: Optional[str] = None
+        category: Optional[str] = None,
+        source: str = "europepmc",
     ) -> List[Dict]:
         """
         Search for papers by author name.
@@ -240,18 +284,30 @@ class BioRxivSearcher:
             author_name: Author name to search for
             start_date: Optional start date (YYYY-MM-DD); defaults to one year back
             end_date: Optional end date (YYYY-MM-DD); defaults to today
-            category: Optional category filter (applied server-side)
+            category: Optional category filter (applied server-side; forces the scan)
+            source: "europepmc" (default) asks Europe PMC, which filters by author
+                server-side; "scan" fetches every bioRxiv paper in the window and
+                filters locally (about 1,400 requests for a year)
 
         Returns:
             List of matching preprints
         """
-        # Every paper in the window is fetched before filtering, so default to
-        # the last year rather than a multi-year scan.
         end_date = end_date or datetime.now().strftime("%Y-%m-%d")
         if not start_date:
             start_date = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
 
         self._log(f"Searching for author: {author_name}")
+
+        if source == "europepmc" and not category:
+            found = self._search_author_europepmc(author_name, start_date, end_date)
+            if found is not None:
+                self._log(f"Found {len(found)} papers by {author_name} via Europe PMC")
+                return found
+            print("Europe PMC could not be reached; scanning bioRxiv's date range instead "
+                  "(slow: every paper in the window is fetched).", file=sys.stderr)
+        elif source == "europepmc" and category:
+            print("A category filter needs the bioRxiv scan (Europe PMC has no bioRxiv "
+                  "categories); scanning the date range.", file=sys.stderr)
 
         # Get all papers in date range
         papers = self.search_by_date_range(start_date, end_date, category)
@@ -410,6 +466,11 @@ def main():
                             help="Keywords to search for")
     search_group.add_argument("--author", "-a",
                             help="Author name to search for")
+    search_group.add_argument("--author-source", choices=["europepmc", "scan"],
+                              default="europepmc",
+                              help="where --author looks: europepmc (default; server-side "
+                                   "author filter, seconds) or scan (fetch every bioRxiv paper "
+                                   "in the window and filter locally; slow)")
     search_group.add_argument("--doi",
                             help="Get details for specific DOI")
 
@@ -480,7 +541,7 @@ def main():
     elif args.author:
         # Search by author
         results = searcher.search_by_author(
-            args.author, start_date, end_date, args.category
+            args.author, start_date, end_date, args.category, args.author_source
         )
 
     elif args.keywords:

@@ -6,7 +6,7 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
 compatibility: Keyless bioRxiv API (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.2.0"
     last_updated: "2026-09-23"
 ---
 
@@ -23,9 +23,11 @@ For **published, peer-reviewed** literature use `alterlab-pubmed`; for **compute
 The bioRxiv `/details` endpoint returns preprints by date range, 30 records per page. It accepts a server-side **subject-category** filter (`?category=cell_biology`), but has **no keyword or author filter**. So this tool:
 
 1. Paginates the date range (following the cursor until all records are retrieved), passing `--category` to the server so only that subject is fetched, then
-2. Filters **client-side** by keyword (substring over title/abstract) and author (substring over the author list).
+2. Filters **client-side** by keyword (substring over title/abstract).
 
-Implication: a wide date range means many API calls and a large download. Keep ranges as tight as the question allows, and use `--category` (cuts API calls) and `--limit` to bound the work.
+**Author search** does not need that scan. By default `--author` asks Europe PMC, which indexes bioRxiv preprints and filters by author on the server, keylessly. The query is `AUTH:"<name>" AND PUBLISHER:"bioRxiv"` within the date range. A year of one author's preprints takes about two seconds; scanning a year of bioRxiv would take about 1,400 requests. Europe PMC can lag bioRxiv by a few days. `--author-source scan` forces the old client-side scan. The scan is also used when you add `--category` (Europe PMC has no bioRxiv categories), and when Europe PMC cannot be reached, with a note on stderr.
+
+Implication: for keyword and date-range searches, a wide date range means many API calls and a large download. Keep ranges as tight as the question allows, and use `--category` (cuts API calls) and `--limit` to bound the work.
 
 ## When to Use This Skill
 
@@ -95,7 +97,7 @@ python scripts/biorxiv_search.py \
 
 ### 2. Author Search
 
-Find all papers by a specific author within a date range.
+Find all papers by a specific author within a date range. This goes through Europe PMC's server-side author filter (fast); add `--author-source scan` to filter bioRxiv's own date listing instead.
 
 **Basic Usage:**
 ```bash
