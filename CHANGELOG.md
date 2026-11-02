@@ -28,10 +28,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 - **A different archive for the Claude app.** `alterlab-<domain>-<version>.zip` is a
   skills-directory bundle, not a claude.ai upload; upload `skill-<name>-<version>.zip`.
   Installs need `python3` and add the skills a selected skill depends on (`--no-deps` to skip).
+- **A skill and two MCP servers were removed.** `alterlab-openalex` is gone (241 skills), and
+  the `alterlab-core` and `alterlab-databases` plugins no longer bundle the `openalex` and
+  `zotero` MCP servers or prompt for their settings (see *Removed*).
 
 A reliability repair: incomplete, failed, or weakly supported work can no longer appear
-successfully verified. No skills were added. Prompted by an external audit; every reported
-defect was reproduced before it was fixed.
+successfully verified. No skills were added; one was removed (see *Removed*). Prompted by an
+external audit; every reported defect was reproduced before it was fixed.
 
 ### Live behavioral evaluation
 
@@ -39,7 +42,7 @@ Every skill's eval cases were answered once with the skill and once without it, 
 Claude Code CLI login with no API key, from 2026-10-15 to 2026-11-02. Method, per-domain
 results and limits: `docs/behavioral-results.md`.
 
-- 242 of 242 skills, 1,605 cases: 1,539 graded, 50 not runnable here (they need a key,
+- 241 of 241 skills, 1,605 cases: 1,539 graded, 50 not runnable here (they need a key,
   connector, host or program the runner lacks), 16 infrastructure errors or refusals.
 - With the skill, 1,358 of 1,539 graded cases passed (88.2%); without it, 820 of the
   same cases (53.3%). The skill turned a bare FAIL into a PASS on 560 cases and the reverse
@@ -70,7 +73,7 @@ results and limits: `docs/behavioral-results.md`.
 - **No maintainer email in requests.** The suite no longer sends a hard-coded contact address in
   User-Agents or `mailto` parameters (citation verifier, MCP connectors, DergiPark, TR Dizin, YÖK
   Akademik). A contact address is opt-in via `ALTERLAB_CONTACT_EMAIL` or `--mailto`.
-- **Hand-off rule on all 242 skills.** When a request matches a routing row, the skill names the
+- **Hand-off rule on all 241 skills.** When a request matches a routing row, the skill names the
   better sibling by id in its first line and stops, instead of answering anyway.
 - **Behavioral eval confinement.** Answer arms run in a private mount namespace that hides the
   checkout and every worktree, with a private temp root holding only their own workspace, fresh
@@ -145,6 +148,26 @@ results and limits: `docs/behavioral-results.md`.
   output, failed report), packaging and isolated-install tests, helper input-domain tests.
 - `docs/CATALOG.md` (the per-domain skill tables, moved out of the README).
 
+### Removed
+
+- **`alterlab-openalex`** (databases), so the suite has 241 skills and the databases domain 38.
+  OpenAlex now meters keyless use: requests without a key share a $0.10/day budget per IP
+  address, and searches and filtered lists fail with HTTP 429 once it is spent, so real use
+  needs an OpenAlex account. The suite must work without logging in to a third-party service.
+  OpenAlex is removed from the other skills' scripts, instructions, evals and workflows as well.
+  Replacements, all keyless: `alterlab-citation-verifier` resolves references against
+  Crossref / Semantic Scholar / arXiv (plus doi.org and the Retraction Watch flag via Crossref);
+  `alterlab-citation-graph` builds citation graphs from OpenCitations + Semantic Scholar;
+  `alterlab-research-lookup` handles scholarly search and metadata. Routing rows that named
+  `alterlab-openalex` now name research-lookup, citation-graph, pubmed, arxiv or
+  citation-verifier.
+- **The `openalex` and `zotero` MCP servers** bundled with `alterlab-core` and
+  `alterlab-databases`, and their `userConfig` fields (`openalex_api_key`, `zotero_library_id`,
+  `zotero_library_type`, `zotero_api_key`), so installing a plugin no longer prompts for a
+  credential. The keyless `crossref` server stays. Zotero stays supported through
+  `alterlab-pyzotero`'s keyless path: Zotero desktop's local API (`localhost:23119`) and
+  exported .bib / CSL-JSON files.
+
 ### Fixed — skills and scripts (found by the live sweep)
 
 - research-lookup `--force-backend parallel` quietly answered from Perplexity without the key.
@@ -162,7 +185,7 @@ results and limits: `docs/behavioral-results.md`.
   match); gtex returned 250 of 655 sQTLs (no paging); reactome overwrote a `.tsv` input with its
   results; alphafold-db downloads failed with curl's default User-Agent; bioservices' KEGG
   `find`/`conv` crash on today's KEGG (REST fallback documented); zinc-db decoded ZINC-22 tranche
-  letters wrongly; openalex's "MIT" example was Harvard's ID.
+  letters wrongly.
 - Eval errors corrected against primary sources: a rubric that tied NM_000059 to BRCA1 (it is
   BRCA2), an ENA accession that does not exist, SB3 callback wiring that raises, a dask z-score
   that holds the array in memory, a Levene pre-test the skill advises against, windowing applied
@@ -186,7 +209,7 @@ results and limits: `docs/behavioral-results.md`.
 - README and README.tr-TR rewritten (1,151 → ~200 lines): they state what has and has not been
   checked, drop the "instant expertise" / "expert-level" / "every reference" claims and the
   incorrect claude.ai bundle claims, correct the citation version (2.1.0 → 3.0.1), and explain
-  the per-skill licenses (202 MIT; 40 others, including 4 non-commercial CC-BY-NC-4.0 and 7
+  the per-skill licenses (201 MIT; 40 others, including 4 non-commercial CC-BY-NC-4.0 and 7
   GPL/LGPL). PROVENANCE.md counts (180/13 → 242/18) and the catalog site's copy are corrected.
 
 
