@@ -7,7 +7,7 @@ compatibility: No API key required. Statistics come keyless from the JSON API be
 metadata:
     skill-author: AlterLab
     version: "1.2.1"
-    last_updated: "2026-10-22"
+    last_updated: "2026-11-02"
     credentials: "optional: DC_API_KEY (unlocks the documented api.datacommons.org v2 observation/node endpoints and the datacommons-client methods that use them; the keyless website API serves the same statistics)"
 ---
 

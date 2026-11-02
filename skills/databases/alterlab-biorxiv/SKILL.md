@@ -7,7 +7,7 @@ compatibility: Keyless bioRxiv API (no authentication required)
 metadata:
     skill-author: AlterLab
     version: "1.2.0"
-    last_updated: "2026-09-23"
+    last_updated: "2026-11-02"
 ---
 
 # bioRxiv Database
@@ -46,7 +46,7 @@ Use this skill when:
 |----------|-------------|
 | Peer-reviewed, MeSH-indexed biomedical journal articles | `alterlab-pubmed` |
 | CS / physics / math / quantitative-biology preprints on arXiv | `alterlab-arxiv` |
-| Citation counts or cross-publisher bibliometrics for preprints | `alterlab-openalex` |
+| Citation counts or cross-publisher bibliometrics for preprints | `alterlab-research-lookup` |
 | Depositing your own preprint (server choice, license, versioning) | `alterlab-preprint-deposition` |
 | Multi-database systematic review with PRISMA screening | `alterlab-literature-review` |
 

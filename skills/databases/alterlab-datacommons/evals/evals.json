@@ -62,12 +62,12 @@
       ]
     },
     {
-      "id": "near-miss-openalex",
+      "id": "near-miss-research-lookup",
       "prompt": "How many papers on climate adaptation were published per year over the last decade, and what's the citation trend? I want a bibliometric breakdown.",
-      "expected_output": "Should NOT trigger Data Commons. Counts of scholarly publications and citation trends over time are bibliometric data served by OpenAlex, not statistical observations over geographic/demographic entities. Data Commons aggregates census, economic, health, and environmental statistics, not literature metadata. Defers to alterlab-openalex.",
+      "expected_output": "Should NOT trigger Data Commons. Counts of scholarly publications and citation trends over time are bibliometric data served by scholarly indexes such as Crossref and Semantic Scholar, not statistical observations over geographic/demographic entities. Data Commons aggregates census, economic, health, and environmental statistics, not literature metadata. Defers to alterlab-research-lookup.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
-        { "type": "output_contains", "value": "openalex" }
+        { "type": "output_contains", "value": "research-lookup" }
       ]
     }
   ]

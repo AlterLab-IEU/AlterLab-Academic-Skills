@@ -74,12 +74,12 @@
       ]
     },
     {
-      "id": "near-miss-openalex",
+      "id": "near-miss-research-lookup",
       "prompt": "Find me peer-reviewed academic papers on neural network pruning and their citation counts.",
-      "expected_output": "Should NOT trigger the USPTO skill. The user wants peer-reviewed scholarly papers and citation counts, which is scholarly-literature territory, not patent/trademark data. It should defer to the openalex database skill (alterlab-openalex) for academic papers and citations.",
+      "expected_output": "Should NOT trigger the USPTO skill. The user wants peer-reviewed scholarly papers and citation counts, which is scholarly-literature territory, not patent/trademark data. It should defer to the research-lookup skill (alterlab-research-lookup), whose keyless scholarly backend returns index records with DOIs and per-index citation counts.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
-        { "type": "output_contains", "value": "openalex" }
+        { "type": "output_contains", "value": "research-lookup" }
       ]
     },
     {
