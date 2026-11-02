@@ -71,6 +71,7 @@ _DOMAIN_CATEGORY = {
     "crossref.org": "Scholarly metadata", "doi.org": "DOI resolver",
     "semanticscholar.org": "Scholarly index",
     "opencitations.net": "Open citation index", "europepmc.org": "Literature (Europe PMC)",
+    "openlibrary.org": "Book catalogue (Open Library)",
     "doaj.org": "Open-access journals", "openarchives.org": "OAI-PMH", "purl.org": "Persistent URLs",
     "figshare.com": "Research data", "datacommons.org": "Open data", "wikipedia.org": "Reference",
     # Biomedical / genomics
