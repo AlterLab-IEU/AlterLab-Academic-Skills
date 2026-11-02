@@ -9,14 +9,14 @@
 - The plugin: `/plugin install alterlab-workflows@alterlab-academic-skills`. It declares
   `alterlab-core` as a dependency, so the citation verifier, reviewer, and deep-research skills the
   workflows call are installed with it. Optional helpers (install when the workflow's table row
-  names them): `alterlab-databases` (PubMed, OpenAlex, arXiv skills), `alterlab-writing-tools`
+  names them): `alterlab-databases` (PubMed, arXiv skills), `alterlab-research-tools` (research lookup,
+  citation graph), `alterlab-writing-tools`
   (literature review, grants), `alterlab-social-science-workflow` (meta-analysis),
   `alterlab-turkish-academia` (TÜBİTAK).
-- Network access for the scholarly APIs; no API key is needed. Optionally configure the core plugin
-  (`/plugin configure alterlab-core@alterlab-academic-skills`): a free OpenAlex API key gives
-  OpenAlex calls their own daily budget (export `NCBI_API_KEY` for PubMed-heavy runs) — keyless calls
-  share a small per-IP budget and fail with HTTP 429 once it is spent (the verifier then reports
-  UNVERIFIED, never fabricated).
+- Network access for the scholarly APIs; no API key, account or login is needed. Optional
+  environment variables only raise rate limits: `S2_API_KEY` (a dedicated Semantic Scholar rate;
+  keyless calls share one pool and answer HTTP 429 when it is busy, and the verifier then reports
+  UNVERIFIED, never fabricated) and `NCBI_API_KEY` (for PubMed-heavy runs).
 
 ## Launching
 
@@ -103,7 +103,7 @@ How the workflows handle failure:
 |---|---|---|
 | `/alterlab-workflows:…` not in autocomplete | plugin not installed/enabled, or workflows disabled | `/plugin` → enable; check `/config` → Dynamic workflows |
 | Run stops at a permission prompt | a tool the agents need isn't allowed | allow Bash/WebFetch/WebSearch/Write, or run in auto mode |
-| Many `UNVERIFIED` citations | API rate limits or no network | add an OpenAlex API key; rerun later — UNVERIFIED is never an accusation |
+| Many `UNVERIFIED` citations | API rate limits (often Semantic Scholar's shared keyless pool) or no network | rerun later, or export an optional `S2_API_KEY` — UNVERIFIED is never an accusation |
 | Screening report says κ is not defined | a screener used a single category for every record | check the codebook; tiny or homogeneous record sets can do this legitimately |
 | `status: partial` | some agents failed after their retry, or a cap applied | read `status_reasons` and the unchecked / unresolved lists; re-run that slice (one chapter, the unresolved records) |
 | `status: blocked`, `report: null` | a required stage failed, there was no input to work on, or the report could not be written or read back | read `status_reasons`; the coverage counts are still returned; fix the cause (permissions, path) and re-run |

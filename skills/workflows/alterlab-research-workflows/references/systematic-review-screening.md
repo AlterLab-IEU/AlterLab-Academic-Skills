@@ -13,7 +13,7 @@ reported — where a record whose screening did not complete is never counted as
 | `question` (or the string argument) | required | the review question |
 | `include` / `exclude` | derived | the team's criteria, kept verbatim in the codebook |
 | `records` | none | an existing export (RIS, BibTeX, nbib, CSV, JSONL); skips searching |
-| `databases` | `["pubmed", "openalex"]` | databases to search when no export is given |
+| `databases` | `["pubmed", "europepmc"]` | databases to search when no export is given; other keyless choices include `crossref` (all disciplines), `arxiv`, `biorxiv`, `clinicaltrials` |
 | `max_per_database` | 300 (max 2000) | retrieval cap per database; hitting it is logged and makes the run `partial` |
 | `batch` | 25 (5–60) | records per screening batch (raised automatically for very large sets so the run fits the agent cap) |
 | `out_dir` | `alterlab-screening` | output folder |

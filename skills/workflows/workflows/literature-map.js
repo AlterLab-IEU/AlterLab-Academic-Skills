@@ -4,7 +4,7 @@ export const meta = {
   whenToUse: 'Starting a project, proposal, or thesis chapter: find the themes, landmark and recent papers, methods, and open questions in a topic. Returns status complete / partial / blocked with requested-vs-completed sweep and gap-check counts. Args: a topic string, or {topic, seeds?: [DOIs], years?, out_dir?}.',
   phases: [
     { title: 'Plan', detail: 'search angles and database-native queries' },
-    { title: 'Sweep', detail: 'one agent per angle across OpenAlex, PubMed, arXiv, and citation links' },
+    { title: 'Sweep', detail: 'one agent per angle across Crossref, Semantic Scholar, PubMed, arXiv, and citation links' },
     { title: 'Cluster', detail: 'themes, landmark works, methods, open questions' },
     { title: 'Gaps', detail: 'each candidate gap searched for work that already fills it' },
     { title: 'Map', detail: 'the field map and research-question shortlist, then a read-back check that the file exists' },
@@ -35,21 +35,22 @@ const PLAN = {
         properties: {
           key: { type: 'string', description: 'short slug' },
           rationale: { type: 'string' },
-          query: { type: 'string', description: 'an OpenAlex search string; add PubMed or arXiv syntax in the rationale when those databases matter' },
+          query: { type: 'string', description: 'a keyword search string for Crossref and Semantic Scholar; add PubMed or arXiv syntax in the rationale when those databases matter' },
         },
       },
     },
   },
 }
 
-// Keyless OpenAlex list/search calls share a small per-IP daily budget and then answer HTTP 429
-// (single-DOI lookups keep working). A rate-limited source was not searched; it is never evidence
-// that no works exist.
+// Every source below is keyless. Semantic Scholar's keyless pool is shared by all users and answers
+// HTTP 429 when it is busy. A rate-limited source was not searched; it is never evidence that no
+// works exist.
 const KEYLESS_SOURCES =
-  'OpenAlex searches are often rate-limited without a key (HTTP 429; single-DOI lookups still work). If a source answers 429 or ' +
-  'fails, continue with the other keyless public APIs: Crossref (api.crossref.org/works?query=...), Europe PMC ' +
-  '(www.ebi.ac.uk/europepmc/webservices/rest/search), arXiv (export.arxiv.org/api/query), and name the unavailable source. A ' +
-  'rate-limited source means not searched, never no works found.'
+  'Search the keyless public APIs: Crossref (api.crossref.org/works?query=...), Semantic Scholar ' +
+  '(api.semanticscholar.org/graph/v1/paper/search; its shared keyless pool often answers HTTP 429, so back off and retry once), ' +
+  'Europe PMC (www.ebi.ac.uk/europepmc/webservices/rest/search), arXiv (export.arxiv.org/api/query), and OpenCitations ' +
+  '(api.opencitations.net/index/v2) for citation links. If a source answers 429 or fails, continue with the others and name ' +
+  'the unavailable source. A rate-limited source means not searched, never no works found.'
 
 const SWEEP = {
   type: 'object',
@@ -277,7 +278,7 @@ const sweeps = await pipeline(angles, async (a) => {
   sweepStat.dispatched++
   const s = await withRetry(
     `Search the literature for the "${a.key}" angle of "${input.topic}" (${YEARS}). Rationale: ${a.rationale}\nQuery: ${a.query}\n` +
-      'Use the alterlab-openalex skill (and alterlab-pubmed, alterlab-arxiv, or alterlab-citation-graph where they fit) when installed, or ' +
+      'Use the alterlab-research-lookup skill (and alterlab-pubmed, alterlab-arxiv, or alterlab-citation-graph where they fit) when installed, or ' +
       'the public APIs. ' + KEYLESS_SOURCES + ' Save up to 200 records to ' + `${OUT_DIR}/angle-${a.key}.jsonl ` +
       '(title, year, doi, authors, venue, cited_by, abstract) and return the 25 most important for the topic — landmark and highly cited ' +
       'works plus the strongest recent ones — with a line on why each matters. Report only works you retrieved.',

@@ -19,7 +19,7 @@ if (!input.question) {
 const OUT_DIR = input.out_dir || 'alterlab-screening'
 const BATCH = Math.min(Math.max(Number(input.batch) || 25, 5), 60)
 const PER_DB = Math.min(Math.max(Number(input.max_per_database) || 300, 20), 2000)
-const DATABASES = Array.isArray(input.databases) && input.databases.length ? input.databases : ['pubmed', 'openalex']
+const DATABASES = Array.isArray(input.databases) && input.databases.length ? input.databases : ['pubmed', 'europepmc']
 const MAX_SCREEN = 2000
 const ADJ_GROUP = 15
 const FIRST_PASS_AGENTS = 700 // keep two screeners per batch under this so retries and adjudication fit the cap
@@ -337,11 +337,12 @@ if (!input.records) {
     searchStat.dispatched++
     return withRetry(
       `Run this search in ${q.database} and save the results: ${q.query}\n` +
-        `Use the matching AlterLab skill when installed (alterlab-pubmed, alterlab-openalex, alterlab-arxiv, alterlab-biorxiv, alterlab-clinicaltrials) ` +
-        'or the database\'s public API. Retrieve at most ' + `${PER_DB} records, most relevant first, and write them as JSON Lines to ` +
+        `Use the matching AlterLab skill when installed (alterlab-pubmed, alterlab-arxiv, alterlab-biorxiv, alterlab-clinicaltrials) ` +
+        'or the database\'s keyless public API (Europe PMC: www.ebi.ac.uk/europepmc/webservices/rest/search; Crossref: ' +
+        'api.crossref.org/works). Retrieve at most ' + `${PER_DB} records, most relevant first, and write them as JSON Lines to ` +
         `${OUT_DIR}/records-${q.database.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jsonl with fields: source, source_id, title, abstract, ` +
         'authors, year, journal, doi, pmid. Report the exact query executed and the database\'s total hit count. If the database ' +
-        'rate-limits (HTTP 429; keyless OpenAlex searches often do) or fails, set ran to false and do not substitute another ' +
+        'rate-limits (HTTP 429; keyless Semantic Scholar searches often do) or fails, set ran to false and do not substitute another ' +
         'database or report zero hits: the search is then listed as not run.',
       { schema: SEARCH, label: `search ${q.database}`, phase: 'Search' },
       searchStat,

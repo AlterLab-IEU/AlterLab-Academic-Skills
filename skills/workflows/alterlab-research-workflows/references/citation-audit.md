@@ -9,7 +9,7 @@ says what its source says — with an exact account of what was and was not chec
 | Field | Default | Meaning |
 |---|---|---|
 | `path` (or the string argument) | required | manuscript: `.md`, `.tex` (+ its `.bib`), `.docx`, or `.pdf` |
-| `mailto` | none | contact email for Crossref's polite pool (OpenAlex ignores mailto since Feb 2026 — set `OPENALEX_API_KEY` instead) |
+| `mailto` | none | optional contact email for Crossref's polite pool; without it (and without `ALTERLAB_CONTACT_EMAIL`) the verifier uses Crossref's public pool and sends no address |
 | `out` | `alterlab-citation-audit.md` | report path |
 
 ## Stages and acceptance rules

@@ -108,7 +108,7 @@ def ca_doc(claims_total: int = 6) -> dict:
 
 CA_REF_VERDICTS = {"results": [
     {"id": "R1", "verdict": "VERIFIED", "evidence": "Crossref DOI match 0.98"},
-    {"id": "R2", "verdict": "VERIFIED", "evidence": "OpenAlex match 0.95"},
+    {"id": "R2", "verdict": "VERIFIED", "evidence": "Semantic Scholar match 0.95"},
     {"id": "R3", "verdict": "NOT_FOUND", "evidence": "title, author+year, and DOI searches empty"},
     {"id": "R4", "verdict": "PAC", "evidence": "year is 2013, not 2014", "corrected": "Author4 et al. (2013)."},
     {"id": "R5", "verdict": "VERIFIED", "evidence": "Crossref match 0.99"},
@@ -127,7 +127,7 @@ def ca_rules(*extra: dict, claims_total: int = 6, status: str = "COMPLETE") -> l
         ret("^extract references", ca_doc(claims_total)),
         ret("^references ", CA_REF_VERDICTS),
         ret("^claims batch", CA_CLAIM_VERDICTS),
-        ret("^recheck ", {"overturned": False, "evidence": "searched Crossref, OpenAlex, ORCID: nothing"}),
+        ret("^recheck ", {"overturned": False, "evidence": "searched Crossref, Semantic Scholar, ORCID: nothing"}),
         confirm(status),
     ]
     returns = [r for r in extra if "return" in r]
@@ -440,7 +440,7 @@ def sr_rules(*extra: dict, included: int = 7, unresolved: int = 0, status: str =
     protocol = {
         "pico": "nurses; mindfulness; usual care; burnout; any design",
         "criteria": [{"code": "I1", "kind": "include", "rule": "nurses"}, {"code": "E1", "kind": "exclude", "rule": "not nurses"}],
-        "queries": [{"database": "pubmed", "query": "mindfulness AND burnout"}, {"database": "openalex", "query": "mindfulness burnout"}],
+        "queries": [{"database": "pubmed", "query": "mindfulness AND burnout"}, {"database": "europepmc", "query": "mindfulness burnout"}],
     }
     fixtures = [
         ret("^protocol", protocol),
@@ -572,27 +572,27 @@ def test_screening_report_failures_block() -> None:
 
 
 def test_screening_failed_search_is_reported() -> None:
-    args = {"question": "Does mindfulness training reduce burnout in nurses?", "databases": ["pubmed", "openalex"], "batch": 5}
+    args = {"question": "Does mindfulness training reduce burnout in nurses?", "databases": ["pubmed", "europepmc"], "batch": 5}
     search = {"database": "pubmed", "query_run": "mindfulness AND burnout", "count": 6, "total_hits": 6, "capped": False, "file": f"{SR_DIR}/records-pubmed.jsonl"}
-    res = run(SR, args, sr_rules(ret("^search ", search), act("^search openalex", "null"), status="PARTIAL"))["result"]
+    res = run(SR, args, sr_rules(ret("^search ", search), act("^search europepmc", "null"), status="PARTIAL"))["result"]
     s = res["coverage"]["searches"]
     assert (s["requested"], s["completed"], s["failed"], s["retried"]) == (2, 1, 1, 1)
-    assert s["failed_databases"] == ["openalex"]
+    assert s["failed_databases"] == ["europepmc"]
     assert res["status"] == "partial"
     capped = run(SR, args, sr_rules(ret("^search ", search | {"capped": True, "total_hits": 900}), status="PARTIAL"))["result"]
     assert any("capped" in r for r in capped["status_reasons"])
 
 
 def test_screening_rate_limited_database_is_not_run_not_empty() -> None:
-    """A database that answered HTTP 429 (keyless OpenAlex searches often do) is a failed search."""
-    args = {"question": "Does mindfulness training reduce burnout in nurses?", "databases": ["pubmed", "openalex"], "batch": 5}
+    """A database that answered HTTP 429 (a keyless API's shared rate limit, for example) is a failed search."""
+    args = {"question": "Does mindfulness training reduce burnout in nurses?", "databases": ["pubmed", "europepmc"], "batch": 5}
     search = {"database": "pubmed", "query_run": "mindfulness AND burnout", "count": 6, "total_hits": 6, "capped": False, "file": f"{SR_DIR}/records-pubmed.jsonl"}
-    limited = {"database": "openalex", "query_run": "mindfulness burnout", "count": 0, "total_hits": 0, "capped": False,
-               "file": f"{SR_DIR}/records-openalex.jsonl", "ran": False}
-    res = run(SR, args, sr_rules(ret("^search openalex", limited), ret("^search ", search), status="PARTIAL"))["result"]
+    limited = {"database": "europepmc", "query_run": "mindfulness burnout", "count": 0, "total_hits": 0, "capped": False,
+               "file": f"{SR_DIR}/records-europepmc.jsonl", "ran": False}
+    res = run(SR, args, sr_rules(ret("^search europepmc", limited), ret("^search ", search), status="PARTIAL"))["result"]
     s = res["coverage"]["searches"]
     assert (s["requested"], s["completed"], s["failed"]) == (2, 1, 1)
-    assert s["failed_databases"] == ["openalex"] and res["status"] == "partial"
+    assert s["failed_databases"] == ["europepmc"] and res["status"] == "partial"
 
 
 def test_screening_respects_the_agent_cap() -> None:
@@ -776,7 +776,7 @@ def lm_rules(*extra: dict, status: str = "COMPLETE") -> list[dict]:
         {"name": "Ethics", "summary": "s", "key_works": ["10.1/b"], "open_questions": ["Who owns the codebook?"]},
     ]}
     fixtures = [ret("^search plan", plan), ret("^sweep: ", sweep), ret("^cluster themes", themes),
-                ret("^gap: ", {"open": True, "evidence": "OpenAlex and PubMed searches found nothing", "sharpened": "narrowed"}), confirm(status)]
+                ret("^gap: ", {"open": True, "evidence": "Crossref and PubMed searches found nothing", "sharpened": "narrowed"}), confirm(status)]
     returns = [r for r in extra if "return" in r]
     return returns + fixtures + [r for r in extra if "return" not in r]
 
@@ -799,7 +799,7 @@ def test_literature_map_unchecked_gap_is_not_open(fault: str) -> None:
 
 def test_literature_map_gap_no_database_could_search_is_unchecked() -> None:
     """A gap whose every source was rate-limited is unchecked, never open."""
-    blocked_gap = {"open": True, "evidence": "OpenAlex HTTP 429; Crossref and Europe PMC unreachable", "searched": False}
+    blocked_gap = {"open": True, "evidence": "Semantic Scholar HTTP 429; Crossref and Europe PMC unreachable", "searched": False}
     res = run(LM, LM_ARGS, lm_rules(ret("^gap: Ethics", blocked_gap)))["result"]
     assert len(res["open_gaps"]) == 1
     [u] = res["unchecked_gaps"]
@@ -825,7 +825,7 @@ def test_literature_map_failures() -> None:
 SFA = "skill-freshness-audit"
 SFA_SCRIPT = REPO_ROOT / ".claude" / "workflows" / "skill-freshness-audit.js"
 SFA_ARGS = {"domains": ["databases"]}
-SFA_SKILLS = ["alterlab-pubmed", "alterlab-openalex", "alterlab-arxiv"]
+SFA_SKILLS = ["alterlab-pubmed", "alterlab-biorxiv", "alterlab-arxiv"]
 
 
 def sfa_finding(skill: str, kind: str) -> dict:
@@ -833,7 +833,7 @@ def sfa_finding(skill: str, kind: str) -> dict:
             "current": f"{skill} v2.0", "source": "https://pypi.org/pypi/example/json", "severity": "misleads"}
 
 
-SFA_AUDIT = {"checked": SFA_SKILLS, "findings": [sfa_finding("alterlab-pubmed", "version"), sfa_finding("alterlab-openalex", "endpoint")]}
+SFA_AUDIT = {"checked": SFA_SKILLS, "findings": [sfa_finding("alterlab-pubmed", "version"), sfa_finding("alterlab-biorxiv", "endpoint")]}
 
 
 def sfa_rules(*extra: dict, status: str = "COMPLETE") -> list[dict]:
@@ -872,7 +872,7 @@ def test_freshness_audit_reaches_every_stage(mode: str) -> None:
 
 @pytest.mark.parametrize("fault", ["null", "throw"])
 def test_freshness_audit_failed_verifier_is_unverified_not_rejected(fault: str) -> None:
-    out = sfa(sfa_rules(act("^verify alterlab-pubmed", fault)), capture="^(write report|verify alterlab-openalex)")
+    out = sfa(sfa_rules(act("^verify alterlab-pubmed", fault)), capture="^(write report|verify alterlab-biorxiv)")
     res = out["result"]
     assert (res["confirmed"], res["rejected"], res["unverified"]) == (1, 0, 1), "a verifier that did not complete must not count as a rejection"
     assert res["unverified_findings"][0]["skill"] == "alterlab-pubmed"
@@ -884,14 +884,14 @@ def test_freshness_audit_failed_verifier_is_unverified_not_rejected(fault: str) 
     assert "alterlab-pubmed" not in section(report, "Rejected:", "UNVERIFIED (verifier did not complete):")
     assert "alterlab-pubmed" in section(report, "UNVERIFIED (verifier did not complete):", "Unchecked skills:")
     assert "not independent verification" in report
-    assert prompt_of(out, "^verify alterlab-openalex").startswith("Separately verify")
+    assert prompt_of(out, "^verify alterlab-biorxiv").startswith("Separately verify")
 
 
 def test_freshness_audit_verifier_retry_and_rejection() -> None:
     once = sfa(sfa_rules(act("^verify alterlab-pubmed", "throw", times=1)))["result"]
     assert (once["confirmed"], once["unverified"], once["status"]) == (2, 0, "complete")
     assert once["coverage"]["verification"]["retried"] == 1
-    rejected = sfa(sfa_rules(act("^verify alterlab-openalex", "set", values={"confirmed": False})))["result"]
+    rejected = sfa(sfa_rules(act("^verify alterlab-biorxiv", "set", values={"confirmed": False})))["result"]
     assert (rejected["confirmed"], rejected["rejected"], rejected["unverified"], rejected["status"]) == (1, 1, 0, "complete")
 
 
@@ -902,7 +902,7 @@ def test_freshness_audit_failed_or_partial_batch_is_unchecked() -> None:
     assert (sk["dispatched"], sk["completed"], sk["failed"], sk["retried"]) == (3, 0, 3, 1)
     assert failed["confirmed"] == 0 and failed["status"] == "partial"
     partial = sfa(sfa_rules(act("^databases batch 1", "set", values={"checked": ["alterlab-pubmed"]})))["result"]
-    assert partial["unchecked"] == ["databases/alterlab-openalex", "databases/alterlab-arxiv"] and partial["status"] == "partial"
+    assert partial["unchecked"] == ["databases/alterlab-biorxiv", "databases/alterlab-arxiv"] and partial["status"] == "partial"
     # The retry re-sends only the omitted skills; it repeats both findings and names pubmed again.
     recovered = sfa(sfa_rules(act("^databases batch 1", "set", values={"checked": ["alterlab-pubmed"]}, times=1)))["result"]
     assert recovered["unchecked"] == [] and recovered["status"] == "complete"

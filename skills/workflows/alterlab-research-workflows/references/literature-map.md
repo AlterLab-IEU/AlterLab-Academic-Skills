@@ -19,7 +19,8 @@ survive a search for existing answers. **Default output folder:** `alterlab-lite
    methods, populations/settings, adjacent fields' vocabulary, recent preprints, seed citation
    neighbourhoods. Database-native queries. Angle keys name the output files, so they are made
    unique; angles beyond 6 are counted and make the run `partial`.
-2. **Sweep** — one agent per angle (OpenAlex; PubMed, arXiv, citation graph where they fit), up
+2. **Sweep** — one agent per angle (Crossref and Semantic Scholar; Europe PMC, PubMed, arXiv,
+   citation graph where they fit; all keyless), up
    to 200 records saved per angle, top 25 returned with why each matters. Retrieved works only. A
    failed sweep is retried once; angles that still failed are named in the search log.
 3. **Merge** (code) — de-duplicate by DOI, else normalized title + year; works surfaced by several

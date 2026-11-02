@@ -4,7 +4,7 @@ export const meta = {
   whenToUse: 'Before submission, after an AI-assisted draft, or when reviewing a thesis: catches fabricated, corrupted, hijacked, placeholder, and unsupportive citations. Returns status complete / partial / blocked with requested-vs-completed counts. Args: a manuscript path, or {path, mailto?, out?}.',
   phases: [
     { title: 'Extract', detail: 'parse the reference list and up to 150 claim-citation pairs' },
-    { title: 'Verify', detail: 'resolve reference batches against Crossref, OpenAlex, Semantic Scholar, and arXiv' },
+    { title: 'Verify', detail: 'resolve reference batches against Crossref, Semantic Scholar, and arXiv' },
     { title: 'Faithfulness', detail: 'check each checkable cited claim against what its sources say' },
     { title: 'Challenge', detail: 'two separate re-checks of every flagged item' },
     { title: 'Report', detail: 'integrity report with coverage, then a read-back check that the file exists' },
@@ -25,10 +25,10 @@ const CONTACT = input.mailto ? ` Pass ${input.mailto} as the Crossref polite-poo
 const TOOLING =
   'Use the alterlab-citation-verifier skill (alterlab-core plugin): scripts/verify_citations.py for existence and ' +
   'metadata, scripts/claim_faithfulness.py for claim support. If that skill is not installed, query the Crossref, ' +
-  'OpenAlex, Semantic Scholar, and arXiv public APIs directly. Judge only from what those sources return, never from ' +
+  'Semantic Scholar, and arXiv public APIs directly. Judge only from what those sources return, never from ' +
   'memory: the model that may have invented a citation shares its training data with you, so a plausible fabrication ' +
-  'would pass a memory check. The verifier uses OPENALEX_API_KEY and S2_API_KEY from the environment when they are ' +
-  'set; keyless OpenAlex and Semantic Scholar calls share a small per-IP budget. If verify_citations.py reports ' +
+  'would pass a memory check. The verifier uses S2_API_KEY from the environment when it is set; keyless Semantic ' +
+  'Scholar calls share one rate limit with every other user and answer HTTP 429 when it is busy. If verify_citations.py reports ' +
   'status "partial" (exit code 3), the entries it lists under input_accounting as rejected or unsupported were not ' +
   'checked: give those references UNVERIFIED, never VERIFIED. claim_faithfulness.py never verifies a claim: its ' +
   'LEXICAL_MATCH_REQUIRES_REVIEW and MODEL_JUDGED_SUPPORT_REQUIRES_REVIEW labels are leads, so read the source ' +
@@ -457,7 +457,7 @@ const describe = (f) =>
     ? `Reference ${f.r.id}: "${refIndex.get(f.r.id).text}" was judged ${f.r.verdict} (${f.r.evidence}).`
     : `Claim ${f.r.id}: "${claimById.get(f.r.id).claim}" citing ${claimById.get(f.r.id).refs.join(', ')} was judged ${f.r.verdict} (${f.r.evidence}).`
 const strategies = [
-  'Search by exact title in Crossref and OpenAlex, then by first author plus year, then resolve any identifier directly. A source ' +
+  'Search by exact title in Crossref and Semantic Scholar, then by first author plus year, then resolve any identifier directly. A source ' +
     'that answers HTTP 429 or fails was not searched: that is unavailable, never not found.',
   "Search the first author's publication list (ORCID, Google Scholar profile, institutional page) and the venue's table of contents for that year.",
 ]

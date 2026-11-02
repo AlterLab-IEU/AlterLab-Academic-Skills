@@ -31,7 +31,7 @@ SAMPLE_ARGS: dict[str, object] = {
     "citation-audit": {"path": "paper.md", "mailto": "lab@example.edu"},
     "review-panel": {"path": "paper.pdf", "venue": "PLOS ONE"},
     "claim-stress-test": {"path": "paper.md"},
-    "systematic-review-screening": {"question": "Does mindfulness training reduce burnout in nurses?", "databases": ["pubmed", "openalex"]},
+    "systematic-review-screening": {"question": "Does mindfulness training reduce burnout in nurses?", "databases": ["pubmed", "europepmc"]},
     "rebuttal": {"manuscript": "paper.docx", "reviews": ["reviewer1.pdf", "reviewer2.pdf"]},
     "grant-mock-panel": {"path": "proposal.pdf", "funder": "NIH", "mechanism": "R01"},
     "literature-map": {"topic": "LLM-assisted qualitative coding"},
