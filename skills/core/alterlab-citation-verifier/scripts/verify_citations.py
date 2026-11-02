@@ -2,20 +2,24 @@
 """verify_citations.py — Existence-verify a bibliography against public scholarly APIs.
 
 Given a bibliography (BibTeX, a list of DOIs/arXiv IDs, or free-form references),
-this checks whether each entry ACTUALLY EXISTS by querying four public scholarly
-APIs (Crossref, OpenAlex, Semantic Scholar, arXiv), plus the doi.org Handle API to
-confirm whether a cited DOI is registered at all. It resolves DOI / arXiv
+this checks whether each entry ACTUALLY EXISTS by querying three public scholarly
+APIs (Crossref, Semantic Scholar, arXiv), plus the doi.org Handle API to confirm
+whether a cited DOI is registered at all. It resolves DOI / arXiv
 identifiers, fuzzy-matches title and authors (difflib SequenceMatcher ratio —
 Ratcliff/Obershelp, not edit-distance — default threshold 0.70), flags retractions
 (Crossref ``updated-by`` / ``update-to`` records, which since 2025 include the
-Retraction Watch database, and OpenAlex ``is_retracted``), and emits a JSON verdict
+Retraction Watch database), and emits a JSON verdict
 per entry mapped to the AlterLab citation hallucination taxonomy (TF / PAC / IH / PH / SH).
 
 Design constraints:
-- NO API key required. Optional keys only raise rate limits: ``OPENALEX_API_KEY``
-  (OpenAlex retired its ``mailto`` polite pool in Feb 2026; keyless calls share a
-  small per-IP daily budget in which DOI lookups are free but searches are metered)
-  and ``S2_API_KEY`` (Semantic Scholar). Keys are sent as headers, never logged.
+- NO API key required. The optional ``S2_API_KEY`` only gives Semantic Scholar a
+  dedicated rate limit instead of the shared keyless pool; it is sent as a header,
+  never logged. (OpenAlex was removed in v1.3.0: its keyless searches now draw on a
+  small per-IP daily budget, so real use needed an account.)
+- Semantic Scholar's keyless pool is shared by every unauthenticated caller and often
+  answers HTTP 429. The script backs off (exponentially) and, if the pool is still
+  busy, records Semantic Scholar as *not checked* for that entry and pauses it briefly
+  for the rest of the run. A rate-limited source is never read as "not found".
 - NO third-party deps required: uses ``requests`` if present, else the stdlib
   (``urllib``). Mirrors the integrity_verification_agent taxonomy exactly (see
   ../SKILL.md and ../../alterlab-research-pipeline/agents/integrity_verification_agent.md).
@@ -40,10 +44,10 @@ Usage:
                                           [--out report.json] [--offline]
   uv run python verify_citations.py - < refs.bib        # read stdin
 
-Optional environment: OPENALEX_API_KEY (free key, openalex.org/settings/api; sent
-as an Authorization: Bearer header), S2_API_KEY (Semantic Scholar, x-api-key header).
+Optional environment: S2_API_KEY (Semantic Scholar, x-api-key header);
+ALTERLAB_CONTACT_EMAIL (opt-in contact address for Crossref's polite pool).
 A rate-limited source (HTTP 429) is reported in ``source_status`` and
-``summary.notes``; it never counts as "not found".
+``summary.notes`` as not checked; it never counts as "not found".
 
 Input formats (``--format auto`` detects them, and a mixed file is handled piecewise):
 - BibTeX / BibLaTeX: a dependency-free, brace-depth-aware tokenizer. Single-line and
@@ -102,7 +106,7 @@ from typing import Any, Callable, Optional, Sequence
 # HTTP layer — prefer requests, fall back to urllib (stdlib). Keys optional.  #
 # --------------------------------------------------------------------------- #
 
-TOOL_VERSION = "1.2.0"
+TOOL_VERSION = "1.3.0"
 # Contact email for Crossref's polite pool: opt-in (--mailto or ALTERLAB_CONTACT_EMAIL). With
 # none, requests carry no address and use the public pool; no default address is ever sent.
 DEFAULT_MAILTO = os.environ.get("ALTERLAB_CONTACT_EMAIL", "").strip()
@@ -122,18 +126,30 @@ def _mailto_param(mailto: str, sep: str) -> str:
 HTTP_TIMEOUT = 15
 RETRIES = 2
 BACKOFF = 1.5
-# A 429 asking us to wait longer than this (e.g. OpenAlex's exhausted daily budget
-# returns Retry-After of many hours) is reported as a source error, not retried.
+# A 429 asking us to wait longer than this (an exhausted daily quota can return a
+# Retry-After of many hours) is reported as a source error, not retried.
 MAX_RETRY_AFTER = 30
 
-# Optional credentials — never required; they only raise rate limits.
-OPENALEX_API_KEY = os.environ.get("OPENALEX_API_KEY", "").strip()
+# Optional credential — never required; it only raises Semantic Scholar's rate limit.
 S2_API_KEY = (os.environ.get("S2_API_KEY") or os.environ.get("SEMANTIC_SCHOLAR_API_KEY") or "").strip()
 
 # Minimum spacing between calls to one host. arXiv's API terms ask for >= 3 s
-# between calls; Semantic Scholar's key tier is 1 request/second.
-MIN_INTERVAL = {"export.arxiv.org": 3.0, "arxiv.org": 3.0, "api.semanticscholar.org": 1.0}
+# between calls; Semantic Scholar's key tier is 1 request/second; Crossref's public
+# pool allows 5 requests/s with one in flight (checked 2026-11-02).
+MIN_INTERVAL = {"export.arxiv.org": 3.0, "arxiv.org": 3.0, "api.semanticscholar.org": 1.0,
+                "api.crossref.org": 0.25}
 _LAST_CALL: dict[str, float] = {}
+
+# Per-host retry policy for HTTP 429 / 5xx: (retries, base backoff in seconds), doubling
+# per attempt. Semantic Scholar's keyless pool is shared by every unauthenticated caller
+# and sends no Retry-After, so it gets the longest backoff (2 + 4 + 8 s); Crossref's
+# public pool answers 429 whenever a second request from the same IP is in flight.
+RETRY_POLICY = {"api.semanticscholar.org": (3, 2.0), "api.crossref.org": (3, 1.0)}
+# After a host's retries are spent on HTTP 429, calls to it fail fast for this long (s),
+# so one busy shared pool cannot stall a long bibliography. Each skipped call is
+# reported as rate-limited (not checked), never as "not found".
+RATE_LIMIT_COOLDOWN = {"api.semanticscholar.org": 30.0}
+_COOLDOWN_UNTIL: dict[str, float] = {}
 
 try:  # pragma: no cover - environment dependent
     import requests as _requests  # type: ignore
@@ -186,12 +202,11 @@ def _throttle(url: str) -> None:
 # What a rate limit means per host, so a 429 is reported with its remedy instead
 # of silently reading as "no match".
 _RATE_LIMIT_HINTS = {
-    "api.openalex.org": ("OpenAlex rate limit: the keyless daily budget shared by this IP is "
-                         "spent (or the request rate is too high); set a free OPENALEX_API_KEY "
-                         "or retry after the reset at midnight UTC"),
-    "api.semanticscholar.org": ("Semantic Scholar rate limit: the keyless pool is shared by all "
-                                "unauthenticated users; set S2_API_KEY or retry later"),
-    "api.crossref.org": "Crossref rate limit: slow down (polite pool allows 10 req/s, 3 concurrent)",
+    "api.semanticscholar.org": ("Semantic Scholar rate limit: not checked (which is not 'not found'); "
+                                "the keyless pool is shared by all unauthenticated users, so retry "
+                                "later or set the optional S2_API_KEY"),
+    "api.crossref.org": ("Crossref rate limit: not checked; slow down (public pool 5 req/s with one "
+                         "request in flight; polite pool with --mailto 10 req/s)"),
 }
 
 
@@ -203,11 +218,21 @@ def _http_get(url: str, mailto: str, accept: str = "application/json",
     Raises SourceError when the API could not answer (429/5xx after retries,
     401/403, timeout) and NetworkUnavailable on a DNS/connection failure, so the
     caller can tell "offline" and "this source failed" apart from "not found".
+
+    HTTP 429 / 5xx are retried with backoff (``RETRY_POLICY`` per host, honouring a short
+    ``Retry-After``). A host listed in ``RATE_LIMIT_COOLDOWN`` that is still answering
+    429 once its retries are spent fails fast for a while, with the same rate-limit
+    SourceError, so the entry records that source as not checked.
     """
+    host = urllib.parse.urlsplit(url).hostname or ""
+    if time.monotonic() < _COOLDOWN_UNTIL.get(host, 0.0):
+        raise SourceError("HTTP 429 — " + _RATE_LIMIT_HINTS.get(host, "rate limited; retry later"))
+    retries, base = RETRY_POLICY.get(host, (RETRIES, BACKOFF))
     headers = {"User-Agent": _user_agent(mailto), "Accept": accept}
     headers.update(extra_headers or {})
     last_exc: Optional[Exception] = None
-    for attempt in range(RETRIES + 1):
+    wait_hint = 0.0  # a short Retry-After the server asked for
+    for attempt in range(retries + 1):
         _throttle(url)
         try:
             if _HAS_REQUESTS:
@@ -228,10 +253,12 @@ def _http_get(url: str, mailto: str, accept: str = "application/json",
             last_exc = exc
             if exc.retry_after > MAX_RETRY_AFTER:
                 break
+            wait_hint = exc.retry_after
         except urllib.error.HTTPError as exc:  # urllib path
             if exc.code == 429 or 500 <= exc.code < 600:
                 last_exc = exc
-                if _retry_after(exc.headers.get("Retry-After") if exc.headers else None) > MAX_RETRY_AFTER:
+                wait_hint = _retry_after(exc.headers.get("Retry-After") if exc.headers else None)
+                if wait_hint > MAX_RETRY_AFTER:
                     break
             elif exc.code in (401, 403):
                 raise SourceError(f"HTTP {exc.code} (access denied)") from exc
@@ -256,11 +283,13 @@ def _http_get(url: str, mailto: str, accept: str = "application/json",
                 raise NetworkUnavailable(str(exc)) from exc
             else:
                 last_exc = exc
-        if attempt < RETRIES:
-            time.sleep(BACKOFF * (attempt + 1))
+        if attempt < retries:
+            delay = base * (2 ** attempt) if host in RETRY_POLICY else BACKOFF * (attempt + 1)
+            time.sleep(max(delay, wait_hint))
     code = getattr(last_exc, "status", None) or getattr(last_exc, "code", None)
     if code == 429:
-        host = urllib.parse.urlsplit(url).hostname or ""
+        if host in RATE_LIMIT_COOLDOWN:
+            _COOLDOWN_UNTIL[host] = time.monotonic() + RATE_LIMIT_COOLDOWN[host]
         raise SourceError("HTTP 429 — " + _RATE_LIMIT_HINTS.get(host, "rate limited; retry later"))
     raise SourceError(f"no answer after retries ({last_exc})")
 
@@ -315,7 +344,7 @@ def _normalize(text: str) -> str:
 def title_ratio(a: str, b: str) -> float:
     """Similarity ratio (0..1) via difflib SequenceMatcher on normalized titles.
 
-    Some records drop the subtitle (OpenAlex / Semantic Scholar often store only
+    Some records drop the subtitle (Semantic Scholar and arXiv often store only
     "Main title"), so a title with a subtitle also counts as matching when its main
     title is essentially identical (ratio >= 0.9) to the other title *as a whole*.
     Comparing main titles loosely would match unrelated works that merely share a
@@ -1356,49 +1385,6 @@ def _crossref_norm(msg: dict) -> dict:
     }
 
 
-def _openalex_headers() -> dict:
-    # OpenAlex ignores `mailto` since Feb 2026; a free key raises the daily budget.
-    return {"Authorization": f"Bearer {OPENALEX_API_KEY}"} if OPENALEX_API_KEY else {}
-
-
-def openalex_lookup(entry: Entry, mailto: str) -> Optional[dict]:
-    if entry.doi:
-        # Singleton DOI lookups are free even without a key.
-        url = f"https://api.openalex.org/works/doi:{urllib.parse.quote(entry.doi)}"
-        data = _http_get(url, mailto, extra_headers=_openalex_headers())
-        if data and data.get("id"):
-            rec = _openalex_norm(data)
-            rec["method"] = "id"
-            return rec
-    if entry.title:
-        # Searches draw on the metered budget (shared per IP when keyless).
-        q = urllib.parse.quote(entry.title)
-        url = f"https://api.openalex.org/works?search={q}&per-page=5"
-        data = _http_get(url, mailto, extra_headers=_openalex_headers())
-        results = (data or {}).get("results", []) if data else []
-        if results:
-            rec = max((_openalex_norm(w) for w in results[:5]), key=lambda r: _rank(entry, r))
-            rec["method"] = "title"
-            return rec
-    return None
-
-
-def _openalex_norm(w: dict) -> dict:
-    surnames = []
-    for au in w.get("authorships", []):
-        disp = (au.get("author", {}) or {}).get("display_name", "")
-        if disp:
-            surnames.append(disp.split()[-1])
-    return {
-        "source": "openalex",
-        "title": w.get("title") or w.get("display_name") or "",
-        "authors": surnames,
-        "year": str(w.get("publication_year") or ""),
-        "doi": (w.get("doi") or "").replace("https://doi.org/", "").lower(),
-        "retracted": bool(w.get("is_retracted")),
-    }
-
-
 def semanticscholar_lookup(entry: Entry, mailto: str) -> Optional[dict]:
     fields = "title,year,authors,externalIds"
     hdrs = {"x-api-key": S2_API_KEY} if S2_API_KEY else {}
@@ -1589,7 +1575,6 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
 
     sources: list[tuple[str, Callable[[], Optional[dict]]]] = [
         ("crossref", _crossref),
-        ("openalex", lambda: openalex_lookup(entry, mailto)),
         ("semanticscholar", lambda: semanticscholar_lookup(entry, mailto)),
         ("arxiv", lambda: arxiv_lookup(entry, mailto)),
     ]
@@ -1704,9 +1689,10 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
         near_mashup = (best is not None and a_overlap is not None and a_overlap >= 0.5
                        and t_ratio >= 0.5)
         if not near_mashup:
-            # TF needs Crossref plus a broad index (OpenAlex or Semantic Scholar) to
-            # have answered: Crossref alone misses books and grey literature.
-            if answered("crossref") and (answered("openalex") or answered("semanticscholar")):
+            # TF needs Crossref plus a broad index (Semantic Scholar) to have answered:
+            # Crossref alone misses books and grey literature, and arXiv covers preprints
+            # only. A rate-limited Semantic Scholar therefore leaves the entry unverified.
+            if answered("crossref") and answered("semanticscholar"):
                 closest = (f" Closest record: '{best['title']}' (title ratio {t_ratio:.2f})."
                            if best else "")
                 return _verdict(entry, ref_id, "TF",
@@ -1715,11 +1701,11 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
                                 matches=matches, status=status)
             limited = [f"{src} {'rate-limited (HTTP 429)' if '429' in st else 'failed'}"
                        for src, st in status.items()
-                       if src in ("openalex", "semanticscholar") and st.startswith("error")]
+                       if src in ("crossref", "semanticscholar") and st.startswith("error")]
             return _unverified(entry, ref_id,
                                reason=("no matching record in the sources that answered, and "
-                                       "OpenAlex / Semantic Scholar could not be queried to rule "
-                                       "out books or grey literature"
+                                       "Crossref and Semantic Scholar were not both checked, so "
+                                       "books and grey literature cannot be ruled out"
                                        + (" (" + ", ".join(limited) + "; see summary.notes)"
                                           if limited else "")),
                                status=status, matches=matches)
@@ -1758,8 +1744,8 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
         result["flags"] = result.get("flags", []) + ["RETRACTED"]
         # Retraction does not change existence verdict but is a SERIOUS flag.
         result["severity"] = "SERIOUS"
-        result["detail"] += (" RETRACTED: Crossref (publisher or Retraction Watch notice) and/or "
-                             "OpenAlex mark this work as retracted.")
+        result["detail"] += (" RETRACTED: Crossref (publisher or Retraction Watch notice) marks "
+                             "this work as retracted.")
     if concern:
         result["flags"] = result.get("flags", []) + ["EXPRESSION_OF_CONCERN"]
         result["detail"] += " An expression of concern is on record for this work."
@@ -1940,8 +1926,7 @@ def build_report(results: list[dict], mailto: str, threshold: float, offline: bo
         "warning": warning,
         "config": {"mailto": mailto, "threshold": threshold, "offline": offline,
                    "http_backend": "requests" if _HAS_REQUESTS else "urllib",
-                   # whether optional keys were present — never the keys themselves
-                   "openalex_api_key": bool(OPENALEX_API_KEY),
+                   # whether the optional key was present — never the key itself
                    "s2_api_key": bool(S2_API_KEY)},
         "taxonomy": VERDICTS,
         "summary": {

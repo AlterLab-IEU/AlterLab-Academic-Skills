@@ -1,6 +1,6 @@
 ---
 name: cite-check
-description: Verify that citations actually exist and that the claims they support are faithful to the cited source. Runs deterministic existence checks (Crossref / OpenAlex / Semantic Scholar / arXiv) plus a claim-faithfulness pass via the alterlab-citation-verifier skill.
+description: Verify that citations actually exist and that the claims they support are faithful to the cited source. Runs deterministic existence checks (Crossref / Semantic Scholar / arXiv) plus a claim-faithfulness pass via the alterlab-citation-verifier skill.
 argument-hint: [path to .bib / manuscript, or pasted references]
 disable-model-invocation: true
 allowed-tools: Read Write Edit Bash WebFetch WebSearch
@@ -18,14 +18,14 @@ Steps:
    path, or a pasted list). If nothing was given, ask for the references or file.
 2. **Existence check** — Run
    `${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/scripts/verify_citations.py` over the references. It
-   resolves each one against Crossref, OpenAlex, Semantic Scholar, and arXiv (no API
-   key required; optional `OPENALEX_API_KEY` / `S2_API_KEY` raise rate limits),
+   resolves each one against Crossref, Semantic Scholar, and arXiv (no API key
+   required; an optional `S2_API_KEY` raises Semantic Scholar's rate limit),
    checks DOI registration at doi.org, matches title and authors with the difflib
    `SequenceMatcher` ratio (≥ 0.70), and maps each entry to the TF / PAC / IH / PH
    taxonomy.
 3. **Retraction screen** — Surface every `RETRACTED` flag (Crossref `updated-by` /
-   `update-to` notices, including Retraction Watch data, or OpenAlex
-   `is_retracted`) and any expression of concern.
+   `update-to` notices, including Retraction Watch data) and any expression of
+   concern.
 4. **Claim faithfulness** — Where a sentence is tied to a citation, run
    `${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/scripts/claim_faithfulness.py` on the (claim, DOI) pair; report `contradict` as
    SH and escalate `unsupported` claims (the abstract does not establish them) to the

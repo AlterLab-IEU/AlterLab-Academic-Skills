@@ -3,7 +3,9 @@
 Covers the reported defects (single-line entries and indented closing braces parsed as
 zero entries; mixed bibliographies silently losing entries), the BibTeX syntax the
 tokenizer must handle, actionable diagnostics for malformed input, the rule that a
-partial audit can never pass, and conservative network behaviour.
+partial audit can never pass, and conservative network behaviour: the sources are
+Crossref, Semantic Scholar and arXiv (plus doi.org), and a rate-limited Semantic Scholar is
+reported as not checked — it can never turn an unresolved entry into a verified one or a TF.
 
 No test touches the network: an autouse fixture replaces the HTTP layer with a guard
 that fails the test on any outbound call, and the network tests inject failures.
@@ -56,6 +58,7 @@ def _no_network(monkeypatch):
     monkeypatch.setattr(vc, "_HAS_REQUESTS", False)
     monkeypatch.setattr(vc, "_requests", None)
     monkeypatch.setattr(vc.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(vc, "_COOLDOWN_UNTIL", {})  # no rate-limit pause leaks between tests
 
 
 def parse(text: str, fmt: str = "auto"):
@@ -722,3 +725,153 @@ def test_rate_limited_run_is_unverified_with_notes(monkeypatch, capsys):
     assert report["summary"]["verdict_counts"]["verified"] == 0
     assert report["summary"]["verdict_counts"]["TF"] == 0  # failures are never fabrication
     assert report["summary"]["source_errors"] and report["summary"]["notes"]
+
+
+# --------------------------------------------------------------------------- #
+# Sources: Crossref / Semantic Scholar / arXiv (OpenAlex removed)              #
+# --------------------------------------------------------------------------- #
+
+NO_ID = "@article{noid, title={A study with no identifier}, author={Doe, J.}, year={2020}}"
+_ARXIV_EMPTY = '<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"></feed>'
+_RATE_LIMIT = vc.SourceError("HTTP 429 — " + vc._RATE_LIMIT_HINTS["api.semanticscholar.org"])
+
+
+def _fake_sources(monkeypatch, crossref=None, s2=None, calls=None):
+    """Route _http_get by host. ``crossref`` / ``s2`` are a JSON answer, None (no match),
+    or an exception to raise; arXiv answers an empty feed and doi.org 'registered'."""
+    calls = [] if calls is None else calls
+
+    def fake(url, mailto, accept="application/json", extra_headers=None):
+        calls.append(url)
+        host = vc.urllib.parse.urlsplit(url).hostname
+        ans = {"api.crossref.org": crossref, "api.semanticscholar.org": s2}.get(host)
+        if host in ("export.arxiv.org",):
+            return _ARXIV_EMPTY
+        if host == "doi.org":
+            return {"responseCode": 1}
+        if host not in ("api.crossref.org", "api.semanticscholar.org"):
+            pytest.fail(f"unexpected host contacted: {url}")
+        if isinstance(ans, Exception):
+            raise ans
+        return ans
+
+    monkeypatch.setattr(vc, "_http_get", fake)
+    return calls
+
+
+def _cr_items(*items):
+    return {"message": {"items": list(items)}}
+
+
+def test_only_crossref_semantic_scholar_and_arxiv_are_queried(monkeypatch):
+    calls = _fake_sources(monkeypatch, crossref=None, s2=None)
+    r = vc.verify_entry(_entry(NO_ID), "", 0.7, False)
+    assert set(r["source_status"]) == {"crossref", "semanticscholar", "arxiv"}
+    hosts = {vc.urllib.parse.urlsplit(u).hostname for u in calls}
+    assert hosts == {"api.crossref.org", "api.semanticscholar.org", "export.arxiv.org"}
+    assert not any("openalex" in u for u in calls)
+    assert not hasattr(vc, "openalex_lookup") and "openalex_api_key" not in vc.build_report(
+        [r], "", 0.7, False)["config"]
+
+
+def test_no_identifier_and_no_record_in_crossref_and_s2_is_tf(monkeypatch):
+    _fake_sources(monkeypatch, crossref=None, s2=None)
+    r = vc.verify_entry(_entry(NO_ID), "", 0.7, False)
+    assert r["verdict"] == "TF" and r["severity"] == "SERIOUS"
+
+
+def test_rate_limited_semantic_scholar_never_yields_tf(monkeypatch):
+    _fake_sources(monkeypatch, crossref=None, s2=_RATE_LIMIT)
+    r = vc.verify_entry(_entry(NO_ID), "", 0.7, False)
+    assert r["verdict"] == "unverified" and r["verdict"] != "TF"
+    assert r["source_status"]["semanticscholar"].startswith("error: HTTP 429")
+    assert "not checked" in r["source_status"]["semanticscholar"]
+    assert "semanticscholar rate-limited (HTTP 429)" in r["detail"]
+    report = vc.build_report([r], "", 0.7, False)
+    assert report["summary"]["source_errors"] == {"semanticscholar": 1}
+    assert any("not checked" in n for n in report["summary"]["notes"])
+    assert report["summary"]["verdict"] == "UNVERIFIED"
+
+
+def test_losing_semantic_scholar_never_verifies_an_unresolved_entry(monkeypatch):
+    # Crossref's closest hit is an unrelated work; with Semantic Scholar rate-limited the
+    # entry stays unresolved: it must be unverified, never verified and never TF.
+    unrelated = {"title": ["Grain yields under drought in the Sahel"], "author": [{"family": "Roe"}],
+                 "issued": {"date-parts": [[2011]]}, "DOI": "10.1000/unrelated"}
+    _fake_sources(monkeypatch, crossref=_cr_items(unrelated), s2=_RATE_LIMIT)
+    r = vc.verify_entry(_entry(NO_ID), "", 0.7, False)
+    assert r["verdict"] == "unverified"
+    _fake_sources(monkeypatch, crossref=_cr_items(unrelated), s2=None)
+    assert vc.verify_entry(_entry(NO_ID), "", 0.7, False)["verdict"] == "TF"  # both answered
+
+
+def test_crossref_match_still_verifies_while_semantic_scholar_is_rate_limited(monkeypatch):
+    rec = {"title": ["A study with no identifier"], "author": [{"family": "Doe"}],
+           "issued": {"date-parts": [[2020]]}, "DOI": "10.1000/real"}
+    _fake_sources(monkeypatch, crossref=_cr_items(rec), s2=_RATE_LIMIT)
+    r = vc.verify_entry(_entry(NO_ID), "", 0.7, False)
+    assert r["verdict"] == "verified" and r["detail"] == "Matched in crossref."
+    assert r["source_status"]["semanticscholar"].startswith("error: HTTP 429")
+
+
+def test_retraction_flag_comes_from_crossref(monkeypatch):
+    rec = {"title": ["A study with no identifier"], "author": [{"family": "Doe"}],
+           "issued": {"date-parts": [[2020]]}, "DOI": "10.1000/real",
+           "updated-by": [{"type": "retraction", "source": "retraction-watch", "DOI": "10.1000/notice"}]}
+    _fake_sources(monkeypatch, crossref=_cr_items(rec), s2=None)
+    r = vc.verify_entry(_entry(NO_ID), "", 0.7, False)
+    assert r["verdict"] == "verified" and r["retracted"] is True and "RETRACTED" in r["flags"]
+    assert r["severity"] == "SERIOUS" and "Crossref" in r["detail"]
+
+
+def test_semantic_scholar_429_backs_off_exponentially_then_pauses(monkeypatch):
+    sleeps, calls = [], []
+
+    def fake_urlopen(request, timeout=None):
+        calls.append(request.full_url)
+        raise _http_error(429)  # Semantic Scholar sends no Retry-After
+
+    monkeypatch.setattr(vc, "_http_get", REAL_HTTP_GET)
+    monkeypatch.setattr(vc.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(vc.time, "sleep", sleeps.append)
+    url = "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1000/x?fields=title"
+    with pytest.raises(vc.SourceError, match="HTTP 429 — Semantic Scholar rate limit: not checked"):
+        REAL_HTTP_GET(url, "")
+    retries, base = vc.RETRY_POLICY["api.semanticscholar.org"]
+    assert len(calls) == retries + 1
+    backoff = [s for s in sleeps if s >= base]  # throttle sleeps are shorter than the backoff
+    assert backoff == [base * 2 ** i for i in range(retries)]
+    # While paused, further Semantic Scholar calls fail fast with the same "not checked"
+    # error instead of stalling the run; other hosts are unaffected.
+    with pytest.raises(vc.SourceError, match="not checked"):
+        REAL_HTTP_GET(url, "")
+    assert len(calls) == retries + 1
+    with pytest.raises(vc.SourceError):
+        REAL_HTTP_GET("https://api.crossref.org/works/10.1000/x", "")
+    assert len(calls) > retries + 1
+
+
+def test_short_retry_after_is_honoured(monkeypatch):
+    sleeps = []
+    answers = [_http_error(429, "7"), None]
+
+    class _Ok:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def read(self):
+            return b'{"message": {}}'
+
+    def fake_urlopen(request, timeout=None):
+        exc = answers.pop(0)
+        if exc:
+            raise exc
+        return _Ok()
+
+    monkeypatch.setattr(vc.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(vc.time, "sleep", sleeps.append)
+    assert REAL_HTTP_GET("https://api.crossref.org/works/10.1000/x", "") == {"message": {}}
+    assert 7.0 in sleeps

@@ -3,10 +3,11 @@
 A 24-entry bibliography submitted for a citation-existence audit. It is a deliberate
 fixture: most entries are real, and a handful seed the TF/PAC/IH taxonomy and a
 retraction so the verifier has something to catch. The verifier should resolve each entry
-against Crossref / OpenAlex / Semantic Scholar / arXiv (plus doi.org for DOIs) and return a
+against Crossref / Semantic Scholar / arXiv (plus doi.org for DOIs) and return a
 per-entry verdict. Expected verdicts were re-checked against the live APIs on 2026-09-23;
-entries marked TF may come back `unverified` when OpenAlex and Semantic Scholar are
-rate-limited, and must then go through the WebSearch fallback.
+entries marked TF may come back `unverified` when Semantic Scholar is rate-limited (not
+checked), and must then go through the WebSearch fallback. So may the real books (6, 14,
+15), or as PAC, when Crossref holds only a later edition or a book review of them.
 
 1. Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, L., & Polosukhin, I. (2017). Attention is all you need. *Advances in Neural Information Processing Systems, 30*. [REAL — expected VERIFIED]
 
@@ -46,7 +47,7 @@ rate-limited, and must then go through the WebSearch fallback.
 
 19. Bender, E. M., Gebru, T., McMillan-Major, A., & Shmitchell, S. (2021). On the dangers of stochastic parrots: Can language models be too big? *Proceedings of FAccT 2021*, 610-623. https://doi.org/10.1145/3442188.3445922 [REAL — expected VERIFIED]
 
-20. Wakefield, A. J., Murch, S. H., Anthony, A., Linnell, J., Casson, D. M., Malik, M., Berelowitz, M., Dhillon, A. P., Thomson, M. A., Harvey, P., Valentine, A., Davies, S. E., & Walker-Smith, J. A. (1998). Ileal-lymphoid-nodular hyperplasia, non-specific colitis, and pervasive developmental disorder in children. *The Lancet, 351*(9103), 637-641. https://doi.org/10.1016/S0140-6736(97)11096-0 [REAL but RETRACTED in 2010 — expected verified + RETRACTED flag (Crossref updated-by from Retraction Watch; OpenAlex is_retracted)]
+20. Wakefield, A. J., Murch, S. H., Anthony, A., Linnell, J., Casson, D. M., Malik, M., Berelowitz, M., Dhillon, A. P., Thomson, M. A., Harvey, P., Valentine, A., Davies, S. E., & Walker-Smith, J. A. (1998). Ileal-lymphoid-nodular hyperplasia, non-specific colitis, and pervasive developmental disorder in children. *The Lancet, 351*(9103), 637-641. https://doi.org/10.1016/S0140-6736(97)11096-0 [REAL but RETRACTED in 2010 — expected verified + RETRACTED flag (Crossref updated-by from Retraction Watch)]
 
 21. Mayer, R. E. (2009). *Multimedia learning* (2nd ed.). Cambridge University Press. [REAL — expected VERIFIED]
 

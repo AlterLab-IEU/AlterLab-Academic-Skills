@@ -2,7 +2,7 @@
 """claim_faithfulness.py — score claim support against a cited work's abstract.
 
 Given one or more (claim, DOI) pairs, this tool fetches the cited work's abstract
-from Crossref (primary) or OpenAlex (fallback, with inverted-index reconstruction)
+from Crossref, falling back to Semantic Scholar, then Europe PMC (all keyless),
 and scores whether the abstract **supports**, **contradicts**, or leaves the claim
 **unsupported**. It is the Phase-E ("Semantic Hallucination", SH) half of the
 AlterLab citation gate; existence/metadata checks (TF/PAC/IH/PH) live in
@@ -67,6 +67,21 @@ Usage
     # offline self-test (no network) on a toy pair
     uv run python claim_faithfulness.py --self-test
 
+Abstract sources, in order (each keyless; checked live 2026-11-02):
+
+1. Crossref ``/works/<doi>`` — the ``abstract`` field (JATS XML, stripped to text).
+2. Semantic Scholar ``/graph/v1/paper/DOI:<doi>?fields=abstract``. Its keyless pool is
+   shared and often answers HTTP 429: the call backs off (2 s, 4 s) and, if the pool is
+   still busy, records Semantic Scholar as *not checked* rather than "no abstract".
+   An optional ``S2_API_KEY`` gives a dedicated rate limit.
+3. Europe PMC ``/search?query=DOI:"<doi>"&resultType=core`` — ``abstractText`` of the
+   record whose DOI matches (life sciences, plus many preprints).
+
+``signals.abstract_sources`` records what each source answered (abstract / no_abstract
+/ not_found / rate_limited / error), so a missing abstract is never confused with a
+source that could not be asked. (OpenAlex was removed in v2.1: its keyless use is now
+metered per IP, so dependable use needed an account.)
+
 Dependencies: Python standard library only (urllib/json/re). No ``requests``,
 no third-party packages — runs under ``uv run python`` with no extra installs.
 """
@@ -78,6 +93,7 @@ import json
 import os
 import re
 import subprocess
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -98,12 +114,16 @@ def alterlab_model() -> str:
 
 
 # Crossref routes requests that carry a mailto to its "polite" pool (higher limits).
-# OpenAlex has ignored mailto since Feb 2026, but the single-DOI lookups used here
-# are free without an API key, so no key is needed for abstract retrieval.
-# Opt-in contact email (ALTERLAB_CONTACT_EMAIL); with none, no address is sent.
+# Opt-in contact email (ALTERLAB_CONTACT_EMAIL); with none, no address is sent anywhere.
 CONTACT_EMAIL = os.environ.get("ALTERLAB_CONTACT_EMAIL", "").strip()
-USER_AGENT = "AlterLab-CitationVerifier/2.0" + (f" (mailto:{CONTACT_EMAIL})" if CONTACT_EMAIL else "")
+USER_AGENT = "AlterLab-CitationVerifier/2.1" + (f" (mailto:{CONTACT_EMAIL})" if CONTACT_EMAIL else "")
 _MAILTO_QS = f"?mailto={urllib.parse.quote(CONTACT_EMAIL)}" if CONTACT_EMAIL else ""
+# Optional: a dedicated Semantic Scholar rate limit instead of the shared keyless pool.
+S2_API_KEY = (os.environ.get("S2_API_KEY") or os.environ.get("SEMANTIC_SCHOLAR_API_KEY") or "").strip()
+# Backoff (seconds) between retries when a source answers HTTP 429. Semantic Scholar's
+# keyless pool is shared and sends no Retry-After, so it waits longest.
+S2_BACKOFF = (2.0, 4.0)
+CROSSREF_BACKOFF = (1.0, 2.0)  # Crossref's public pool allows one request in flight
 
 VERDICTS = ("support", "contradict", "unsupported")
 
@@ -172,7 +192,7 @@ class FaithfulnessResult:
     rationale: str
     abstract_only: bool = True  # abstracts only — never claim full-text coverage
     abstract_found: bool = True
-    source: str = ""  # "crossref" | "openalex" | ""
+    source: str = ""  # "crossref" | "semanticscholar" | "europepmc" | "override" | ""
     signals: Dict[str, Any] = field(default_factory=dict)
     evidence_scope: str = "abstract"  # "abstract" | "none" — what the verdict was based on
     method: str = "lexical-heuristic"  # "lexical-heuristic" | "model-judgment" | "none"
@@ -182,18 +202,39 @@ class FaithfulnessResult:
 
 
 # --------------------------------------------------------------------------- #
-# Abstract fetching (Crossref primary, OpenAlex fallback)                       #
+# Abstract fetching (Crossref, then Semantic Scholar, then Europe PMC)           #
 # --------------------------------------------------------------------------- #
-def _http_get_json(url: str, timeout: int = 20) -> Optional[dict]:
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+def _get_json(url: str, timeout: int = 20,
+              headers: Optional[Dict[str, str]] = None) -> Tuple[Optional[dict], str]:
+    """GET JSON. Returns (data, state): state is "ok", "not_found" (HTTP 404 or another
+    4xx: the source answered that it has no such record), "rate_limited" (HTTP 429: not
+    checked) or "error" (5xx, network failure, unparseable body: not checked)."""
+    hdrs = {"User-Agent": USER_AGENT, "Accept": "application/json"}
+    hdrs.update(headers or {})
+    req = urllib.request.Request(url, headers=hdrs)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             if resp.status != 200:
-                return None
-            return json.loads(resp.read().decode("utf-8", errors="replace"))
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError,
-            json.JSONDecodeError, ValueError):
-        return None
+                return None, "error"
+            return json.loads(resp.read().decode("utf-8", errors="replace")), "ok"
+    except urllib.error.HTTPError as exc:
+        if exc.code == 429:
+            return None, "rate_limited"
+        return None, ("error" if exc.code >= 500 else "not_found")
+    except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError, ValueError):
+        return None, "error"
+
+
+def _get_json_backoff(url: str, timeout: int, backoff: Tuple[float, ...],
+                      headers: Optional[Dict[str, str]] = None) -> Tuple[Optional[dict], str]:
+    """_get_json, retried after each delay in ``backoff`` while the source answers HTTP 429."""
+    data, state = _get_json(url, timeout=timeout, headers=headers)
+    for delay in backoff:
+        if state != "rate_limited":
+            break
+        time.sleep(delay)
+        data, state = _get_json(url, timeout=timeout, headers=headers)
+    return data, state
 
 
 _TAG_RE = re.compile(r"<[^>]+>")
@@ -204,49 +245,79 @@ def _strip_jats(text: str) -> str:
     return re.sub(r"\s+", " ", _TAG_RE.sub(" ", text)).strip()
 
 
-def _reconstruct_openalex_abstract(inv: Dict[str, List[int]]) -> str:
-    """Rebuild plain text from OpenAlex abstract_inverted_index."""
-    if not inv:
-        return ""
-    positions: List[Tuple[int, str]] = []
-    for word, idxs in inv.items():
-        for i in idxs:
-            positions.append((i, word))
-    positions.sort(key=lambda p: p[0])
-    return " ".join(word for _, word in positions)
+def _clean_doi(doi: str) -> str:
+    return re.sub(r"^(https?://(dx\.)?doi\.org/|doi:)", "", doi.strip(), flags=re.I)
+
+
+def _crossref_abstract(doi: str, timeout: int) -> Tuple[Optional[str], str]:
+    enc = urllib.parse.quote(doi, safe="")
+    cr, state = _get_json_backoff(f"https://api.crossref.org/works/{enc}{_MAILTO_QS}",
+                                  timeout, CROSSREF_BACKOFF)
+    if not cr:
+        return None, state if state != "ok" else "not_found"
+    text = _strip_jats((cr.get("message") or {}).get("abstract") or "")
+    return (text, "abstract") if text else (None, "no_abstract")
+
+
+def _semanticscholar_abstract(doi: str, timeout: int) -> Tuple[Optional[str], str]:
+    url = (f"https://api.semanticscholar.org/graph/v1/paper/DOI:{urllib.parse.quote(doi, safe='/')}"
+           "?fields=abstract")
+    headers = {"x-api-key": S2_API_KEY} if S2_API_KEY else None
+    # The keyless pool is shared by every unauthenticated caller: back off, then retry.
+    data, state = _get_json_backoff(url, timeout, S2_BACKOFF, headers=headers)
+    if not data:
+        return None, state if state != "ok" else "not_found"
+    text = re.sub(r"\s+", " ", data.get("abstract") or "").strip()
+    return (text, "abstract") if text else (None, "no_abstract")
+
+
+def _europepmc_abstract(doi: str, timeout: int) -> Tuple[Optional[str], str]:
+    qs = urllib.parse.urlencode({"query": f'DOI:"{doi}"', "resultType": "core", "format": "json",
+                                 "pageSize": 5})
+    data, state = _get_json_backoff(f"https://www.ebi.ac.uk/europepmc/webservices/rest/search?{qs}",
+                                    timeout, CROSSREF_BACKOFF)
+    if data is None:
+        return None, state if state != "not_found" else "error"
+    hits = [r for r in (data.get("resultList") or {}).get("result", []) or []
+            if (r.get("doi") or "").lower() == doi.lower()]
+    if not hits:
+        return None, "not_found"
+    for r in hits:
+        text = _strip_jats(r.get("abstractText") or "")
+        if text:
+            return text, "abstract"
+    return None, "no_abstract"
+
+
+ABSTRACT_SOURCES = (
+    ("crossref", _crossref_abstract),
+    ("semanticscholar", _semanticscholar_abstract),
+    ("europepmc", _europepmc_abstract),
+)
+
+
+def fetch_abstract_detailed(doi: str, timeout: int = 20) -> Tuple[Optional[str], str, Dict[str, str]]:
+    """Return (abstract_or_None, source, status per source asked).
+
+    Sources are tried in order (Crossref, Semantic Scholar, Europe PMC) until one returns an
+    abstract. Status values: abstract, no_abstract, not_found, rate_limited, error.
+    """
+    doi_clean = _clean_doi(doi)
+    status: Dict[str, str] = {}
+    if not doi_clean:
+        return None, "", status
+    for name, fetch in ABSTRACT_SOURCES:
+        text, state = fetch(doi_clean, timeout)
+        status[name] = state
+        if text:
+            return text, name, status
+    return None, "", status
 
 
 def fetch_abstract(doi: str, timeout: int = 20) -> Tuple[Optional[str], str]:
-    """Return (abstract_text_or_None, source). Crossref first, then OpenAlex."""
-    doi_clean = doi.strip()
-    doi_clean = re.sub(r"^(https?://(dx\.)?doi\.org/|doi:)", "", doi_clean, flags=re.I)
-    enc = urllib.parse.quote(doi_clean, safe="")
-
-    # 1) Crossref
-    cr = _http_get_json(
-        f"https://api.crossref.org/works/{enc}{_MAILTO_QS}",
-        timeout=timeout,
-    )
-    if cr:
-        abstract = (cr.get("message") or {}).get("abstract")
-        if abstract:
-            text = _strip_jats(abstract)
-            if text:
-                return text, "crossref"
-
-    # 2) OpenAlex (reconstruct from inverted index)
-    oa = _http_get_json(
-        f"https://api.openalex.org/works/doi:{enc}{_MAILTO_QS}",
-        timeout=timeout,
-    )
-    if oa:
-        inv = oa.get("abstract_inverted_index")
-        if inv:
-            text = _reconstruct_openalex_abstract(inv)
-            if text:
-                return text, "openalex"
-
-    return None, ""
+    """Return (abstract_text_or_None, source). Crossref, then Semantic Scholar, then Europe PMC."""
+    text, source, _status = fetch_abstract_detailed(doi, timeout=timeout)
+    return text, source
 
 
 # --------------------------------------------------------------------------- #
@@ -647,23 +718,27 @@ def score_pair(
     abstract_override: Optional[str] = None, timeout: int = 20,
 ) -> FaithfulnessResult:
     """Score one (claim, DOI) pair. ``abstract_override`` skips network (tests)."""
+    sources_status: Dict[str, str] = {}
     if abstract_override is not None:
         abstract, source = abstract_override, "override"
     else:
-        abstract, source = fetch_abstract(doi, timeout=timeout)
+        abstract, source, sources_status = fetch_abstract_detailed(doi, timeout=timeout)
 
     if not abstract:
+        unchecked = [n for n, st in sources_status.items() if st in ("rate_limited", "error")]
+        caveat = (f" Not checked: {', '.join(unchecked)} (rate-limited or unreachable), so an "
+                  "abstract may still exist — retry later." if unchecked else "")
         return FaithfulnessResult(
             claim=claim, doi=doi, verdict="unsupported",
             taxonomy=TAXONOMY_MAP["unsupported"], confidence=0.0,
             tier=tier, abstract_found=False, source=source,
             evidence_scope="none", method="none",
             rationale=(
-                "No abstract available from Crossref or OpenAlex for this DOI. "
-                "Cannot assess faithfulness — treat as UNVERIFIABLE_ACCESS and "
-                "fall back to full-text / WebSearch verification."
+                "No abstract available from Crossref, Semantic Scholar or Europe PMC for "
+                "this DOI." + caveat + " Cannot assess faithfulness — treat as "
+                "UNVERIFIABLE_ACCESS and fall back to full-text / WebSearch verification."
             ),
-            signals={},
+            signals={"abstract_sources": sources_status} if sources_status else {},
         )
 
     if tier == "llm":
@@ -673,6 +748,8 @@ def score_pair(
 
     result.doi = doi
     result.source = source
+    if sources_status:
+        result.signals["abstract_sources"] = sources_status
     return result
 
 

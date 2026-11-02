@@ -1,14 +1,14 @@
 ---
 name: alterlab-citation-verifier
-description: "Verifies that every bibliography entry actually exists by cross-checking Crossref, OpenAlex, Semantic Scholar, and arXiv (no API key required) plus doi.org DOI registration, fuzzy-matching title and authors (difflib ratio >= 0.70), flagging retractions recorded by Crossref (including Retraction Watch data) or OpenAlex, and emitting per-entry JSON verdicts in the AlterLab citation-hallucination taxonomy (TF/PAC/IH/PH/SH); a companion script scores whether a cited abstract supports a claim (SH). Accepts BibTeX, DOI/arXiv lists, or pasted references, and reports unverified instead of passing anything it could not check. Use when the request mentions verify citations, check references, fabricated or hallucinated references, fake DOI, retraction check, bibliography audit, reference existence check, or whether a source supports a claim. For drafting a manuscript prefer alterlab-paper-writer; for dead hyperlinks prefer alterlab-link-health. Part of the AlterLab Academic Skills suite."
+description: "Verifies that every bibliography entry actually exists by cross-checking Crossref, Semantic Scholar, and arXiv (no API key required) plus doi.org DOI registration, fuzzy-matching title and authors (difflib ratio >= 0.70), flagging retractions recorded by Crossref (including Retraction Watch data), and emitting per-entry JSON verdicts in the AlterLab citation-hallucination taxonomy (TF/PAC/IH/PH/SH); a companion script scores whether a cited abstract supports a claim (SH). Accepts BibTeX, DOI/arXiv lists, or pasted references, and reports unverified instead of passing anything it could not check. Use when the request mentions verify citations, check references, fabricated or hallucinated references, fake DOI, retraction check, bibliography audit, reference existence check, or whether a source supports a claim. For drafting a manuscript prefer alterlab-paper-writer; for dead hyperlinks prefer alterlab-link-health. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash WebSearch WebFetch
-compatibility: "No API key required — stdlib Python (`requests` optional) via `uv run python` against Crossref, OpenAlex, Semantic Scholar, arXiv, and the doi.org Handle API; optional OPENALEX_API_KEY / S2_API_KEY only raise rate limits; offline runs return 'unverified' verdicts"
+compatibility: "No API key required — stdlib Python (`requests` optional) via `uv run python` against Crossref, Semantic Scholar, arXiv, the doi.org Handle API and (abstracts) Europe PMC; optional S2_API_KEY only raises Semantic Scholar's rate limit; offline runs return 'unverified' verdicts"
 metadata:
   skill-author: AlterLab
-  version: "1.2.2"
-  last_updated: "2026-10-22"
-  credentials: "optional: OPENALEX_API_KEY (free key; gives OpenAlex searches their own daily budget instead of the small per-IP keyless one), S2_API_KEY or SEMANTIC_SCHOLAR_API_KEY (dedicated 1 request/s instead of the shared keyless Semantic Scholar pool)"
+  version: "1.2.3"
+  last_updated: "2026-11-02"
+  credentials: "optional: S2_API_KEY or SEMANTIC_SCHOLAR_API_KEY (dedicated 1 request/s instead of the shared keyless Semantic Scholar pool)"
   depends_on: "alterlab-research-pipeline (shares the integrity taxonomy), alterlab-deep-research"
 ---
 
@@ -92,26 +92,25 @@ For each bibliography entry the script:
 5. **Flags retractions** on the matched work: Crossref `updated-by` / `update-to`
    notices of type retraction, withdrawal, or removal (from the publisher or, with
    `source: retraction-watch`, the Retraction Watch database that Crossref serves in
-   its REST API since 2025) and OpenAlex `is_retracted`. Expressions of concern get
-   a separate flag.
+   its REST API since 2025). Expressions of concern get a separate flag.
 6. **Emits a verdict** per entry mapped to the taxonomy below, with a
    `source_status` map showing which sources answered, plus a repo-level
    `summary.verdict` (PASS / PASS_WITH_CONDITIONS / FAIL / UNVERIFIED).
 
-### Sources (no key required; current as of 2026-09)
+### Sources (no key required; checked 2026-11-02)
 
 | Source | Endpoint | Used for | Access notes |
 |--------|----------|----------|--------------|
-| Crossref | `api.crossref.org/works` | DOI resolution, bibliographic search, retraction notices | `mailto` routes to the polite pool (10 req/s, 3 concurrent) |
-| OpenAlex | `api.openalex.org/works` | DOI lookup + title search, `is_retracted` | `mailto` is ignored since Feb 2026. DOI lookups are free; searches draw on a daily budget shared per IP without a key (a free key gives 10× — set `OPENALEX_API_KEY`) |
-| Semantic Scholar | `api.semanticscholar.org/graph/v1` | DOI/arXiv resolution, title search | Keyless pool is shared and often returns 429; `S2_API_KEY` gives a dedicated 1 req/s |
+| Crossref | `api.crossref.org/works` | DOI resolution, bibliographic search, retraction notices | Public pool: 5 req/s, one request in flight (the script spaces calls and backs off on 429); an opt-in `--mailto` routes to the polite pool (10 req/s) |
+| Semantic Scholar | `api.semanticscholar.org/graph/v1` | DOI/arXiv resolution, title search | Keyless pool is shared and often returns 429: the script backs off 2 + 4 + 8 s, then records it as *not checked* and pauses it for 30 s. `S2_API_KEY` gives a dedicated 1 req/s |
 | arXiv | `export.arxiv.org/api/query` | arXiv ID resolution, preprint title search | ≥ 3 s between calls (the script throttles) |
 | doi.org Handle API | `doi.org/api/handles/<doi>` | Is the DOI registered with *any* agency (Crossref, DataCite, mEDRA…)? | Authoritative for DOI existence |
 
 Keys are optional, read from the environment, sent as headers, and never written
 to the report (the report only records whether one was present). A source that
 errors (rate limit, 5xx) is recorded in `source_status` and is never counted as
-evidence that a work does not exist.
+evidence that a work does not exist. OpenAlex is no longer queried: since 2026 its
+keyless searches draw on a small per-IP daily budget, so dependable use needed an account.
 
 This skill answers **"does the cited work exist, and does its identifier point
 to it?"** From API metadata alone it cannot establish Semantic Hallucination
@@ -131,7 +130,7 @@ SERIOUS / MEDIUM / MINOR scale used in the Integrity Report schema.
 | Code | Name | Severity | Script trigger |
 |------|------|----------|----------------|
 | `verified` | — (exists, matches) | NONE | Title ratio >= threshold AND author overlap OK AND year consistent in >=1 authoritative source |
-| `TF` | Total Fabrication | **SERIOUS** | Cited DOI is not registered at doi.org, or cited arXiv ID does not exist on arXiv, and no close title match exists; OR (no identifier) no record matches title + authors while Crossref and OpenAlex or Semantic Scholar answered |
+| `TF` | Total Fabrication | **SERIOUS** | Cited DOI is not registered at doi.org, or cited arXiv ID does not exist on arXiv, and no close title match exists; OR (no identifier) no record matches title + authors while both Crossref and Semantic Scholar answered (a rate-limited Semantic Scholar leaves the entry `unverified`) |
 | `PAC` | Partial Attribute Corruption | MEDIUM | Entry found but >=1 metadata field disagrees (year, author overlap < 50%, a cited identifier that does not resolve to it, or a garbled title whose closest record shares the authors — possible mashup) |
 | `IH` | Identifier Hijacking | **SERIOUS** | Cited DOI/arXiv ID **resolved** (method=id) but the resolved record's title is unrelated (ratio < threshold) |
 | `PH` | Placeholder Hallucination | **SERIOUS** | Unresolved template/placeholder (`[CITATION NEEDED]`, `\cite{}`, `et al., YYYY`, `TODO`, `forthcoming`, `in press`) — caught pre-network |
@@ -139,7 +138,7 @@ SERIOUS / MEDIUM / MINOR scale used in the Integrity Report schema.
 | `unverified` | — (could not check) | MEDIUM | Offline, the sources needed for a decision errored, or a registered DOI that no index returned. **Never treated as passing.** |
 
 A `RETRACTED` flag is attached (and severity bumped to SERIOUS) whenever Crossref
-or OpenAlex marks the *matched* work as retracted, independent of the existence
+(publisher notice or Retraction Watch) marks the *matched* work as retracted, independent of the existence
 verdict; an unrelated closest hit never lends its flag to the cited entry.
 
 `TF` is a serious accusation, so the script only asserts it on authoritative
@@ -185,9 +184,8 @@ uv run python scripts/verify_citations.py \
 - `--threshold` tunes the fuzzy title-match ratio (0..1; default 0.70).
 - `--offline` skips the network and emits `unverified` verdicts deliberately.
 - Omit `--out` to print the JSON report to stdout.
-- Optional: `export OPENALEX_API_KEY=…` (free key from openalex.org/settings/api)
-  and/or `S2_API_KEY=…` before large bibliographies — keyless OpenAlex searches
-  share a small per-IP daily budget, and the keyless Semantic Scholar pool is busy.
+- Optional: `export S2_API_KEY=…` before large bibliographies — the keyless
+  Semantic Scholar pool is shared and busy. Never needed for a verdict.
 - Exit codes: 0 complete, 2 bad input / nothing parseable, 3 partial (the report is
   still written).
 
@@ -208,9 +206,9 @@ Check `status` first: if it is `partial`, list `input_accounting.rejected_entrie
    at doi.org").
 4. Any `RETRACTED` / `EXPRESSION_OF_CONCERN` flags, prominently.
 5. For `unverified` entries: say which sources failed (`source_status`), relay the
-   `manual_instructions` and any `summary.notes` (for example, an OpenAlex HTTP 429
-   means the keyless per-IP budget is spent — a free `OPENALEX_API_KEY` fixes it),
-   and run the fallback below.
+   `manual_instructions` and any `summary.notes` (for example, a Semantic Scholar
+   HTTP 429 means its shared keyless pool was busy: that source was not checked,
+   which is not "not found"; re-run later), and run the fallback below.
 
 ### 4. Route fixes
 
@@ -236,7 +234,7 @@ Failures are never swallowed into a pass:
   nothing SERIOUS was found.
 
 For each `unverified` entry, re-run with connectivity or a key if possible;
-otherwise look it up with the plugin's `crossref` / `openalex` MCP tools when they
+otherwise look it up with the plugin's keyless `crossref` MCP tools when they
 are available (setup: `mcp_setup.md` in the alterlab-core plugin's `references/` folder), then fall back to WebSearch with
 three distinct queries (exact title in quotes; title + first author; first author +
 venue + year) and, for a DOI, open `https://doi.org/<DOI>`. If a record is found, report the verdict it supports
@@ -251,8 +249,10 @@ precisely because it was parked in that gray zone and never searched.
 
 Existence is half of the gate; a real paper cited for something it never said
 (the "Frankenstein" pattern) passes every existence check. For (claim, DOI) pairs,
-`claim_faithfulness.py` fetches the cited abstract (Crossref, then OpenAlex) and
-returns `support` / `contradict` / `unsupported`:
+`claim_faithfulness.py` fetches the cited abstract (Crossref, falling back to Semantic
+Scholar, then Europe PMC; `signals.abstract_sources` says what each answered, and a
+rate-limited source is reported as not checked) and returns `support` / `contradict` /
+`unsupported`:
 
 ```bash
 uv run python scripts/claim_faithfulness.py \
@@ -285,7 +285,7 @@ uv run python .../claim_faithfulness.py --input pairs.json --tier llm --json
 ```json
 {
   "tool": "alterlab-citation-verifier/verify_citations.py",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "status": "complete",
   "warning": null,
   "summary": {
@@ -297,13 +297,13 @@ uv run python .../claim_faithfulness.py --input pairs.json --tier llm --json
     "citation_integrity_score": 0.5,
     "fabrication_risk_score": 0.5,
     "retracted": 0,
-    "source_errors": {"openalex": 1},
-    "notes": ["OpenAlex rate limit: the keyless daily budget shared by this IP is spent ..."]
+    "source_errors": {"semanticscholar": 1},
+    "notes": ["Semantic Scholar rate limit: not checked (which is not 'not found'); the keyless pool is shared ..."]
   },
   "entries": [
     {"ref_id": "walters2023", "verdict": "verified", "severity": "NONE",
      "title_ratio": 1.0, "author_overlap": 1.0, "matches": [{"source": "crossref"}],
-     "source_status": {"crossref": "record", "openalex": "record", "semanticscholar": "record", "arxiv": "no_record"}},
+     "source_status": {"crossref": "record", "semanticscholar": "error: HTTP 429 — Semantic Scholar rate limit: not checked ...", "arxiv": "no_record"}},
     {"ref_id": "ghostpaper2021", "verdict": "TF", "severity": "SERIOUS",
      "detail": "DOI 10.xxxx/... is not registered with any DOI agency (doi.org Handle API)..."}
   ]

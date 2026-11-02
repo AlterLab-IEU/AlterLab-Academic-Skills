@@ -16,10 +16,10 @@ distortion lives in the gap between the claim and the source.
 `alterlab-citation-verifier` is built around that gap. It runs **two** deterministic checks
 and keeps their verdicts separate:
 
-1. `scripts/verify_citations.py` — *does this work exist?* (Crossref / OpenAlex / Semantic
-   Scholar / arXiv resolution, title+author similarity >= 0.70 via difflib `SequenceMatcher`,
+1. `scripts/verify_citations.py` — *does this work exist?* (Crossref / Semantic Scholar /
+   arXiv resolution, title+author similarity >= 0.70 via difflib `SequenceMatcher`,
    DOI/arXiv-ID resolution, retraction flag from Crossref `updated-by` / `update-to` —
-   including Retraction Watch data — and OpenAlex `is_retracted`).
+   including Retraction Watch data).
 2. `scripts/claim_faithfulness.py` — *does this work support the claim?* (compares the user's
    sentence against the cited work's retrieved abstract and returns `support` /
    `contradict` / `unsupported`; `contradict` maps to SH).
@@ -54,11 +54,11 @@ $ echo "Mueller, P. A., & Oppenheimer, D. M. (2014). The pen is mightier than th
 
 # Summary of the JSON entry:
   verdict:        verified   (severity NONE)
-  detail:         Matched in crossref, openalex, semanticscholar.
-  source_status:  crossref=record  openalex=record  semanticscholar=record  arxiv=no_record
+  detail:         Matched in crossref, semanticscholar.
+  source_status:  crossref=record  semanticscholar=record  arxiv=no_record
   title_ratio:    1.0   (Crossref stores the subtitle separately; the script rejoins it)
   author_overlap: 1.0   (Mueller, Oppenheimer)
-  retracted:      false (no retraction notice in Crossref updated-by / OpenAlex is_retracted)
+  retracted:      false (no retraction notice in Crossref updated-by / update-to)
 ```
 
 So far, **everything is green.** The paper is real, the DOI resolves, the metadata matches,
@@ -154,7 +154,7 @@ Do NOT cite Mueller & Oppenheimer (2014) for this sentence. Either:
       actually reports it — this paper is not it.
 
 ## Audit trail
-- verify_citations.py: verified in Crossref/OpenAlex/Semantic Scholar; title ratio 1.00; no retraction flag.
+- verify_citations.py: verified in Crossref/Semantic Scholar; title ratio 1.00; no retraction flag.
 - claim_faithfulness.py: heuristic tier abstained (unsupported, 0% overlap); llm tier returned contradict —
   intervention mismatch, effect-direction contradiction, "31%" absent from the abstract (abstract_only: true).
 ```
@@ -170,7 +170,8 @@ real paper to a claim that paper never made. Separating the two verdicts is the 
 
 ### 2. The SH verdict is grounded in the retrieved abstract, not in memory
 The verifier never relies on the model "knowing" what Mueller & Oppenheimer found. It
-resolves the DOI, fetches the cited work's abstract (Crossref/OpenAlex), and compares that
+resolves the DOI, fetches the cited work's abstract (Crossref, falling back to Semantic
+Scholar, then Europe PMC), and compares that
 retrieved text against the claim. Same-source hallucination (the verifier and the writer
 sharing training data) cannot launder a false claim through, because the comparison is
 against the retrieved abstract, not recall. (The abstract is the ceiling of what the tool
