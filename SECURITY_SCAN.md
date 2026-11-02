@@ -2,7 +2,7 @@
 
 > **Generated** — do not edit by hand. Regenerate with `python3 scripts/gen_security_scan.py`; CI fails if this file is stale (`--check`) or if the attestation is violated (`--strict`).
 
-This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **279 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
+This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **276 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
 
 ## Attestation
 
@@ -26,7 +26,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | Domain | Category | Refs |
 |--------|----------|------|
 | `alphavantage.co` | other (review) | 2 |
-| `arxiv.org` | Preprints / literature | 15 |
+| `arxiv.org` | Preprints / literature | 14 |
 | `bindingdb.org` | Binding affinities | 3 |
 | `biorxiv.org` | Preprints / literature | 5 |
 | `brenda-enzymes.org` | Enzymes | 5 |
@@ -38,16 +38,16 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `civicdb.org` | other (review) | 2 |
 | `clinicaltrials.gov` | Clinical trials | 2 |
 | `clinpgx.org` | Pharmacogenomics | 3 |
-| `crossref.org` | Scholarly metadata | 11 |
+| `crossref.org` | Scholarly metadata | 9 |
 | `datacommons.org` | Open data | 12 |
 | `depmap.org` | Cancer dependency | 1 |
 | `dergipark.org.tr` | Turkish journals (DergiPark) | 7 |
 | `doaj.org` | Open-access journals | 2 |
 | `docking.org` | Compound libraries | 4 |
-| `doi.org` | DOI resolver | 36 |
+| `doi.org` | DOI resolver | 27 |
 | `drugbank.ca` | Drugs | 1 |
 | `dsmz.de` | other (review) | 4 |
-| `ebi.ac.uk` | EMBL-EBI | 16 |
+| `ebi.ac.uk` | EMBL-EBI | 17 |
 | `elixir.no` | Bioinformatics infra | 3 |
 | `ensembl.org` | Genomics | 3 |
 | `europepmc.org` | Literature (Europe PMC) | 1 |
@@ -73,9 +73,8 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `nf-co.re` | nf-core pipelines | 1 |
 | `nih.gov` | NCBI / NIH | 21 |
 | `oncokb.org` | other (review) | 1 |
-| `openalex.org` | Scholarly index | 25 |
 | `openarchives.org` | OAI-PMH | 2 |
-| `opencitations.net` | Open citation index | 2 |
+| `opencitations.net` | Open citation index | 1 |
 | `openrouter.ai` | LLM backend (user key) | 17 |
 | `openstreetmap.org` | other (review) | 1 |
 | `opentargets.org` | Target–disease | 1 |
@@ -88,7 +87,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `sanger.ac.uk` | Wellcome Sanger | 7 |
 | `scientific-writer.local` | Local (non-network) | 1 |
 | `sec.gov` | other (review) | 2 |
-| `semanticscholar.org` | Scholarly index | 4 |
+| `semanticscholar.org` | Scholarly index | 6 |
 | `stlouisfed.org` | FRED economics | 14 |
 | `store` | Placeholder (commented docs) | 1 |
 | `string-db.org` | Protein interactions | 5 |
@@ -104,7 +103,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `yahoo.com` | other (review) | 1 |
 | `yok.gov.tr` | YÖK | 3 |
 
-_78 distinct domains._
+_77 distinct domains._
 
 ## Method
 

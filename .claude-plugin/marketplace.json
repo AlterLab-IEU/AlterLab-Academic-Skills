@@ -1,13 +1,13 @@
 {
   "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
   "name": "alterlab-academic-skills",
-  "description": "242 Claude skills for academic research, organized by domain",
+  "description": "241 Claude skills for academic research, organized by domain",
   "version": "4.0.0",
   "owner": {
     "name": "AlterLab @ Izmir University of Economics"
   },
   "metadata": {
-    "description": "242 Claude skills for academic research, organized by domain",
+    "description": "241 Claude skills for academic research, organized by domain",
     "version": "4.0.0"
   },
   "plugins": [
@@ -211,35 +211,7 @@
         "./alterlab-research-pipeline/agents/pipeline_orchestrator_agent.md",
         "./alterlab-research-pipeline/agents/state_tracker_agent.md"
       ],
-      "mcpServers": "./.mcp.json",
-      "userConfig": {
-        "openalex_api_key": {
-          "type": "string",
-          "title": "OpenAlex API key (recommended)",
-          "description": "Free key from https://openalex.org/settings/api. OpenAlex meters usage per day (since February 2026); keyless requests share a small per-IP budget and fail with HTTP 429 once it is spent.",
-          "sensitive": true,
-          "default": ""
-        },
-        "zotero_api_key": {
-          "type": "string",
-          "title": "Zotero API key (optional)",
-          "description": "Read access key from https://www.zotero.org/settings/keys",
-          "sensitive": true,
-          "default": ""
-        },
-        "zotero_library_id": {
-          "type": "string",
-          "title": "Zotero library ID (optional)",
-          "description": "Numeric user or group library ID, shown at https://www.zotero.org/settings/keys",
-          "default": ""
-        },
-        "zotero_library_type": {
-          "type": "string",
-          "title": "Zotero library type",
-          "description": "Either 'user' (personal library) or 'group'.",
-          "default": "user"
-        }
-      }
+      "mcpServers": "./.mcp.json"
     },
     {
       "name": "alterlab-data-science",
@@ -289,7 +261,7 @@
     {
       "name": "alterlab-databases",
       "source": "./skills/databases",
-      "description": "Connectors to scientific databases (PubMed, ChEMBL, UniProt, GEO, and more) (39 skills)",
+      "description": "Connectors to scientific databases (PubMed, ChEMBL, UniProt, GEO, and more) (38 skills)",
       "version": "4.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
@@ -337,7 +309,6 @@
         "./alterlab-kegg",
         "./alterlab-metabolomics-wb",
         "./alterlab-monarch",
-        "./alterlab-openalex",
         "./alterlab-opentargets",
         "./alterlab-pdb",
         "./alterlab-pubchem",
@@ -348,35 +319,7 @@
         "./alterlab-uspto",
         "./alterlab-zinc-db"
       ],
-      "mcpServers": "./.mcp.json",
-      "userConfig": {
-        "openalex_api_key": {
-          "type": "string",
-          "title": "OpenAlex API key (recommended)",
-          "description": "Free key from https://openalex.org/settings/api. OpenAlex meters usage per day (since February 2026); keyless requests share a small per-IP budget and fail with HTTP 429 once it is spent.",
-          "sensitive": true,
-          "default": ""
-        },
-        "zotero_api_key": {
-          "type": "string",
-          "title": "Zotero API key (optional)",
-          "description": "Read access key from https://www.zotero.org/settings/keys",
-          "sensitive": true,
-          "default": ""
-        },
-        "zotero_library_id": {
-          "type": "string",
-          "title": "Zotero library ID (optional)",
-          "description": "Numeric user or group library ID, shown at https://www.zotero.org/settings/keys",
-          "default": ""
-        },
-        "zotero_library_type": {
-          "type": "string",
-          "title": "Zotero library type",
-          "description": "Either 'user' (personal library) or 'group'.",
-          "default": "user"
-        }
-      }
+      "mcpServers": "./.mcp.json"
     },
     {
       "name": "alterlab-document-tools",

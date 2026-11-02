@@ -2,14 +2,14 @@
   "summary": {
     "version": "4.0.0",
     "generated_at": "2026-11-02",
-    "total": 242,
+    "total": 241,
     "per_domain": {
       "bioinformatics": 38,
       "cheminformatics": 12,
       "clinical-research": 7,
       "core": 10,
       "data-science": 22,
-      "databases": 39,
+      "databases": 38,
       "document-tools": 3,
       "domain-specific": 18,
       "faculty-life": 6,
@@ -24,9 +24,9 @@
       "writing-tools": 14
     },
     "eval_coverage": {
-      "with_evals": 242,
+      "with_evals": 241,
       "without_evals": 0,
-      "total": 242,
+      "total": 241,
       "fraction": 1.0
     }
   },
@@ -438,7 +438,7 @@
       "domain": "bioinformatics",
       "description": "Extract and preprocess tiles from whole-slide images (WSI) with histolab — OpenSlide-backed slide loading, tissue detection and masks, Random/Grid/Score tile extraction, and image/morphological filters for H&E preprocessing. Use when the user needs lightweight WSI slide preprocessing — building tile datasets for ML training, tissue segmentation, or quick tile-based inspection of histopathology slides. For end-to-end computational-pathology, deep-learning model training, nucleus segmentation, or multiplexed/spatial-proteomics (CODEX, Vectra) pipelines prefer alterlab-pathml instead. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "compatibility": "Runs under `uv run python` with histolab 0.7.0 (still the latest release, Feb 2024) in a **dedicated environment**: it requires Python >= 3.8, < 3.12 and pins numpy <= 1.24.4, scipy < 1.10.1, scikit-image < 0.19.4 and openslide-python 1.3.1 — it will not co-install with a modern numpy 2.x / Python 3.12+ stack. The OpenSlide C library must also be present (`uv pip install openslide-bin`, or `brew install openslide` / `apt install libopenslide0`). No API key or account required.",
       "allowed_tools": [
         "Read",
@@ -449,7 +449,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 165,
+      "body_lines": 166,
       "references": [
         "best_practices.md",
         "filters_preprocessing.md",
@@ -923,7 +923,7 @@
       "domain": "bioinformatics",
       "description": "Store and query genomic variant data at scale with TileDB-VCF — ingest VCF/BCF into compressed TileDB arrays, add samples incrementally, run fast parallel region/sample queries, and export back to VCF. Use when managing population-genomics variant datasets that are too large for flat VCF, building joint variant stores, or querying thousands of samples by region. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "compatibility": "No API key required: local TileDB-VCF stores — ingest, incremental sample addition, region/sample queries, and export back to VCF — work fully offline. tiledbvcf-py ships from the `tiledb` conda channel (not PyPI/conda-forge/bioconda); release 0.40.3 (2026-04) for linux-64, osx-64, osx-arm64 on Python 3.9-3.12 (no 3.13, no Windows, no linux-aarch64). Distributed TileDB Cloud ingest/query is an optional extra that uses a TileDB Cloud account and TILEDB_REST_TOKEN.",
       "allowed_tools": [
         "Read",
@@ -934,7 +934,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 337,
+      "body_lines": 338,
       "references": []
     },
     {
@@ -1107,7 +1107,7 @@
       "domain": "cheminformatics",
       "description": "Queries the Precision Medicine Knowledge Graph (PrimeKG) for multiscale biomedical relationships across genes, drugs, diseases, phenotypes, pathways, and biological processes. Use when exploring drug-disease or gene-disease links, building disease-centric knowledge subgraphs, or sourcing relations for drug repurposing and precision-medicine analyses; also points to OptimusKG, the maintainers' successor graph, for new work. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "compatibility": "Runs under `uv run python` with pandas installed and the PrimeKG `kg.csv` available locally (set `PRIMEKG_DATA_PATH`); no API key or account required.",
       "allowed_tools": [
         "Read",
@@ -1118,7 +1118,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 141,
+      "body_lines": 142,
       "references": []
     },
     {
@@ -1421,10 +1421,10 @@
     {
       "name": "alterlab-citation-verifier",
       "domain": "core",
-      "description": "Verifies that every bibliography entry actually exists by cross-checking Crossref, OpenAlex, Semantic Scholar, and arXiv (no API key required) plus doi.org DOI registration, fuzzy-matching title and authors (difflib ratio >= 0.70), flagging retractions recorded by Crossref (including Retraction Watch data) or OpenAlex, and emitting per-entry JSON verdicts in the AlterLab citation-hallucination taxonomy (TF/PAC/IH/PH/SH); a companion script scores whether a cited abstract supports a claim (SH). Accepts BibTeX, DOI/arXiv lists, or pasted references, and reports unverified instead of passing anything it could not check. Use when the request mentions verify citations, check references, fabricated or hallucinated references, fake DOI, retraction check, bibliography audit, reference existence check, or whether a source supports a claim. For drafting a manuscript prefer alterlab-paper-writer; for dead hyperlinks prefer alterlab-link-health. Part of the AlterLab Academic Skills suite.",
+      "description": "Verifies that every bibliography entry actually exists by cross-checking Crossref, Semantic Scholar, and arXiv (no API key required) plus doi.org DOI registration, fuzzy-matching title and authors (difflib ratio >= 0.70), flagging retractions recorded by Crossref (including Retraction Watch data), and emitting per-entry JSON verdicts in the AlterLab citation-hallucination taxonomy (TF/PAC/IH/PH/SH); a companion script scores whether a cited abstract supports a claim (SH). Accepts BibTeX, DOI/arXiv lists, or pasted references, and reports unverified instead of passing anything it could not check. Use when the request mentions verify citations, check references, fabricated or hallucinated references, fake DOI, retraction check, bibliography audit, reference existence check, or whether a source supports a claim. For drafting a manuscript prefer alterlab-paper-writer; for dead hyperlinks prefer alterlab-link-health. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.2.2",
-      "compatibility": "No API key required — stdlib Python (`requests` optional) via `uv run python` against Crossref, OpenAlex, Semantic Scholar, arXiv, and the doi.org Handle API; optional OPENALEX_API_KEY / S2_API_KEY only raise rate limits; offline runs return 'unverified' verdicts",
+      "version": "1.2.3",
+      "compatibility": "No API key required — stdlib Python (`requests` optional) via `uv run python` against Crossref, Semantic Scholar, arXiv, the doi.org Handle API and (abstracts) Europe PMC; optional S2_API_KEY only raises Semantic Scholar's rate limit; offline runs return 'unverified' verdicts",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1444,7 +1444,7 @@
       "domain": "core",
       "description": "Runs a 13-agent deep research pipeline for rigorous academic work on any topic across 7 modes (full research, quick brief, paper review, lit-review, fact-check, Socratic guided research dialogue, and systematic review with optional meta-analysis), covering research-question formulation, Socratic mentoring, methodology design, systematic literature search, source verification, cross-source synthesis, risk-of-bias assessment, meta-analysis, APA 7.0 report compilation, editorial and devil's-advocate review, ethics review, and post-research literature monitoring. Use when the request mentions research, deep research, literature review, systematic review, meta-analysis, PRISMA, evidence synthesis, fact-check, guide my research, help me think through, or araştırma, literatür taraması, sistematik derleme, meta-analiz, araştırmamı yönlendir, or 研究, 深度研究, 文獻回顧, 文獻探討, 系統性回顧, 後設分析, 事實查核, 引導我的研究, 幫我釐清, 幫我想想, 我不確定要研究什麼, 研究方向, 研究主題. Part of the AlterLab Academic Skills suite.",
       "license": "CC-BY-NC-4.0",
-      "version": "2.4.2",
+      "version": "2.4.3",
       "compatibility": "Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -1480,7 +1480,7 @@
       "domain": "core",
       "description": "Audits and repairs Markdown link health across a skills repo via a four-tier pipeline (config hardening, intra-repo file-ref fixes, external URL substitutions, residual exclusions) and enforces a Tier 3 substitution guardrail that prevents regressions of previously-passing links; designed for lychee-based GitHub Actions link checkers but generalizes to markdown-link-check and similar tools. Use when the request mentions link audit, dead links, link health, lychee, broken links, link checker, markdown link audit, link-health audit, 404 audit, check-links failing, CI link-check, or 連結健檢, 死鏈, 失效連結, 斷鏈檢查. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "compatibility": "No API key required. Targets lychee-based GitHub Actions link checkers (generalizes to markdown-link-check); lychee also runs locally with no token or account",
       "allowed_tools": [
         "Read",
@@ -1532,7 +1532,7 @@
       "domain": "core",
       "description": "Drafts and revises academic papers through a 12-agent pipeline with hardened LaTeX output (apa7 class, PDF compiled from LaTeX), supporting IMRaD, literature review, theoretical, case study, policy brief, and conference paper structures, APA 7.0 (default), Chicago, MLA, IEEE, and Vancouver citation formats, bilingual abstracts (English plus the author's language, e.g. Turkish or Traditional Chinese), and multi-format output (LaTeX, DOCX, PDF, Markdown). Use when the request mentions write paper, academic paper, paper outline, write abstract, revise paper, check citations, convert to LaTeX, guide my paper, parse reviews, revision roadmap, or makale yaz, akademik makale, özet yaz, makaleyi revize et, hakem yorumları, or 寫論文, 學術論文, 論文大綱, 寫摘要, 修改論文, 檢查引用, 引導我寫論文, 審查意見, 修訂路線圖. Its citation-check mode formats and inserts citations while drafting; for a standalone anti-hallucination check that cited references actually exist prefer alterlab-citation-verifier instead. Part of the AlterLab Academic Skills suite.",
       "license": "CC-BY-NC-4.0",
-      "version": "2.6.2",
+      "version": "2.6.3",
       "compatibility": "Uses built-in Claude tools only; optional LaTeX toolchain (apa7 document class) required for PDF compilation; no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -1567,7 +1567,7 @@
       "domain": "core",
       "description": "Orchestrates the full academic research pipeline (research, write, integrity check, review, revise, re-review, re-revise, final integrity check, finalize), coordinating alterlab-deep-research, alterlab-paper-writer, and alterlab-paper-reviewer into a seamless 10-stage workflow with mandatory integrity verification, two-stage peer review, and reproducible quality gates. Use when the request mentions academic pipeline, research to paper, full paper workflow, paper pipeline, end-to-end paper, research-to-publication, or complete paper workflow. Part of the AlterLab Academic Skills suite.",
       "license": "CC-BY-NC-4.0",
-      "version": "2.7.1",
+      "version": "2.7.2",
       "compatibility": "Orchestrates alterlab-deep-research, alterlab-paper-writer, and alterlab-paper-reviewer; uses built-in Claude tools only; no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -1738,7 +1738,7 @@
       "domain": "data-science",
       "description": "Creates, analyzes, and visualizes complex networks and graphs in Python with NetworkX. Use when working with network/graph data structures, analyzing relationships between entities, computing graph algorithms (shortest paths, centrality, clustering), detecting communities, generating synthetic networks, or visualizing topologies — applicable to social, biological, transportation, citation, and any pairwise-relationship networks. This is classical graph analytics, not deep learning — for training graph neural networks (GCN/message passing, node/edge/graph classification on Cora-style data) use alterlab-torch-geometric instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "compatibility": "No API key required. Runs locally via `uv run --python \">=3.12\" --with \"networkx[default]>=3.4\" python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires networkx >= 3.4 (current 3.7 as of 2026-09; native Leiden needs 3.7).",
       "allowed_tools": [
         "Read",
@@ -2275,7 +2275,7 @@
       "domain": "databases",
       "description": "Search and retrieve preprints from arXiv via the Atom API by keywords, authors, arXiv IDs, date ranges, or subject categories. Use when finding or fetching papers in physics, mathematics, computer science, quantitative biology, quantitative finance, statistics, electrical engineering, or economics, or resolving an arXiv ID to its metadata and PDF. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "compatibility": "Keyless arXiv Atom API (no authentication required)",
       "allowed_tools": [
         "Read",
@@ -2286,7 +2286,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 382,
+      "body_lines": 385,
       "references": [
         "api_reference.md"
       ]
@@ -2316,7 +2316,7 @@
       "domain": "databases",
       "description": "Search the bioRxiv preprint server and retrieve paper metadata or download PDFs via its API. Use when finding life sciences preprints by keywords, authors, DOI, date ranges, or categories, or when conducting a biology literature review of not-yet-peer-reviewed work. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "compatibility": "Keyless bioRxiv API (no authentication required)",
       "allowed_tools": [
         "Read",
@@ -2327,7 +2327,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 458,
+      "body_lines": 460,
       "references": [
         "api_reference.md"
       ]
@@ -2381,7 +2381,7 @@
       "domain": "databases",
       "description": "Query ChEMBL via the chembl_webresource_client Python client for curated bioactive molecules and drug-like compound libraries at scale — search compounds by structure or physicochemical properties, retrieve bioactivity measurements (IC50, Ki, EC50), and find inhibitors of a target. Use when screening chemical libraries, mining curated bioactivity for a protein, running SAR studies, or sourcing medicinal-chemistry data; for measured protein-ligand binding affinities (Ki/Kd/IC50) prefer alterlab-bindingdb instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "compatibility": "Keyless ChEMBL REST API (no authentication required)",
       "allowed_tools": [
         "Read",
@@ -2392,7 +2392,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 409,
+      "body_lines": 420,
       "references": [
         "api_reference.md"
       ]
@@ -2489,7 +2489,7 @@
       "domain": "databases",
       "description": "Query Google Data Commons for public statistical data aggregated from global sources, resolving geographic entities and pulling time-series statistics. Use when working with demographic data, economic indicators, health statistics, or environmental data — population counts, GDP figures, unemployment rates, disease prevalence — or when resolving places to DCIDs and exploring relationships between statistical entities. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "compatibility": "No API key required. Statistics come keyless from the JSON API behind the datacommons.org website (undocumented; provenance kept per record) and names/Wikidata IDs resolve through the keyless v2 resolve endpoint (scripts/query_datacommons.py, standard library only). An optional DC_API_KEY unlocks the documented api.datacommons.org v2 observation/node endpoints and datacommons-client >= 2.1 (current 2.1.6).",
       "allowed_tools": [
         "Read",
@@ -2499,7 +2499,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 357,
+      "body_lines": 358,
       "references": [
         "getting_started.md",
         "node.md",
@@ -2881,27 +2881,6 @@
       ]
     },
     {
-      "name": "alterlab-openalex",
-      "domain": "databases",
-      "description": "Query and analyze scholarly literature using the OpenAlex API across 300M+ works, retrieving papers, authors, institutions, citations, and open access status. Use when searching academic papers, tracking citations, finding works by author or institution, analyzing research trends, discovering open access publications, or running bibliometric analysis. Part of the AlterLab Academic Skills suite.",
-      "license": "MIT",
-      "version": "1.2.1",
-      "compatibility": "No API key required. OpenAlex REST API at api.openalex.org — single-entity lookups (OpenAlex ID, DOI, ORCID, ROR) and autocomplete cost nothing; list/filter/search calls share a $0.10/day keyless budget per IP (HTTP 429 until midnight UTC once spent; the skill then falls back to free lookups and keyless Crossref). An optional free OPENALEX_API_KEY gives your own $1/day. Max 100 requests/s, per_page ≤ 100 (as of 2026-10).",
-      "allowed_tools": [
-        "Read",
-        "WebFetch",
-        "Bash(curl:*)",
-        "Bash(python:*)"
-      ],
-      "has_scripts": true,
-      "has_evals": true,
-      "body_lines": 497,
-      "references": [
-        "api_guide.md",
-        "common_queries.md"
-      ]
-    },
-    {
       "name": "alterlab-opentargets",
       "domain": "databases",
       "description": "Query the Open Targets Platform GraphQL API for target-disease associations, tractability and safety data, genetics/omics evidence, and known drugs. Use when identifying or prioritizing therapeutic drug targets, assessing target druggability/safety, or gathering target-disease evidence for drug discovery. Part of the AlterLab Academic Skills suite.",
@@ -2974,7 +2953,7 @@
       "domain": "databases",
       "description": "Provide direct REST API access to PubMed via the NCBI E-utilities API, supporting advanced Boolean/MeSH queries, batch processing, and citation management. Use when searching biomedical literature by MeSH terms, retrieving abstracts or PMIDs in bulk, or scripting custom PubMed queries over raw HTTP/REST — for Python workflows prefer biopython (Bio.Entrez) instead, use this for direct REST work or custom API implementations. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "compatibility": "No API key required. Keyless NCBI E-utilities REST API (3 requests/s per IP); an optional NCBI_API_KEY raises this to 10 requests/s",
       "allowed_tools": [
         "Read",
@@ -3062,7 +3041,7 @@
       "domain": "databases",
       "description": "Access USPTO patent and trademark data — keyless full-text patent search through USPTO Patent Public Search, patent legal events and recorded assignments from Google Patents pages, and trademark status, owners, goods/services and prosecution history from TSDR status pages — with optional Open Data Portal (ODP) and TSDR API keys for Patent File Wrapper examination history, continuity, office actions and PTAB data. Use when searching patents or trademarks, conducting prior art searches, retrieving patent examination or assignment records, or doing intellectual property (IP) analysis. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "compatibility": "No API key required. Keyless — USPTO Patent Public Search (ppubs.uspto.gov, anonymous session, full-text grants and applications) and TSDR status pages (tsdr.uspto.gov/statusview) via scripts/uspto_public.py, plus Google Patents pages through WebFetch for legal events and assignments. Optional USPTO_ODP_API_KEY (Patent File Wrapper, office actions, PTAB) and USPTO_TSDR_API_KEY (TSDR API). PEDS, Assignment Search and PatentsView are offline (2026).",
       "allowed_tools": [
         "Read",
@@ -3190,7 +3169,7 @@
       "domain": "domain-specific",
       "description": "Runs time series machine learning with the aeon library — classification, regression, clustering, forecasting, anomaly detection, segmentation, and similarity search via scikit-learn compatible APIs. Use when working with temporal data, sequential patterns, or time-indexed observations (univariate or multivariate) that need specialized algorithms beyond standard ML approaches. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "compatibility": "No API key required. Runs locally via `uv run python`; requires the aeon Python package.",
       "allowed_tools": [
         "Read",
@@ -3202,7 +3181,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 410,
+      "body_lines": 411,
       "references": [
         "anomaly_detection.md",
         "classification.md",
@@ -3625,7 +3604,7 @@
       "domain": "domain-specific",
       "description": "Guides advanced social science research methods — discourse analysis (Fairclough CDA, Gee), conversation analysis, quantitative content analysis, Qualitative Comparative Analysis (QCA), process tracing, archival research, participatory/community-based research (PAR, CBPR), Delphi and Q methodology, social network analysis (SNA), bibliometrics and scientometrics, systematic mapping reviews, and program/policy evaluation. Use when designing or conducting any of these studies — choosing a specialized method, building a coding scheme, establishing causal mechanisms in case studies, mapping relational or subjective data, or applying an evaluation framework. For interpretive coding (thematic analysis, grounded theory, IPA, ethnography) use alterlab-qualitative-methods; for qual+quant integration use alterlab-mixed-methods; to run QCA, SNA, or text-as-data analyses on data use alterlab-qca, alterlab-sna, or alterlab-text-as-data. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "compatibility": "No API key required. Guidance-focused skill; optional Python helpers run via `uv run python`.",
       "allowed_tools": [
         "Read",
@@ -3822,7 +3801,7 @@
       "domain": "finance-economics",
       "description": "Runs a Denario-style end-to-end research pipeline from a described dataset with no API key — Claude itself plays every agent (idea maker and idea critic, methodologist, analyst who writes and runs the analysis code locally, paper writer) and produces idea.md, methods.md, results with figures and a journal-formatted LaTeX paper (APS revtex or plain LaTeX; AAS/JHEP/ICML/NeurIPS/PASJ with the venue's style file). The optional denario package (AstroPilot-AI; AG2 + LangGraph + cmbagent) runs the same stages with its own LLM keys. Use when automating research from a dataset description to a paper, generating hypotheses from a dataset, developing methodology, executing analysis, turning methods and results into a journal manuscript, or driving Denario (get_idea/get_method/get_results/get_paper). Part of the AlterLab Academic Skills suite.",
       "license": "GPL-3.0",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "compatibility": "No API key required. Claude carries out every stage and runs the analysis with local Python (`uv run --python \">=3.12\" --with pandas ...`); pdflatex compiles the paper (scripts/research_project.py scaffolds and compiles it). The optional denario package (1.0.x, Python 3.12-3.13) runs the stages with its own LLM keys.",
       "allowed_tools": [
         "Read",
@@ -4293,10 +4272,10 @@
     {
       "name": "alterlab-citation-graph",
       "domain": "research-tools",
-      "description": "Free ResearchRabbit / Connected Papers analog — builds a citation and co-citation graph around one or more seed papers from open citation data (OpenAlex plus the OpenCitations index), with no API key, account or subscription. Walks both directions of the citation network (works the seed cites and works that cite the seed), ranks the discovered neighbourhood by co-citation strength and bibliographic coupling to surface the papers most central to a topic's literature, and exports the network as GraphML (Gephi / Cytoscape / yEd) and JSON. Use when mapping a literature landscape, finding seminal or highly co-cited papers from a seed DOI, snowballing a reference network, building a citation map / co-citation analysis, or visualizing how a research area's papers connect. A free OpenAlex key is optional and only speeds up large walks. Part of the AlterLab Academic Skills suite.",
+      "description": "Free ResearchRabbit / Connected Papers analog — builds a citation and co-citation graph around one or more seed papers from open citation data (the OpenCitations index and Semantic Scholar, with titles from Crossref), with no API key, account or subscription. Walks both directions of the citation network (works the seed cites and works that cite the seed), ranks the discovered neighbourhood by co-citation strength and bibliographic coupling to surface the papers most central to a topic's literature, and exports the network as GraphML (Gephi / Cytoscape / yEd) and JSON. Use when mapping a literature landscape, finding seminal or highly co-cited papers from a seed DOI, snowballing a reference network, building a citation map / co-citation analysis, or visualizing how a research area's papers connect. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.2.0",
-      "compatibility": "No API key required: seeds, references and titles come from free OpenAlex single-work lookups, and citing works from OpenAlex list calls or, once the shared per-IP list budget is spent (HTTP 429), from the keyless OpenCitations index. Optional free OPENALEX_API_KEY gives a private daily budget. Network access to api.openalex.org and api.opencitations.net; stdlib-only, runs under bare `uv run python`.",
+      "version": "1.3.0",
+      "compatibility": "No API key required: references and citing works come from the keyless OpenCitations Index v2, with the keyless Semantic Scholar Graph API for works OpenCitations has no data for (backs off on HTTP 429), and titles from Crossref and doi.org. Optional S2_API_KEY only raises Semantic Scholar's rate limit. Network access to api.opencitations.net, api.semanticscholar.org, api.crossref.org and doi.org; stdlib-only, runs under bare `uv run python`.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -4307,7 +4286,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 177,
+      "body_lines": 187,
       "references": []
     },
     {
@@ -4406,7 +4385,7 @@
       "domain": "research-tools",
       "description": "Run Perplexity-style grounded searches (answers where every claim cites a current source) for current information and recent literature. Keyless by default: Claude's WebSearch and WebFetch plus keyless scholarly APIs (Europe PMC, Crossref, arXiv) find and open the sources; Perplexity Sonar models (sonar, sonar-pro, sonar-pro-search agentic search, sonar-reasoning-pro) via LiteLLM and OpenRouter are an optional backend when the user asks for Perplexity and sets OPENROUTER_API_KEY. Use when searching for current information or recent scientific literature, getting answers grounded in cited sources, verifying a claim against current evidence, or reaching information beyond the model's training cutoff. This is the direct single-backend search: for automatic routing with results saved to sources/ use alterlab-research-lookup, and for structured per-paper experimental-data extraction (sample sizes, effect sizes, quality scores) use alterlab-bgpt-search. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "compatibility": "No API key required. Grounded search runs on Claude's WebSearch and WebFetch plus keyless scholarly APIs (Europe PMC, Crossref, arXiv). Optional Perplexity backend - OPENROUTER_API_KEY and the litellm package, resolved per call by uv - sends queries to OpenRouter/Perplexity.",
       "allowed_tools": [
         "Read",
@@ -4432,7 +4411,7 @@
       "domain": "research-tools",
       "description": "Work with your Zotero reference library from code — search and read items, collections and tags, export BibTeX / CSL-JSON / RIS, find duplicates and missing DOIs, and create, update or delete items, collections, tags and attachments with the pyzotero client. Keyless by default — the running Zotero 7+ desktop app's local API (pyzotero local=True) or an exported library file (Better BibTeX .bib, CSL JSON, RIS) read offline with the bundled script; a zotero.org Web API key is optional, for remote or group libraries and web writes. Use when working with Zotero libraries programmatically, managing bibliographic references, exporting citations, searching library contents, uploading PDF attachments, or building research automation workflows that integrate with Zotero. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "compatibility": "No API key required. Reads the running Zotero 7+ desktop app through its local API (pyzotero >= 1.15, Python >= 3.10, local=True), or exported .bib / CSL JSON / RIS files offline with a stdlib script; new items go out as an importable file. Optional - ZOTERO_API_KEY + ZOTERO_LIBRARY_ID for the zotero.org Web API (remote/group libraries, web writes); local writes use Zotero 10+ and a locally granted key. Runs via `uv run python`.",
       "allowed_tools": [
         "Read",
@@ -4509,10 +4488,10 @@
     {
       "name": "alterlab-research-lookup",
       "domain": "research-tools",
-      "description": "Look up current research and scholarly papers by auto-routing each query to the best backend and saving every result with citations to sources/. Keyless by default — paper searches go to the built-in scholarly backend (Crossref, Europe PMC, arXiv, Semantic Scholar, OpenAlex index records with real DOIs, venues and citation counts) and general questions to Claude's WebSearch and WebFetch; the Parallel Chat API and Perplexity sonar-pro-search via OpenRouter are optional backends used when their keys are set. Use when finding papers, gathering research data, verifying scientific claims, or assembling citation lists and unsure which search backend fits. For plain general web search or extracting content from a known URL prefer alterlab-parallel-web; to call Perplexity directly with a chosen Sonar model prefer alterlab-perplexity. Part of the AlterLab Academic Skills suite.",
+      "description": "Look up current research and scholarly papers by auto-routing each query to the best backend and saving every result with citations to sources/. Keyless by default — paper searches go to the built-in scholarly backend (Crossref, Europe PMC, arXiv and Semantic Scholar index records with real DOIs, venues and citation counts) and general questions to Claude's WebSearch and WebFetch; the Parallel Chat API and Perplexity sonar-pro-search via OpenRouter are optional backends used when their keys are set. Use when finding papers, gathering research data, verifying scientific claims, or assembling citation lists and unsure which search backend fits. For plain general web search or extracting content from a known URL prefer alterlab-parallel-web; to call Perplexity directly with a chosen Sonar model prefer alterlab-perplexity. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.2.0",
-      "compatibility": "No API key required. The scholarly backend is stdlib Python that queries Crossref, Europe PMC, arXiv, Semantic Scholar and OpenAlex keyless; general web questions use Claude's WebSearch/WebFetch. Optional backends, used only when their keys are set or forced - PARALLEL_API_KEY (Parallel Chat API, openai package) and OPENROUTER_API_KEY (Perplexity, requests package) - send queries to those services.",
+      "version": "1.2.1",
+      "compatibility": "No API key required. The scholarly backend is stdlib Python that queries Crossref, Europe PMC, arXiv and Semantic Scholar keyless; general web questions use Claude's WebSearch/WebFetch. Optional backends, used only when their keys are set or forced - PARALLEL_API_KEY (Parallel Chat API, openai package) and OPENROUTER_API_KEY (Perplexity, requests package) - send queries to those services.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5088,7 +5067,7 @@
       "domain": "turkish-academia",
       "description": "Searches TR Dizin (TÜBİTAK ULAKBİM national citation index) and verifies a journal's current national-index status through its confirmed unauthenticated REST/Elasticsearch API at https://search.trdizin.gov.tr/api/defaultSearch/{publication|journal|author|institution}/ (params q, order e.g. relevance-DESC, page), parsing hits.hits[]._source plus faceted aggregations, and derives indexing status from a journal record's isActive + journalYear coverage vs rejectYearList. Use when the user wants to search TR Dizin, check if a journal is TR Dizin indexed (TR Dizin'de var mı / taranıyor mu), find Turkish-indexed publications, verify national-index status before submitting, or audit doçentlik-eligible venues. For DergiPark hosting prefer alterlab-dergipark; for doçentlik points prefer alterlab-docentlik-eligibility; for teşvik scoring prefer alterlab-akademik-tesvik. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "compatibility": "No API key required — queries the keyless TR Dizin search API (https://search.trdizin.gov.tr/api/defaultSearch/) via `uv run python` (requests if present, else stdlib urllib); reports network failure rather than passing silently",
       "allowed_tools": [
         "Read",
@@ -5157,9 +5136,9 @@
     {
       "name": "alterlab-yok-akademik",
       "domain": "turkish-academia",
-      "description": "Looks up a Turkish academic's official YÖKSİS-backed profile, current affiliation, unvan (academic title), publications, research projects, and supervised theses on the YÖK Akademik portal (akademik.yok.gov.tr/AkademikArama/), a server-rendered JSP app with no public JSON API, by scraping its verified endpoints (AkademisyenArama POST search, viewAuthor.jsp profile, AkademisyenProjeBilgileri, AkademisyenYonTezBilgileri) keyed by an opaque authorId, with Turkish-character (Iı Şş Ğğ Çç Öö Üü) normalization for name matching. Use when the request is to verify a Turkish academic's current institution, find a researcher on YÖK Akademik, confirm affiliation for authorship or a recommendation letter, or list someone's supervised theses or projects. For admission statistics (kontenjan, taban puan) use alterlab-yokatlas; for the national thesis full-text archive use alterlab-yok-tez; for publication metadata enrichment use alterlab-openalex. Part of the AlterLab Academic Skills suite.",
+      "description": "Looks up a Turkish academic's official YÖKSİS-backed profile, current affiliation, unvan (academic title), publications, research projects, and supervised theses on the YÖK Akademik portal (akademik.yok.gov.tr/AkademikArama/), a server-rendered JSP app with no public JSON API, by scraping its verified endpoints (AkademisyenArama POST search, viewAuthor.jsp profile, AkademisyenProjeBilgileri, AkademisyenYonTezBilgileri) keyed by an opaque authorId, with Turkish-character (Iı Şş Ğğ Çç Öö Üü) normalization for name matching. Use when the request is to verify a Turkish academic's current institution, find a researcher on YÖK Akademik, confirm affiliation for authorship or a recommendation letter, or list someone's supervised theses or projects. For admission statistics (kontenjan, taban puan) use alterlab-yokatlas; for the national thesis full-text archive use alterlab-yok-tez; for publication metadata enrichment use alterlab-research-lookup. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "compatibility": "No API key required — scrapes the public YÖK Akademik JSP portal (akademik.yok.gov.tr/AkademikArama/) via `uv run python` (requests + BeautifulSoup, stdlib fallback) and WebFetch; there is NO official public JSON API",
       "allowed_tools": [
         "Read",
@@ -5171,7 +5150,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 156,
+      "body_lines": 159,
       "references": [
         "affiliation_verification.md",
         "endpoints.md",
@@ -5207,7 +5186,7 @@
       "domain": "turkish-academia",
       "description": "Retrieves Türkiye higher-education program and admission statistics from YÖK Atlas (yokatlas.yok.gov.tr) — quotas (kontenjan), placements (yerleşen), minimum admission scores (taban puan), success ranks (başarı sırası), and per-title academic-staff counts — via the keyless yokatlas-py wrapper (≥0.6.0; 0.7.0 current, MIT) over the JSON API at /api/tercih-kilavuz/ (search plus university, program-group and province lookups), with SearchFilters for puan türü (SAY/SÖZ/EA/DİL/TYT), university type (DEVLET/VAKIF), province, and success-rank ranges. Use when the request mentions YÖK Atlas, program statistics, kontenjan/quota data, taban puan/minimum admission score, başarı sırası/success rank, placement counts, or program staff counts for institutional research, benchmarking, or advising. For an academic's CV/profile/affiliation prefer alterlab-yok-akademik; for theses prefer alterlab-yok-tez. Legacy PHP pages are dead since April 2026. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "compatibility": "No API key required — wraps the keyless YÖK Atlas JSON API (/api/tercih-kilavuz/) through yokatlas-py ≥0.6.0 (0.7.0 current as of 2026-09; MIT, Python ≥3.10) run via `uv run --with yokatlas-py python`; degrades to a documented manual lookup when offline",
       "allowed_tools": [
         "Read",
@@ -5471,8 +5450,8 @@
       "domain": "workflows",
       "description": "Runs AlterLab's packaged multi-agent academic workflows — citation audit, peer-review panel of separate reviewers, claim stress-test, PRISMA dual-screening for systematic reviews, point-by-point rebuttal, grant mock panel, and literature map. In Claude Code they run as dynamic workflows (/alterlab-workflows:<name>) with separate agent contexts, adversarial re-checks, tallies computed in code, and an explicit complete/partial/blocked status; on claude.ai, the API, or anywhere without the Workflow runtime this skill runs the same stages as a staged playbook. Use when a research task needs many separate readers or a second, adversarial opinion at scale — auditing every citation in a manuscript, dual-screening hundreds of records, simulating a review panel or study section, drafting a response to reviewers, or mapping a field before a proposal. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.1",
-      "compatibility": "No API key required. Claude Code with dynamic workflows (paid plans or API access; v2.1.203+) runs the /alterlab-workflows:* commands; installing this plugin also installs alterlab-core, whose skills the workflows call. Other surfaces use the staged playbooks in references/. Database-backed stages use public scholarly APIs (Crossref, OpenAlex, PubMed, arXiv) and need network access.",
+      "version": "1.1.2",
+      "compatibility": "No API key required. Claude Code with dynamic workflows (paid plans or API access; v2.1.203+) runs the /alterlab-workflows:* commands; installing this plugin also installs alterlab-core, whose skills the workflows call. Other surfaces use the staged playbooks in references/. Database-backed stages use keyless public scholarly APIs (Crossref, Semantic Scholar, Europe PMC, PubMed, arXiv) and need network access.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5547,7 +5526,7 @@
       "domain": "writing-tools",
       "description": "Manages citations for academic research — searches Google Scholar and PubMed for papers, extracts complete metadata from DOIs, PMIDs, and arXiv IDs (CrossRef, doi.org content negotiation, NCBI E-utilities, arXiv API), validates BibTeX entries for required fields, format, and duplicates, and generates or cleans properly formatted BibTeX. Use when finding papers, converting DOIs to BibTeX, cleaning or deduplicating a .bib file, checking reference metadata in scientific writing, or building a bibliography. To prove that cited references actually exist or to flag fabricated or retracted citations prefer alterlab-citation-verifier; for Zotero library operations use alterlab-pyzotero. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "compatibility": "No API key required (an optional NCBI_API_KEY raises the PubMed E-utilities limit from 3 to 10 requests/s). Needs network access to CrossRef, doi.org, NCBI E-utilities, arXiv, and Google Scholar; the helper scripts need requests, plus scholarly for Google Scholar search",
       "allowed_tools": [
         "Read",
@@ -5627,7 +5606,7 @@
       "domain": "writing-tools",
       "description": "Conducts comprehensive, systematic literature reviews across multiple academic databases (PubMed, arXiv, bioRxiv, Semantic Scholar), with PRISMA 2020 flow tracking, study screening (title/abstract and full-text), evidence-table extraction, and risk-of-bias assessment (RoB 2, ROBINS-I, AMSTAR 2), producing professionally formatted markdown documents and PDFs with verified citations in multiple styles (APA, Nature, Vancouver). Use when running a systematic or scoping literature review, research synthesis, or broad literature search, building a PRISMA flow diagram, screening studies, extracting an evidence table, or assessing risk of bias across biomedical, scientific, and technical domains. For quantitative pooling of effect sizes (forest/funnel plots) use alterlab-meta-analysis; for an open-ended multi-agent investigation, fact-check, or Socratic research-question work use alterlab-deep-research. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "compatibility": "Needs network access to PubMed, arXiv, bioRxiv, and Semantic Scholar (searches follow the Entrez/Biopython and REST snippets in the references); verify_citations.py needs requests; PDF output requires pandoc and xelatex (check with --check-deps)",
       "allowed_tools": [
         "Read",
