@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Guidance-focused skill; optional Python helpers run via `uv run python`.
 metadata:
   skill-author: AlterLab
-  version: "1.0.1"
-  last_updated: "2026-09-23"
+  version: "1.0.2"
+  last_updated: "2026-11-02"
 ---
 
 # Social Science Research Methods

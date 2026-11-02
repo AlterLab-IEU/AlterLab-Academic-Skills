@@ -6,8 +6,8 @@ allowed-tools: Read Write WebFetch WebSearch Bash(curl:*) Bash(python:*) Bash(py
 compatibility: No API key required. Grounded search runs on Claude's WebSearch and WebFetch plus keyless scholarly APIs (Europe PMC, Crossref, arXiv). Optional Perplexity backend - OPENROUTER_API_KEY and the litellm package, resolved per call by uv - sends queries to OpenRouter/Perplexity.
 metadata:
     skill-author: AlterLab
-    version: "1.2.0"
-    last_updated: "2026-10-22"
+    version: "1.2.1"
+    last_updated: "2026-11-02"
     credentials: "optional: OPENROUTER_API_KEY (Perplexity Sonar answers via OpenRouter, only when the user asks for Perplexity or a Sonar model; paid per token)"
 ---
 
@@ -41,7 +41,7 @@ Skip for: arithmetic/logic, code execution, or facts well within training data (
      `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=TITLE_ABS:(<terms>)&format=json&resultType=core&pageSize=10` (biomedicine, abstracts, `sort=CITED%20desc` for influential work; `DOI:"<doi>"` to fetch one record),
      `https://api.crossref.org/works?query.bibliographic=<terms>&rows=10` (every discipline, `is-referenced-by-count`; `/works/<DOI>` for one record),
      `https://export.arxiv.org/api/query?search_query=all:<word>+AND+all:<word>&max_results=10` (preprints).
-     OpenAlex and Semantic Scholar also answer keyless but share small per-IP budgets (HTTP 429 when spent) — use them as extras, not the only source.
+     Semantic Scholar (`https://api.semanticscholar.org/graph/v1/paper/search?query=<terms>&fields=title,year,venue,externalIds,citationCount`) also answers keyless, but its keyless pool is shared and rate-limited (HTTP 429 when busy; back off and retry) — use it as an extra, not the only source.
 3. **Open what you cite.** WebFetch the primary page — the journal article or its Europe PMC record, the agency report, the trial registry — not a news summary of it. A claim seen only in a search snippet is labelled "snippet only, not verified".
 4. **Answer grounded, the way Perplexity does:** a direct answer first, then the evidence with an inline citation `[n]` on every factual sentence, exact figures as the source states them (effect sizes with CIs, dates, counts), conflicts between sources flagged with which is stronger (evidence hierarchy: meta-analyses > RCTs > cohort > case reports > expert opinion), and a numbered source list: title, publisher/journal, year, DOI or URL, and the retrieval date. Cite the underlying sources, never "Perplexity" or "a search engine".
 5. **Keep a record when asked** (or for anything the user will cite): Write `sources/search_YYYYMMDD_HHMMSS_<topic>.md` with the queries, retrieval date, the answer and the source list — the keyless equivalent of `--output results.json`.

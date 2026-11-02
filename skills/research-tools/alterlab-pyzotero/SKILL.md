@@ -6,8 +6,8 @@ license: MIT
 compatibility: No API key required. Reads the running Zotero 7+ desktop app through its local API (pyzotero >= 1.15, Python >= 3.10, local=True), or exported .bib / CSL JSON / RIS files offline with a stdlib script; new items go out as an importable file. Optional - ZOTERO_API_KEY + ZOTERO_LIBRARY_ID for the zotero.org Web API (remote/group libraries, web writes); local writes use Zotero 10+ and a locally granted key. Runs via `uv run python`.
 metadata:
     skill-author: AlterLab
-    version: "1.2.0"
-    last_updated: "2026-10-22"
+    version: "1.2.1"
+    last_updated: "2026-11-02"
     credentials: "optional: ZOTERO_API_KEY and ZOTERO_LIBRARY_ID (zotero.org Web API v3 — remote and group libraries, web writes, file uploads), PYZOTERO_LOCAL_API_KEY (writes to the local Zotero 10+ library, granted in Zotero's own Allow dialog; not a zotero.org key)"
 ---
 
@@ -36,7 +36,7 @@ Ask for (or check) which one applies only when it matters; when the user has giv
 
 | Scenario | Use Instead |
 |----------|-------------|
-| Discovering new papers in scholarly databases | `alterlab-research-lookup` or `alterlab-openalex` |
+| Discovering new papers in scholarly databases | `alterlab-research-lookup` |
 | Converting DOIs to BibTeX or searching Google Scholar/PubMed without a Zotero library | `alterlab-citation-mgmt` |
 | Checking that every bibliography entry exists / spotting hallucinated references | `alterlab-citation-verifier` |
 | Building an evidence table from a folder of PDFs | `alterlab-pdf-extract` |

@@ -245,7 +245,9 @@ summary(model)
    - Inclusion/exclusion criteria
 
 2. DATA COLLECTION
-   - Select database(s): Scopus, Web of Science, Dimensions, OpenAlex
+   - Select database(s): Scopus, Web of Science, Dimensions (subscription or login), or
+     the keyless open sources: Crossref (records with deposited references), Semantic
+     Scholar and OpenCitations (citation links)
    - Develop search query (Boolean operators, field codes)
    - Test and refine query
    - Download records (include abstracts, references, author info)

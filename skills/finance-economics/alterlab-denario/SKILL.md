@@ -6,9 +6,9 @@ allowed-tools: Read Write Edit WebFetch WebSearch Bash(uv:*) Bash(python:*) Bash
 compatibility: No API key required. Claude carries out every stage and runs the analysis with local Python (`uv run --python ">=3.12" --with pandas ...`); pdflatex compiles the paper (scripts/research_project.py scaffolds and compiles it). The optional denario package (1.0.x, Python 3.12-3.13) runs the stages with its own LLM keys.
 metadata:
     skill-author: AlterLab
-    version: "1.2.0"
+    version: "1.2.1"
     credentials: "optional: OPENAI_API_KEY (lets the denario package run its own agents; its analysis/results module requires it), GOOGLE_API_KEY (Gemini models in the package, the default for its fast mode, check_idea and get_paper), ANTHROPIC_API_KEY (Claude models inside the package), PERPLEXITY_API_KEY (the package's citation search), SEMANTIC_SCHOLAR_KEY (faster check_idea lookups)"
-    last_updated: "2026-09-23"
+    last_updated: "2026-11-02"
 ---
 
 # Denario
@@ -64,7 +64,7 @@ python scripts/research_project.py compile ./my_research    # pdflatex -> paper/
 | `set_data_description()` | Record the data, units, sample sizes, file paths, tools, and hypotheses already considered | `input_files/data_description.md` |
 | `get_idea()` (idea maker + idea hater) | Propose 3-5 hypotheses that the described variables can test; critique each as the "idea hater" (novelty, feasibility with this data, confounds, what result would refute it); revise once; pick one and keep the rejected ones with reasons | `input_files/idea.md` |
 | `set_idea()` | Use the user's own hypothesis verbatim and skip generation | `input_files/idea.md` |
-| `check_idea()` | Novelty check with WebSearch and keyless OpenAlex/arXiv queries; list the closest prior work with DOIs | `idea.md`, Literature section |
+| `check_idea()` | Novelty check with WebSearch and keyless Crossref / Semantic Scholar / arXiv queries; list the closest prior work with DOIs | `idea.md`, Literature section |
 | `get_method()` / `set_method()` | Data preparation, model, tests, robustness checks, and the result that would falsify the idea | `input_files/methods.md` |
 | `get_results()` / `set_results()` | Write the analysis in `analysis/`, run it (`uv run --python ">=3.12" --with pandas --with statsmodels --with matplotlib python analysis/run.py`), save figures to `input_files/plots/`, and write the results from the actual output | `input_files/results.md`, `plots/` |
 | `get_paper(journal=...)` | Fill `paper/paper.tex` from the four files, cite only sources you retrieved, keep the AI-assistance section, and compile | `paper/paper.pdf` |
