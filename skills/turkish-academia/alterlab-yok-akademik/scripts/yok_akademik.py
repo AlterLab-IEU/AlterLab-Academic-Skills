@@ -4,7 +4,7 @@
 YÖK Akademik (akademik.yok.gov.tr/AkademikArama/) is the Turkish Council of Higher
 Education's academic search portal — a server-rendered Java/JSP app, YÖKSİS-backed,
 and the authoritative source for a Turkish academic's official CURRENT affiliation
-(more reliable than ORCID/OpenAlex for TR institutions). There is **no official
+(more reliable than ORCID or bibliographic indexes for TR institutions). There is **no official
 public JSON API**; the only route is polite HTML scraping of its verified endpoints.
 
 Subcommands
@@ -638,7 +638,9 @@ def cmd_pubs(author_id: str, pub_type: str = "") -> dict[str, Any]:
         sections=sections,
         note="Portal-listed publications, by typed tab (pubType tokens discovered live "
         "from the profile, never hardcoded). For canonical DOIs/citation counts enrich "
-        "via alterlab-openalex; to check the works exist use alterlab-citation-verifier.",
+        "keylessly via the person's ORCID record (pub.orcid.org) and Crossref "
+        "(api.crossref.org/works?filter=orcid:<ORCID>), or alterlab-research-lookup; "
+        "to check the works exist use alterlab-citation-verifier.",
     )
 
 

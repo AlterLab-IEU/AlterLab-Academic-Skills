@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash WebFetch
 compatibility: No API key required — queries the keyless TR Dizin search API (https://search.trdizin.gov.tr/api/defaultSearch/) via `uv run python` (requests if present, else stdlib urllib); reports network failure rather than passing silently
 metadata:
   skill-author: AlterLab
-  version: "1.0.2"
-  last_updated: "2026-09-23"
+  version: "1.0.3"
+  last_updated: "2026-11-02"
   depends_on: "alterlab-dergipark (hosting vs indexing), alterlab-docentlik-eligibility, alterlab-akademik-tesvik"
 ---
 
@@ -59,7 +59,7 @@ Use it for any of these intents:
 | YÖK **thesis** (tez) search in Ulusal Tez Merkezi | `alterlab-yok-tez` |
 | YÖK Akademik **academic profile / affiliation** lookup | `alterlab-yok-akademik` |
 | YÖK Atlas **program / admission statistics** | `alterlab-yokatlas` |
-| Verifying an arbitrary citation **exists** (Crossref/OpenAlex/etc.) | `alterlab-citation-verifier` |
+| Verifying an arbitrary citation **exists** (Crossref/Semantic Scholar/etc.) | `alterlab-citation-verifier` |
 | **Turkish APA 7 / TR Dizin citation style** formatting | `alterlab-tr-academic-style` |
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-dergipark`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.

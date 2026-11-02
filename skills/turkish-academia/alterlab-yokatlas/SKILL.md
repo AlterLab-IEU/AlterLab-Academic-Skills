@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash WebFetch
 compatibility: No API key required — wraps the keyless YÖK Atlas JSON API (/api/tercih-kilavuz/) through yokatlas-py ≥0.6.0 (0.7.0 current as of 2026-09; MIT, Python ≥3.10) run via `uv run --with yokatlas-py python`; degrades to a documented manual lookup when offline
 metadata:
   skill-author: AlterLab
-  version: "1.1.0"
-  last_updated: "2026-09-23"
+  version: "1.1.1"
+  last_updated: "2026-11-02"
   depends_on: "alterlab-yok-akademik (academic profiles), alterlab-research-lookup (publication enrichment)"
 ---
 
@@ -77,7 +77,7 @@ Endpoint and field details: `references/api_endpoints.md`.
 | Computing **doçentlik** (associate-professor) eligibility points | `alterlab-docentlik-eligibility` |
 | Computing **akademik teşvik** (academic-incentive) score | `alterlab-akademik-tesvik` |
 | Scaffolding a **TÜBİTAK** ARDEB 1001/1002-A proposal | `alterlab-tubitak-proposal` |
-| Publication metadata for an author (DOIs, citations, h-index) | `alterlab-research-lookup` / `alterlab-openalex` |
+| Publication metadata for an author (DOIs, citations, h-index) | `alterlab-research-lookup` |
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-yok-akademik`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 

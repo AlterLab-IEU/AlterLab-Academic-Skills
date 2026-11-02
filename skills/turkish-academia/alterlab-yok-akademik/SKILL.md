@@ -1,14 +1,14 @@
 ---
 name: alterlab-yok-akademik
-description: "Looks up a Turkish academic's official YÖKSİS-backed profile, current affiliation, unvan (academic title), publications, research projects, and supervised theses on the YÖK Akademik portal (akademik.yok.gov.tr/AkademikArama/), a server-rendered JSP app with no public JSON API, by scraping its verified endpoints (AkademisyenArama POST search, viewAuthor.jsp profile, AkademisyenProjeBilgileri, AkademisyenYonTezBilgileri) keyed by an opaque authorId, with Turkish-character (Iı Şş Ğğ Çç Öö Üü) normalization for name matching. Use when the request is to verify a Turkish academic's current institution, find a researcher on YÖK Akademik, confirm affiliation for authorship or a recommendation letter, or list someone's supervised theses or projects. For admission statistics (kontenjan, taban puan) use alterlab-yokatlas; for the national thesis full-text archive use alterlab-yok-tez; for publication metadata enrichment use alterlab-openalex. Part of the AlterLab Academic Skills suite."
+description: "Looks up a Turkish academic's official YÖKSİS-backed profile, current affiliation, unvan (academic title), publications, research projects, and supervised theses on the YÖK Akademik portal (akademik.yok.gov.tr/AkademikArama/), a server-rendered JSP app with no public JSON API, by scraping its verified endpoints (AkademisyenArama POST search, viewAuthor.jsp profile, AkademisyenProjeBilgileri, AkademisyenYonTezBilgileri) keyed by an opaque authorId, with Turkish-character (Iı Şş Ğğ Çç Öö Üü) normalization for name matching. Use when the request is to verify a Turkish academic's current institution, find a researcher on YÖK Akademik, confirm affiliation for authorship or a recommendation letter, or list someone's supervised theses or projects. For admission statistics (kontenjan, taban puan) use alterlab-yokatlas; for the national thesis full-text archive use alterlab-yok-tez; for publication metadata enrichment use alterlab-research-lookup. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash WebFetch
 compatibility: No API key required — scrapes the public YÖK Akademik JSP portal (akademik.yok.gov.tr/AkademikArama/) via `uv run python` (requests + BeautifulSoup, stdlib fallback) and WebFetch; there is NO official public JSON API
 metadata:
   skill-author: AlterLab
-  version: "1.0.1"
-  last_updated: "2026-09-23"
-  depends_on: "alterlab-yokatlas (admission stats), alterlab-yok-tez (thesis full text), alterlab-openalex (publication metadata)"
+  version: "1.0.2"
+  last_updated: "2026-11-02"
+  depends_on: "alterlab-yokatlas (admission stats), alterlab-yok-tez (thesis full text), alterlab-research-lookup (publication metadata)"
 ---
 
 # YÖK Akademik — Official Turkish Academic Profile & Affiliation Lookup
@@ -17,7 +17,8 @@ metadata:
 Education's academic search portal) is the **authoritative source for a Turkish
 academic's official current affiliation**. It is YÖKSİS-backed (the national
 higher-education information system), so for Turkish institutions it is more
-reliable than ORCID or OpenAlex affiliation strings, which lag and fragment.
+reliable than ORCID or bibliographic-index affiliation strings (Crossref, Semantic
+Scholar), which lag and fragment.
 
 This skill resolves a name to that official record: current **kurum** (institution),
 **fakülte/bölüm** (faculty/department), **unvan** (academic title — e.g. *Prof. Dr.*,
@@ -51,7 +52,7 @@ Route these adjacent asks to the correct sibling skill — do **not** answer the
 | Reading or citing a **thesis full text / abstract** from the national archive (Ulusal Tez Merkezi) | `alterlab-yok-tez` |
 | Searching the national journal-hosting platform DergiPark | `alterlab-dergipark` |
 | Whether a **journal** is indexed in TR Dizin (the national citation index) | `alterlab-trdizin` |
-| Enriching/verifying **publication metadata** (DOIs, citation counts, co-authors) | `alterlab-openalex` |
+| Enriching/verifying **publication metadata** (DOIs, citation counts, co-authors) | `alterlab-research-lookup` |
 | Checking whether the cited papers actually **exist** (fabricated citations) | `alterlab-citation-verifier` |
 | Computing **doçentlik** (associate-professorship) eligibility points from a publication list | `alterlab-docentlik-eligibility` |
 | Computing the **akademik teşvik** (academic-incentive) score | `alterlab-akademik-tesvik` |
@@ -162,6 +163,8 @@ The portal is a public service with no API; scrape gently.
 - [`references/turkish_names.md`](references/turkish_names.md) — Turkish casing/diacritic
   rules (İ/ı etc.) and the name-matching strategy.
 - [`references/affiliation_verification.md`](references/affiliation_verification.md) —
-  why YÖKSİS beats ORCID/OpenAlex for TR affiliation, and the disambiguation checklist.
+  why YÖKSİS beats ORCID and bibliographic indexes for TR affiliation, the keyless route
+  to a person's bibliography (ORCID record, Crossref, TR Dizin), and the disambiguation
+  checklist.
 
 Part of the AlterLab Academic Skills suite.

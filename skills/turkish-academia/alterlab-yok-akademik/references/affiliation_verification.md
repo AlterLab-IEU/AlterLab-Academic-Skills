@@ -7,19 +7,35 @@ System). When a Turkish academic moves, changes title, or is appointed, the offi
 record flows through YÖKSİS — so the portal reflects the **current, official** kurum
 (institution), fakülte/bölüm, and unvan (title).
 
-For Turkish institutions this is **more reliable than ORCID or OpenAlex affiliation
-strings**, which:
+For Turkish institutions this is **more reliable than ORCID or bibliographic-index
+affiliation strings** (Crossref, Semantic Scholar), which:
 
-- lag (authors update ORCID rarely; OpenAlex infers affiliation from paper metadata
+- lag (authors update ORCID rarely; indexes copy affiliation from paper metadata
   that can be months/years stale),
 - fragment one institution into many spellings (Turkish/English names, abbreviations,
   diacritic variants), and
 - often show a *past* affiliation from an old paper rather than the person's current post.
 
 So: for **"where does this person officially work right now?"** → YÖK Akademik. For
-**"what has this person published, with which DOIs and co-authors?"** →
-`alterlab-openalex` (richer, deduped publication metadata). The two are complementary;
-use YÖK Akademik for the affiliation ground truth and OpenAlex for the bibliography.
+**"what has this person published, with which DOIs and co-authors?"** → the keyless
+bibliography route below. The two are complementary: YÖK Akademik for the affiliation
+ground truth, these sources for the bibliography.
+
+1. **ORCID iD on the profile** (the header shows an ORCID badge when the person linked
+   one): read the public ORCID record, `https://pub.orcid.org/v3.0/<ORCID>/works` with
+   `Accept: application/json`, and Crossref's works for that iD,
+   `https://api.crossref.org/works?filter=orcid:<ORCID>` (DOIs, venues,
+   `is-referenced-by-count`). Both are keyless and need no contact address. Both list
+   only what the person or the publishers deposited, so treat them as incomplete.
+2. **No ORCID iD**: search by name and institution with `alterlab-research-lookup`, or
+   Crossref's `query.author=<name>&query.affiliation=<institution>`, and confirm each
+   work is this person's. Common Turkish surnames collide, and the affiliation query
+   matches only deposited affiliation strings.
+3. **Turkish-language journals** often carry no DOI or ORCID link: check them in TR Dizin
+   (`alterlab-trdizin`) and DergiPark (`alterlab-dergipark`).
+
+No keyless source gives a complete, deduplicated publication list for a person; say so
+when you report one.
 
 ## When you actually need this
 
