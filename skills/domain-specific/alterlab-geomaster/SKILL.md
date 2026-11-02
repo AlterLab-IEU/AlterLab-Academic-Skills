@@ -3,12 +3,12 @@ name: alterlab-geomaster
 description: Covers geospatial science across remote sensing, GIS, spatial analysis, and machine learning for earth observation — satellite imagery processing (Sentinel, Landsat, MODIS, SAR, hyperspectral), raster and DEM operations, spectral indices (NDVI/EVI/NDWI), spatial statistics, point cloud processing, network analysis, and cloud-native workflows (STAC, COG, Planetary Computer), with examples across Python, R, Julia, JavaScript, C++, Java, Go, and Rust. Use for remote sensing workflows, satellite/raster image classification, terrain/slope/hillshade analysis, spatial ML on earth-observation data, hydrological modeling, marine spatial analysis, or atmospheric science. For pure tabular vector work with no raster/EO aspect (plain GeoPandas sjoin, buffer, overlay, dissolve, choropleths) prefer the geopandas skill; for celestial-sphere astronomy coordinates (ICRS/galactic, FITS, WCS) prefer the astropy skill. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(uv:*) Bash(python:*)
-compatibility: "No API key required. Local raster/vector/DEM analysis (rasterio, GeoPandas, numpy, scikit-learn) runs offline under `uv run python`, and the default cloud routes are keyless: OpenStreetMap Nominatim/Overpass, Natural Earth, and public STAC catalogs (Element 84 Earth Search, Planetary Computer with anonymous signing). Only Google Earth Engine and private cloud-storage buckets use credentials, and those are optional."
+compatibility: "No API key required. Local raster/vector/DEM analysis (rasterio, GeoPandas, numpy, scikit-learn) runs offline under `uv run python`, and the default cloud routes are keyless: OpenStreetMap Nominatim/Overpass, Natural Earth, public STAC catalogs (Element 84 Earth Search, Planetary Computer with anonymous signing) and ERA5 from Google's public ARCO-ERA5 Zarr store. Earth Engine, Copernicus CDS and private buckets use credentials, all optional."
 metadata:
     skill-author: AlterLab
-    credentials: "optional: Google Earth Engine registration / GCP project (the Earth Engine Python API; keyless STAC catalogs cover the same imagery); AWS/GCS keys (private cloud-storage buckets only — public COGs read with aws_unsigned=True)"
-    version: "1.1.1"
-    last_updated: "2026-09-23"
+    credentials: "optional: Google Earth Engine registration / GCP project (the Earth Engine Python API; keyless STAC catalogs cover the same imagery); AWS/GCS keys (private cloud-storage buckets only — public COGs read with aws_unsigned=True); a free Copernicus Climate Data Store account as ~/.cdsapirc or CDSAPI_URL + CDSAPI_KEY (cdsapi downloads of CDS-only products such as ERA5-Land and ERA5 ensemble members, cut server-side to NetCDF/GRIB — hourly ERA5 single and pressure levels are read keyless from ARCO-ERA5)"
+    version: "1.1.2"
+    last_updated: "2026-11-02"
 ---
 
 # GeoMaster
@@ -313,6 +313,9 @@ These routes need **no account or token** and were verified live (2026-10-22):
 - **OpenStreetMap** — Nominatim geocoding (send a descriptive `User-Agent` with a contact)
   and Overpass for OSM feature queries.
 - **Natural Earth** — direct downloads of admin boundaries, coastlines, etc.
+- **ERA5 reanalysis (ARCO-ERA5)** — Google's public Zarr copy of hourly ERA5, read
+  anonymously with `storage_options={"token": "anon"}` (verified 2026-11-02; recipe in
+  `references/data-sources.md`). The Copernicus CDS / `cdsapi` route needs a free account.
 
 ```python
 import pystac_client
