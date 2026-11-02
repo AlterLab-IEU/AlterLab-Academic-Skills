@@ -59,7 +59,7 @@
       "expected_output": "Triggers the USPTO skill keyless: resolves the application through USPTO Patent Public Search (scripts/uspto_public.py app 16/123,456) to US 10902286 B2, 'Learning assistance device, method of operating learning assistance device, ...', assigned to FUJIFILM Corporation (inventor Shoji Kanada), filed 2018-09-06 and granted 2021-01-26 (pre-grant publication US 2019/0095759 A1) — about 873 days, roughly 2.4 years, of pendency. Says that the office-action-by-office-action transaction list needs the optional ODP key (or the Google Patents legal-events rows, when that page loads), rather than inventing rejection counts.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "10902286" },
+        { "type": "output_contains", "value": ["10902286", "10,902,286"] },
         { "type": "behavior", "value": "Identifies the grant for application 16/123,456 with its owner, filing date and grant date and computes the pendency, without requiring an API key and without fabricating office-action counts." }
       ]
     },
