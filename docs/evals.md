@@ -124,6 +124,9 @@ skilled arm reads them in all of them.
 Keep the three apart when reporting: "242 skills have evals" is a statement about the static
 check only.
 
+The latest live `--behavioral` run of the suite, skilled vs bare, is reported in
+[`behavioral-results.md`](behavioral-results.md).
+
 ### Isolation
 
 Each behavioral case runs both arms from fresh temporary directories, never from this
