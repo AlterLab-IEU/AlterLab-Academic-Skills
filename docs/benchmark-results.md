@@ -3,7 +3,8 @@
 The latest reported run of the five-task benchmark (`scripts/run_benchmark.py`; design in
 [`evals.md`](evals.md#the-five-task-benchmark-scriptsrun_benchmarkpy)). It describes these 16
 cases only. It is not a validation of the other 237 skills, and it is not a validation of these
-five skills beyond the inputs below.
+five skills beyond the inputs below. The live evaluation of every skill's own eval cases, with
+and without the skill, is in [`behavioral-results.md`](behavioral-results.md).
 
 ## Run
 

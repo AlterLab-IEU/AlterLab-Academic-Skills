@@ -32,10 +32,10 @@ faculty and researchers (student skills live in
 
 | Level | Status |
 |---|---|
-| Skills with a structurally valid eval file | **242 / 242** — 1,535 cases, checked in CI on every PR (schema and trigger coverage only; no model is called) |
-| Eval cases that supply input files | 6 cases in 5 skills, plus the benchmark fixtures below |
-| Skills evaluated behaviorally against a live model | **5** — the five benchmark tasks below. The other 237 skills have no recorded behavioral result. (The nightly CI job that was meant to grade them graded nothing for weeks: its API key was missing and failures were reported as success. It has been removed, and a run that grades nothing now exits non-zero.) |
-| Skills shown to beat the bare model | **1 of 5** benchmark tasks (doçentlik pre-screening). On the other four the bare model was already at or near the ceiling. |
+| Skills with a structurally valid eval file | **242 / 242** — 1,605 cases, checked in CI on every PR (schema and trigger coverage only; no model is called) |
+| Eval cases that supply input files | 146 cases in 86 skills, plus the benchmark fixtures below |
+| Skills evaluated behaviorally against a live model | **242 / 242** — every eval case answered once with the skill and once without it, through the Claude Code CLI login with no API key (2026-10-15 to 2026-11-02): 1,539 cases graded, 50 not runnable here (they need a key, connector, host or program the runner lacks). Results, method and limits: [`docs/behavioral-results.md`](docs/behavioral-results.md). (The nightly CI job that was meant to grade them graded nothing for weeks: its API key was missing and failures were reported as success. It has been removed, and a run that grades nothing now exits non-zero.) |
+| Skills shown to beat the bare model | On the same 1,539 graded cases, **88%** of answers with the skill passed against **53%** without it; the skill turned a bare FAIL into a PASS on 560 cases and the reverse on 26. The skilled answer faces more checks, grading reads only the final message, each case ran once, and a Claude model is the judge. Of the five benchmark tasks below, **1** beat the bare model (doçentlik pre-screening); on the other four the bare model was already at or near the ceiling. |
 | Helper scripts | unit-tested: input validation, reference values, and fault paths (see `tests/`) |
 | Dynamic workflows (`/alterlab-workflows:*`) | dry-run against a mocked runtime, including injected failures; not run live |
 | Skill auto-selection (activation) | a harness exists (`run_evals.py --activation`); no current recorded run |

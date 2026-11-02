@@ -33,7 +33,25 @@ A reliability repair: incomplete, failed, or weakly supported work can no longer
 successfully verified. No skills were added. Prompted by an external audit; every reported
 defect was reproduced before it was fixed.
 
-<!-- behavioral-results numbers: filled in after the final eval round -->
+### Live behavioral evaluation
+
+Every skill's eval cases were answered once with the skill and once without it, through the
+Claude Code CLI login with no API key, from 2026-10-15 to 2026-11-02. Method, per-domain
+results and limits: `docs/behavioral-results.md`.
+
+- 242 of 242 skills, 1,605 cases: 1,539 graded, 50 not runnable here (they need a key,
+  connector, host or program the runner lacks), 16 infrastructure errors or refusals.
+- With the skill, 1,358 of 1,539 graded cases passed (88.2%); without it, 820 of the
+  same cases (53.3%). The skill turned a bare FAIL into a PASS on 560 cases and the reverse
+  on 26. The skilled answer faces more checks than the bare one, grading reads only the final
+  message, and each case ran once.
+- On the 1,535 cases with both a first and a final run, skilled PASS went from 1,115 to 1,309
+  (fixes to skills, evals and the harness in between; not a controlled comparison).
+- Every case the skill made worse after the last full round (32) was read by hand. The six
+  caused by missing routing rows are fixed and re-run; seven skill defects remain open and are
+  listed in the results page.
+- 13 cases ran while OpenAlex's shared keyless budget was used up; they are re-run after
+  its daily reset.
 
 ### Changed — behavior that can affect existing users
 
@@ -117,6 +135,9 @@ defect was reproduced before it was fixed.
   pre-screening) with synthetic fixtures, anchored expected answers, deterministic scoring of
   false approvals, false accusations, and abstentions, and a skilled-vs-bare comparison.
   Results: `docs/benchmark-results.md`.
+- `docs/behavioral-results.md`: the live evaluation of every skill, skilled vs bare, per domain,
+  with the cases that could not run here, a hand triage of every case the skill made worse, and
+  the known limits.
 - `benchmarks/harness-canary/`: a test-only skill proving the live harness tells PASS from
   FAIL and delivers bundled files to the skilled arm.
 - Tests: fake-CLI behavioral-runner tests, adversarial claim-faithfulness fixtures, 184 BibTeX
@@ -150,7 +171,15 @@ defect was reproduced before it was fixed.
   `--backend` required so a cluster script is never run locally by omission.
 - Eval runner: arms' background jobs outlived the run and starved later arms; parallel runs
   finishing in the same second could overwrite each other's results file; Anthropic's own API
-  host was labelled as a non-Claude endpoint.
+  host was labelled as a non-Claude endpoint; the CLI's newer acceptable-use refusal ("can't
+  help with this … legal/aup") was scored INFRA_ERROR instead of REFUSED; saved results kept
+  e-mail addresses that answers echoed from the login context (now `[email redacted]`, reserved
+  example domains kept).
+- Routing gaps that made the skilled answer worse than the bare model on near-miss requests:
+  deep-research (thesis supervision → thesis-supervisor), jaspar (protein-protein interaction
+  networks → string-db), literature-review (DOI → BibTeX → citation-mgmt; manuscript prose →
+  scientific-writing), scientific-slides (manuscript prose → scientific-writing) and uspto
+  (compound look-ups → pubchem).
 
 ### Fixed — documentation
 
