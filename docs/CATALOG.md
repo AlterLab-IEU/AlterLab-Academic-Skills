@@ -1,6 +1,6 @@
 # AlterLab Academic Skills — Catalog
 
-All 242 skills by domain (v3.0.1). Each skill is a `SKILL.md` instruction file, often with
+All 242 skills by domain (v4.0.0). Each skill is a `SKILL.md` instruction file, often with
 reference documents and helper scripts. A listing here means the skill exists and ships a
 structurally valid eval file; it does **not** mean the skill was evaluated behaviorally — see
 [`docs/evals.md`](evals.md) and [`docs/benchmark-results.md`](benchmark-results.md) for what has been measured.

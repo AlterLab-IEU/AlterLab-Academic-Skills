@@ -6,9 +6,34 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [4.0.0] — 2026-11-02
+
+**Why a major version.** These changes alter what existing users, scripts and installs get back:
+
+- **Keys are optional.** Every skill does what it claims with no external API key, account or
+  licence; a credential only adds something and is declared in `metadata.credentials`, and
+  `scripts/check_keyless.py` fails the suite on a regression. A keyed backend asked for without
+  its key exits with a message instead of answering from another backend
+  (`alterlab-remote-compute` still requires an explicit `--backend`, so a cluster script is
+  never run locally by omission).
+- **No contact address by default.** User-Agents and `mailto` parameters no longer carry a
+  maintainer email; set `ALTERLAB_CONTACT_EMAIL` or pass `--mailto` to send one.
+- **Skills hand off instead of answering.** When a request matches a routing row, the skill
+  names the better sibling by id and stops.
+- **Statuses, counts and exit codes changed meaning.** `claim_faithfulness.py` never returns
+  `VERIFIED`; `verify_citations.py` reports `PARTIAL` and exits `3` when entries go
+  unprocessed; workflows return `status: complete | partial | blocked` and count only completed
+  or validated work (`claims_checked`, `major_concerns`, `flow.screened`);
+  `run_evals.py --behavioral` exits `0`/`1`/`2`/`3`; helper scripts exit `2` on invalid input.
+- **A different archive for the Claude app.** `alterlab-<domain>-<version>.zip` is a
+  skills-directory bundle, not a claude.ai upload; upload `skill-<name>-<version>.zip`.
+  Installs need `python3` and add the skills a selected skill depends on (`--no-deps` to skip).
+
 A reliability repair: incomplete, failed, or weakly supported work can no longer appear
 successfully verified. No skills were added. Prompted by an external audit; every reported
 defect was reproduced before it was fixed.
+
+<!-- behavioral-results numbers: filled in after the final eval round -->
 
 ### Changed — behavior that can affect existing users
 
@@ -842,6 +867,7 @@ with day-one executable evals on every new skill (coverage holds at **209 / 209*
 
 - Initial public release of the AlterLab Academic Skills collection.
 
+[4.0.0]: https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases/tag/v4.0.0
 [2.1.0]: https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases/tag/v2.1.0
 [2.0.0]: https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases/tag/v2.0.0
 [1.2.0]: https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases/tag/v1.2.0
