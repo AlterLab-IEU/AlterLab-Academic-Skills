@@ -7,7 +7,7 @@ compatibility: "No API key required: local TileDB-VCF stores — ingest, increme
 metadata:
     skill-author: AlterLab
     credentials: "optional: TILEDB_REST_TOKEN / TileDB Cloud account (distributed cloud ingest and query over tiledb:// URIs; local on-disk stores need none)"
-    version: "1.1.1"
+    version: "1.1.2"
     last_updated: "2026-09-23"
 ---
 
@@ -36,6 +36,7 @@ This skill should be used when:
 | Clinical interpretation or population frequency of a specific variant | `alterlab-clinvar` / `alterlab-gnomad` |
 | General chunked array storage for non-variant data (images, tensors, matrices) | `alterlab-zarr` |
 | Out-of-core dataframe analytics on an exported table | `alterlab-polars` / `alterlab-dask` |
+| Differential expression from an RNA-seq count matrix (log2 fold changes, adjusted p-values) | `alterlab-pydeseq2` |
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-pysam`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 

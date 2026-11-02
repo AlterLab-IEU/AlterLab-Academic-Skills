@@ -6,7 +6,7 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: No API key required. Statistics come keyless from the JSON API behind the datacommons.org website (undocumented; provenance kept per record) and names/Wikidata IDs resolve through the keyless v2 resolve endpoint (scripts/query_datacommons.py, standard library only). An optional DC_API_KEY unlocks the documented api.datacommons.org v2 observation/node endpoints and datacommons-client >= 2.1 (current 2.1.6).
 metadata:
     skill-author: AlterLab
-    version: "1.2.0"
+    version: "1.2.1"
     last_updated: "2026-10-22"
     credentials: "optional: DC_API_KEY (unlocks the documented api.datacommons.org v2 observation/node endpoints and the datacommons-client methods that use them; the keyless website API serves the same statistics)"
 ---
@@ -34,6 +34,7 @@ The keyed client is verified against `datacommons-client` 2.1.6 (current as of 2
 | U.S. Treasury fiscal data (debt, spending, revenue) | `alterlab-usfiscaldata` |
 | NCI Imaging Data Commons (CT/MR/pathology images) — a different "Data Commons" | `alterlab-imaging-data-commons` |
 | Spatial joins, buffers, or mapping of geometries | `alterlab-geopandas` |
+| Finding clinical trials (recruitment status, phase, NCT IDs, enrollment) | `alterlab-clinicaltrials` |
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-fred`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 

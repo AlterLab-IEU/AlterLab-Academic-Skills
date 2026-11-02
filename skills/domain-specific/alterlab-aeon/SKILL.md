@@ -6,7 +6,7 @@ allowed-tools: Read Write Edit Bash(uv run python:*) Bash(uv pip install:*) Bash
 compatibility: No API key required. Runs locally via `uv run python`; requires the aeon Python package.
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.1.1"
     last_updated: "2026-09-23"
 ---
 
@@ -36,6 +36,7 @@ Apply this skill when:
 | Having an LLM generate and test candidate hypotheses on a labelled dataset (e.g. which survey features predict deception) | `alterlab-hypogenic` |
 | Plain tabular features (no temporal ordering) for classification/regression | `alterlab-scikit-learn` |
 | Physiological signal processing (ECG/EEG/EDA peaks, HRV) | `alterlab-neurokit2` |
+| Running a fluid-dynamics simulation (e.g. a pseudospectral Navier-Stokes solver) and its energy spectra | `alterlab-fluidsim` |
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-timesfm`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
