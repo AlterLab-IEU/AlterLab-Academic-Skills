@@ -79,6 +79,13 @@ if mode == "limit_once":
 if mode == "authfail":
     sys.stderr.write("Invalid API key sk-ant-api03-SECRETSECRETSECRET · Please run /login\n")
     sys.exit(1)
+if mode == "refuse_aup":  # the newer CLI wording: the API's acceptable-use refusal
+    print("API Error: Claude can't help with this. Start a new session to continue.\n\n"
+          "Learn more: https://www.anthropic.com/legal/aup\n\nDetails: `[bio]`")
+    sys.exit(1)
+if mode == "says_cant_help" and skilled:  # an ordinary answer that happens to say it
+    out("GOOD-ANSWER: I can't help with this part (see https://www.anthropic.com/legal/aup).")
+    sys.exit(0)
 if mode == "refuse":
     print("API Error: Claude Code is unable to respond to this request, which appears to "
           "violate our Usage Policy")
@@ -218,6 +225,18 @@ def test_infrastructure_failure_is_blocked_redacted_and_aborts(fake_cli, tmp_pat
 def test_refusals_are_counted_separately_and_block(fake_cli, tmp_path, monkeypatch):
     rc, res = _run(tmp_path, [_case("a")], "refuse", monkeypatch)
     assert rc == 2 and res["cases"][0]["skilled"]["outcome"] == "REFUSED"
+
+
+def test_acceptable_use_refusal_is_refused_not_infra(fake_cli, tmp_path, monkeypatch):
+    rc, res = _run(tmp_path, [_case("a")], "refuse_aup", monkeypatch)
+    skilled = res["cases"][0]["skilled"]
+    assert rc == 2 and skilled["outcome"] == "REFUSED", skilled
+    assert "category: bio" in skilled["reason"]
+
+
+def test_an_answer_that_says_cant_help_is_not_a_refusal(fake_cli, tmp_path, monkeypatch):
+    rc, res = _run(tmp_path, [_case("a")], "says_cant_help", monkeypatch)
+    assert res["cases"][0]["skilled"]["outcome"] == "PASS"
 
 
 def test_partial_run_exits_three(fake_cli, tmp_path, monkeypatch):

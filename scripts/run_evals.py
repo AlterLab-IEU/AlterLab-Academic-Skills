@@ -301,6 +301,11 @@ _NO_ANSWER = "<no-answer>"
 _REFUSED = f"{_NO_ANSWER} ENV-REFUSED"
 # Signatures of the CLI usage-policy refusal — printed to *stdout* with a non-zero exit.
 _REFUSAL_SIGNATURES = ("violate our Usage Policy", "unable to respond to this request")
+# Newer CLI builds print the API's acceptable-use refusal instead: "API Error: ... can't help
+# with this. ... Learn more: https://www.anthropic.com/legal/aup ... Details: `[bio]`". It counts
+# only with a failed exit and both markers, so an answer that merely says "can't help" is not one.
+_AUP_REFUSAL_MARKERS = ("API Error", "anthropic.com/legal/aup")
+_AUP_CATEGORY = re.compile(r"Details: `\[([a-z_-]+)\]`")
 
 # Per-case outcomes. Only PASS and FAIL are usable verdicts; the other three say *why* a case
 # could not be graded, and none of them can make a run read as successful.
@@ -802,9 +807,11 @@ def _claude_call_once(prompt: str, model: str, timeout: int, system: str | None 
     }
     # The CLI prints usage-policy refusals to stdout and exits non-zero, so check both streams.
     combined = f"{proc.stdout} {proc.stderr}"
-    if any(sig in combined for sig in _REFUSAL_SIGNATURES):
-        return CallResult(_REFUSED, "refused", "usage-policy refusal by the runner environment",
-                          **meta)
+    aup = proc.returncode != 0 and all(m in combined for m in _AUP_REFUSAL_MARKERS)
+    if aup or any(sig in combined for sig in _REFUSAL_SIGNATURES):
+        cat = _AUP_CATEGORY.search(combined) if aup else None
+        return CallResult(_REFUSED, "refused", "usage-policy refusal by the runner environment"
+                          + (f" (category: {cat.group(1)})" if cat else ""), **meta)
     if proc.returncode != 0 or data is None or data.get("is_error"):
         raw = str((data or {}).get("result") or "") or proc.stderr.strip() or proc.stdout.strip()
         detail = _redact(raw)[:300] or "no output"
