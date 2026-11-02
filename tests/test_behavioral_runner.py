@@ -86,6 +86,10 @@ if mode == "refuse_aup":  # the newer CLI wording: the API's acceptable-use refu
 if mode == "says_cant_help" and skilled:  # an ordinary answer that happens to say it
     out("GOOD-ANSWER: I can't help with this part (see https://www.anthropic.com/legal/aup).")
     sys.exit(0)
+if mode == "emails" and skilled:  # an answer that echoes addresses from the login context
+    out("GOOD-ANSWER: reach me at jane.doe@university.edu.tr; set the User-Agent to "
+        "you@example.org or ops@lab.example.com")
+    sys.exit(0)
 if mode == "refuse":
     print("API Error: Claude Code is unable to respond to this request, which appears to "
           "violate our Usage Policy")
@@ -237,6 +241,15 @@ def test_acceptable_use_refusal_is_refused_not_infra(fake_cli, tmp_path, monkeyp
 def test_an_answer_that_says_cant_help_is_not_a_refusal(fake_cli, tmp_path, monkeypatch):
     rc, res = _run(tmp_path, [_case("a")], "says_cant_help", monkeypatch)
     assert res["cases"][0]["skilled"]["outcome"] == "PASS"
+
+
+def test_saved_results_redact_email_addresses(fake_cli, tmp_path, monkeypatch):
+    rc, res = _run(tmp_path, [_case("a")], "emails", monkeypatch)
+    skilled = res["cases"][0]["skilled"]
+    assert skilled["outcome"] == "PASS"  # graded on the original text
+    blob = json.dumps(res)
+    assert "jane.doe@university.edu.tr" not in blob and "[email redacted]" in blob
+    assert "you@example.org" in blob and "ops@lab.example.com" in blob  # placeholders kept
 
 
 def test_partial_run_exits_three(fake_cli, tmp_path, monkeypatch):

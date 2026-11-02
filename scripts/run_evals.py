@@ -362,10 +362,25 @@ _SECRET_PATTERNS = (
 )
 
 
+# Answers can echo the account's e-mail address from the CLI login context, and saved results
+# are meant to be shareable, so every address is replaced when a result is written. The
+# reserved example domains (RFC 2606/6761) stay: evals use them as placeholders. Grading reads
+# the unredacted text in-process; only the files on disk (and so --regrade) see the redaction.
+_EMAIL = re.compile(r"[A-Za-z0-9._%+\-]+@([A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,})")
+_EXAMPLE_DOMAIN = re.compile(r"(?i)(?:^|\.)(?:example\.(?:com|org|net|edu)|example|invalid|test|localhost)$")
+
+
+def _scrub_emails(text):
+    if not isinstance(text, str):
+        return text
+    return _EMAIL.sub(lambda m: m.group(0) if _EXAMPLE_DOMAIN.search(m.group(1))
+                      else "[email redacted]", text)
+
+
 def _redact(text: str) -> str:
     for pat in _SECRET_PATTERNS:
         text = pat.sub("[REDACTED]", text)
-    return text
+    return _scrub_emails(text)
 
 
 _DIAGNOSES = (
@@ -1289,10 +1304,11 @@ def _run_arm(prompt: str, model: str, timeout: int, runs: int, workspace: Path,
             "rubric_verdict": rv,
             "assertions": [{"assertion": a, "verdict": v, "detail": _redact(str(d))[:300]}
                            for (a, v, d) in assertions],
-            "response_excerpt": call.text[:1500] if call.outcome == "answer" else None,
+            "response_excerpt": _scrub_emails(call.text[:1500]) if call.outcome == "answer"
+            else None,
             # Full text, so a run can be re-graded later (e.g. with a revised judge) without
             # repeating the answer calls.
-            "response": call.text if call.outcome == "answer" else None,
+            "response": _scrub_emails(call.text) if call.outcome == "answer" else None,
         })
     rubric_majority = _majority(rubric_votes)
     if with_assertions and eval_obj.get("assertions"):
