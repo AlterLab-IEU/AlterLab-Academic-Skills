@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(uv run:*) Bash(uv pip:*)
 compatibility: Keyless ChEMBL REST API (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.2"
-    last_updated: "2026-10-23"
+    version: "1.0.3"
+    last_updated: "2026-11-02"
 ---
 
 # ChEMBL Database
@@ -57,6 +57,17 @@ Without Python, the same data comes from the REST API, e.g.
 `curl "https://www.ebi.ac.uk/chembl/api/data/mechanism.json?molecule_chembl_id=CHEMBL25"`
 and `.../drug_indication.json?molecule_chembl_id=CHEMBL25` (checked 2026-10-23: 1 mechanism,
 cyclooxygenase inhibitor; 167 indication records).
+
+**Large result sets — count first, then page in 1,000s.** Broad activity filters match
+thousands of records: EGFR (`CHEMBL203`) IC50 ≤ 100 nM is 10,665 activities (checked
+2026-11-02). Iterating a client queryset fetches them about 20 per request, which takes many
+minutes. Read `page_meta.total_count` first, then either page the REST API at its maximum
+`limit=1000` with `only=` fields (one page took about 4 s), or slice the queryset
+(`activity.filter(...).only([...])[:1000]`) and say how many were left out:
+
+```bash
+curl -s "https://www.ebi.ac.uk/chembl/api/data/activity.json?target_chembl_id=CHEMBL203&standard_type=IC50&standard_relation=%3D&standard_units=nM&standard_value__lte=100&limit=1000&only=molecule_chembl_id,standard_value,pchembl_value"
+```
 
 ### Basic Usage Pattern
 
