@@ -61,7 +61,7 @@ skills** — see [`ROADMAP.md`](ROADMAP.md).
   license in its frontmatter; the per-skill distribution is tabulated in
   [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 - **Citation and claim faithfulness.** AlterLab adds a deterministic citation-existence and
-  claim-faithfulness layer (Crossref / Semantic Scholar / arXiv resolution, Retraction Watch
+  claim-faithfulness layer (Crossref / Semantic Scholar / Europe PMC / arXiv resolution, Retraction Watch
   flagging) so that generated bibliographies are verified rather than asserted.
 - **No fabrication.** Real APIs, real DOIs, no unsourced vendor benchmarks; any script that sends
   data to a third-party API says so.

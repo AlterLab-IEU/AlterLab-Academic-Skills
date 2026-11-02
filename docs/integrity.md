@@ -15,7 +15,7 @@ instead of a generic, same-model WebSearch that is prone to confirming its own h
 The gate has **two halves**, run in order:
 
 1. **Existence + metadata** — *does the cited work exist, and does its metadata match?*
-   Handled by `verify_citations.py` (Crossref / Semantic Scholar / arXiv existence check,
+   Handled by `verify_citations.py` (Crossref / Semantic Scholar / Europe PMC / arXiv existence check, Open Library for books,
    title/author similarity, doi.org DOI and arXiv-ID resolution, Retraction Watch flag via
    Crossref).
 2. **Claim faithfulness** — *does the cited work actually support the claim attached to it?*

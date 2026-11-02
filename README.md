@@ -110,7 +110,7 @@ You do not need skill names. Describe the task, or say *"use AlterLab skills"*, 
 
 | Command | What it does |
 |---|---|
-| `/alterlab-workflows:citation-audit` | resolves references against Crossref / Semantic Scholar / arXiv and checks up to 150 cited claims against their sources; flags need two completed re-checks |
+| `/alterlab-workflows:citation-audit` | resolves references against Crossref / Semantic Scholar / Europe PMC / arXiv and checks up to 150 cited claims against their sources; flags need two completed re-checks |
 | `/alterlab-workflows:review-panel` | a panel of separate reviewers; each major concern is re-checked against the manuscript, and one whose check did not complete reaches the editor labelled unverified |
 | `/alterlab-workflows:claim-stress-test` | three critics per headline claim; calibrated rewrites |
 | `/alterlab-workflows:systematic-review-screening` | PRISMA 2020 title/abstract screening with two screeners per record and adjudication; records whose screening failed are kept and reported as unresolved |
@@ -126,7 +126,8 @@ not independent verification, and the reports say so.
 ## Integrity tools: what they establish
 
 - **`alterlab-citation-verifier`** checks that references exist and that their metadata
-  agrees with Crossref, Semantic Scholar, arXiv, and doi.org, and flags retractions.
+  agrees with Crossref, Semantic Scholar, Europe PMC, arXiv (Open Library for books), and doi.org,
+  and flags retractions.
   An entry it could not check is `unverified`, never a pass; input it could not parse makes the
   run `PARTIAL` (exit 3), never a pass.
 - **`claim_faithfulness.py`** compares a claim with the cited work's **abstract only**. It

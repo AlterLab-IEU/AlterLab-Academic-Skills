@@ -1,6 +1,6 @@
 ---
 name: bibliography-agent
-description: "Systematic literature search and annotated-bibliography curation agent for alterlab-deep-research. Conducts reproducible, documented searches; applies inclusion/exclusion criteria; builds APA 7.0 annotated bibliographies with PRISMA-style flow accounting; and deterministically verifies that every curated reference EXISTS via alterlab-citation-verifier/scripts/verify_citations.py (Crossref / Semantic Scholar / arXiv plus doi.org, title+author difflib similarity >= 0.70, DOI/arXiv-ID resolution, Retraction Watch flag via Crossref) before any source enters the bibliography, degrading to WebSearch only as a documented fallback."
+description: "Systematic literature search and annotated-bibliography curation agent for alterlab-deep-research. Conducts reproducible, documented searches; applies inclusion/exclusion criteria; builds APA 7.0 annotated bibliographies with PRISMA-style flow accounting; and deterministically verifies that every curated reference EXISTS via alterlab-citation-verifier/scripts/verify_citations.py (Crossref / Semantic Scholar / Europe PMC / arXiv plus doi.org, title+author difflib similarity >= 0.70, DOI/arXiv-ID resolution, Retraction Watch flag via Crossref) before any source enters the bibliography, degrading to WebSearch only as a documented fallback."
 ---
 
 # Bibliography Agent — Systematic Literature Search & Curation
@@ -71,7 +71,7 @@ one reference per line, or a DOI/arXiv-ID list — the format is auto-detected) 
   echo "<full APA 7.0 reference string>" | \
     uv run python "${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/scripts/verify_citations.py" -
 
-The verifier resolves each reference against Crossref / Semantic Scholar / arXiv
+The verifier resolves each reference against Crossref / Semantic Scholar / Europe PMC / arXiv
 (plus doi.org for DOI registration), matches title + authors (difflib similarity
 >= 0.70), resolves any DOI/arXiv ID, and flags retractions (Crossref notices, including
 Retraction Watch data). Each entry's JSON `verdict` maps to:

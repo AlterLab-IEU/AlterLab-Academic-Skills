@@ -16,7 +16,7 @@ The machine-readable index is [`skills.json`](../skills.json); the browsable sit
 | 2 | **📝 Paper Writer** | 12 | Academic paper authoring with LaTeX, bilingual support, 9 writing modes |
 | 3 | **🔍 Paper Reviewer** | 7 | Multi-perspective peer review with Devil's Advocate, 0–100 quality rubrics |
 | 4 | **🔄 Research Pipeline** | 3 | 10-stage orchestrator with integrity verification and material passports |
-| 5 | **🔎 Citation Verifier** | — | Deterministic citation-existence gate over Crossref / Semantic Scholar / arXiv |
+| 5 | **🔎 Citation Verifier** | — | Deterministic citation-existence gate over Crossref / Semantic Scholar / Europe PMC / arXiv |
 | 6 | **🎓 Teaching Design** | — | Course design, syllabi, rubrics, Bloom's taxonomy, backward design |
 | 7 | **📋 Thesis Supervisor** | — | Dissertation guidance, defense prep, committee management |
 | 8 | **🔗 Link Health** | — | Repo link-health audit meta-skill |
@@ -436,7 +436,7 @@ Claude Code **dynamic workflows** are scripts that orchestrate many subagents an
 
 | # | Command | What It Does |
 |:---:|:---|:---|
-| 1 | `/alterlab-workflows:citation-audit` | Every reference resolved against Crossref / Semantic Scholar / arXiv, every cited claim checked against its source; each flag counts only after **two completed re-checks** by separate agents (TF / PAC / IH / PH / SH report); up to 150 cited claims, with coverage reported |
+| 1 | `/alterlab-workflows:citation-audit` | Every reference resolved against Crossref / Semantic Scholar / Europe PMC / arXiv, every cited claim checked against its source; each flag counts only after **two completed re-checks** by separate agents (TF / PAC / IH / PH / SH report); up to 150 cited claims, with coverage reported |
 | 2 | `/alterlab-workflows:review-panel` | 4–6 **blind** reviewers chosen for the paper's field and design; every major concern re-read against the manuscript before the editor decides |
 | 3 | `/alterlab-workflows:claim-stress-test` | Three skeptics per headline claim (counter-evidence, citation support, inference); majority rating and calibrated rewrites |
 | 4 | `/alterlab-workflows:systematic-review-screening` | PRISMA 2020 title/abstract screening — codebook, optional database search, de-duplication, **two blinded screeners per record**, adjudication, Cohen's κ |

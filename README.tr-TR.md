@@ -115,7 +115,7 @@ değildir; raporlar bunu açıkça yazar.
 ## Bütünlük araçları neyi gösterir
 
 - **`alterlab-citation-verifier`** kaynakların var olduğunu ve künyelerinin Crossref,
-  Semantic Scholar, arXiv ve doi.org kayıtlarıyla uyuştuğunu denetler, geri çekilmeleri işaretler.
+  Semantic Scholar, Europe PMC, arXiv (kitaplar için Open Library) ve doi.org kayıtlarıyla uyuştuğunu denetler, geri çekilmeleri işaretler.
   Denetleyemediği bir kayıt `unverified` olur, asla geçer sayılmaz; ayrıştıramadığı girdi
   çalıştırmayı `PARTIAL` yapar (çıkış kodu 3).
 - **`claim_faithfulness.py`** bir iddiayı yalnızca atıf yapılan çalışmanın **özetiyle**
