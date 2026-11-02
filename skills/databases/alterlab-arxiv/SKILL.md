@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv:*)
 compatibility: Keyless arXiv Atom API (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.1.1"
+    last_updated: "2026-11-02"
 ---
 
 # arXiv Database
@@ -35,7 +35,7 @@ Use this skill when:
 |----------|-------------|
 | Peer-reviewed, MeSH-indexed biomedical journal articles | `alterlab-pubmed` |
 | Life-science preprints (bioRxiv / medRxiv) | `alterlab-biorxiv` |
-| Citation counts, citation trajectories, or tracking an institution's / lab's output | `alterlab-openalex` |
+| Citation counts, the works that cite a paper, or citation trajectories (arXiv has no citation data) | `alterlab-citation-graph` |
 | Depositing your own preprint on arXiv (categories, license, versioning) | `alterlab-preprint-deposition` |
 | Multi-database systematic review with PRISMA screening | `alterlab-literature-review` |
 
@@ -82,8 +82,11 @@ python scripts/arxiv_search.py \
 
 `au:` matches **author names only** — the API cannot filter by affiliation, so
 `au:anthropic` or `au:deepmind` return nothing (or only papers where an organization
-is listed as a collective author). To follow a lab, query its members by name; to
-follow a whole institution, use `alterlab-openalex` (institution filter).
+is listed as a collective author). To follow a lab, query its members by name. No
+keyless source offers a complete institution filter: Crossref's `query.affiliation`
+search matches only the affiliation strings publishers deposit (many records carry
+none), and members' public ORCID records (`pub.orcid.org/v3.0/<ORCID>/works`, keyless
+reads) list their works. Say that institution-level coverage is partial.
 
 ```bash
 python scripts/arxiv_search.py \
@@ -310,8 +313,8 @@ print(df["primary_category"].value_counts().head(10))
 
 ### Track a Research Group
 
-arXiv has no affiliation search, so track a group through its members' names (or
-switch to `alterlab-openalex` and filter works by institution ID):
+arXiv has no affiliation search, so track a group through its members' names (for
+the group's journal papers, Crossref's `query.affiliation` search adds partial coverage):
 
 ```python
 searcher = ArxivSearcher()
@@ -374,12 +377,12 @@ results = searcher.search(query=query, max_results=20)
 4. **Use `sort_by=submittedDate`** for recent papers, `relevance` for keyword searches.
 5. **Max 2000 results per call**: arXiv caps a single request at 2000 (the script clamps to this). For larger sets, paginate with the `start` parameter, up to a 30000 total cap.
 6. **arXiv IDs**: Use bare IDs (`2309.10668`), not full URLs, in programmatic code.
-7. **Combine with `alterlab-openalex`**: For citation counts and impact metrics arXiv doesn't provide.
+7. **Combine with `alterlab-citation-graph`** (citing works, citation counts) or `alterlab-research-lookup` (cross-index metadata): for the citation data arXiv doesn't provide.
 
 ## Limitations
 
 - **No full-text search**: Only searches metadata (title, abstract, authors, comments)
-- **No citation data**: Use `alterlab-openalex` or Semantic Scholar for citations
+- **No citation data**: Use `alterlab-citation-graph`, Semantic Scholar (`/graph/v1/paper/arXiv:<id>`) or OpenCitations for citations
 - **No affiliation search**: `au:` matches author names only
 - **Max 2000 results per call**: Use pagination (`start`) for larger sets, up to a 30000 total cap.
 - **Rate limited**: ~1 request per 3 seconds recommended

@@ -24,7 +24,7 @@
     {
       "id": "author-tracking",
       "prompt": "Track the recent cs.LG preprints coming out of Anthropic — I want to monitor what their interpretability team is posting.",
-      "expected_output": "Triggers the arXiv skill. Explains that the arXiv API's au: prefix matches author names only (au:anthropic returns nothing; affiliations are not searchable), so it builds an au:\"...\" OR query over the team's known author names, combined with cat:cs.LG and abstract terms like interpretability, sorted by submittedDate descending, and returns the recent preprint list. Uses arXiv query syntax with uppercase boolean operators and may point to alterlab-openalex for institution-level tracking.",
+      "expected_output": "Triggers the arXiv skill. Explains that the arXiv API's au: prefix matches author names only (au:anthropic returns nothing; affiliations are not searchable), so it builds an au:\"...\" OR query over the team's known author names, combined with cat:cs.LG and abstract terms like interpretability, sorted by submittedDate descending, and returns the recent preprint list. Uses arXiv query syntax with uppercase boolean operators and may note that institution-level tracking needs another, partial source (Crossref's affiliation search or the members' ORCID records), since no keyless API filters by institution.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Constructs an author-name arXiv query (au: prefix) for the group's members rather than an affiliation search, and flags that arXiv cannot filter by affiliation." }
@@ -40,12 +40,12 @@
       ]
     },
     {
-      "id": "near-miss-openalex",
-      "prompt": "For the 'Attention Is All You Need' transformer paper, how many times has it been cited and what's its citation trajectory over the years?",
-      "expected_output": "Should NOT trigger the arXiv skill. arXiv provides no citation counts or impact metrics. The request for citation counts and a citation trajectory should defer to the openalex database skill (alterlab-openalex), which exposes citation and impact data.",
+      "id": "near-miss-citation-graph",
+      "prompt": "For the 'Attention Is All You Need' transformer paper, how many times has it been cited, which works cite it, and what's its citation trajectory over the years?",
+      "expected_output": "Should NOT trigger the arXiv skill. arXiv provides no citation counts, citing-work lists or impact metrics. The request for a citation count, the works that cite the paper and a year-by-year citation trajectory should defer to the citation-graph skill (alterlab-citation-graph), which walks a paper's citing works in open citation data and gives each citing work's year.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
-        { "type": "output_contains", "value": "openalex" }
+        { "type": "output_contains", "value": "citation-graph" }
       ]
     }
   ]
