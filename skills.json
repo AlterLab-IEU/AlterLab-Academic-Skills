@@ -1365,8 +1365,8 @@
       "domain": "clinical-research",
       "description": "Develops, tests, and validates clinical machine learning models with the PyHealth 2.x healthcare AI toolkit. Use when working with electronic health records (EHR), clinical prediction tasks (mortality, readmission, length of stay, drug recommendation), medical coding systems (ICD, NDC, ATC, CCS), physiological signals (EEG, ECG), healthcare datasets (MIMIC-III/IV, eICU, OMOP), or implementing deep learning models for healthcare (RETAIN, SafeDrug, GAMENet, Transformer, GAT/GCN). Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.2.0",
-      "compatibility": "No API key required. Runs install-free with `uv run --python 3.13 --with \"pyhealth>=2.0.2,<2.1\" python script.py` (PyHealth 2.0.x needs Python 3.12-3.13; see Installation for the CPU-only torch index). MIMIC-III/IV and eICU data need the user's own PhysioNet credentialed access.",
+      "version": "1.2.1",
+      "compatibility": "No API key required. Runs install-free with `uv run --python 3.13 --with \"pyhealth>=2.0.2,<2.1\" python script.py` (PyHealth 2.0.x needs Python 3.12-3.13; see Installation for the CPU-only torch index). Default data is open — the PhysioNet MIMIC-IV, eICU-CRD and MIMIC-III demos and PyHealth's synthetic MIMIC-III. Full MIMIC/eICU is optional (the user's own credentialed copy).",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1376,7 +1376,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 370,
+      "body_lines": 399,
       "references": [
         "datasets.md",
         "medical_coding.md",
@@ -1421,10 +1421,10 @@
     {
       "name": "alterlab-citation-verifier",
       "domain": "core",
-      "description": "Verifies that every bibliography entry actually exists by cross-checking Crossref, Semantic Scholar, and arXiv (no API key required) plus doi.org DOI registration, fuzzy-matching title and authors (difflib ratio >= 0.70), flagging retractions recorded by Crossref (including Retraction Watch data), and emitting per-entry JSON verdicts in the AlterLab citation-hallucination taxonomy (TF/PAC/IH/PH/SH); a companion script scores whether a cited abstract supports a claim (SH). Accepts BibTeX, DOI/arXiv lists, or pasted references, and reports unverified instead of passing anything it could not check. Use when the request mentions verify citations, check references, fabricated or hallucinated references, fake DOI, retraction check, bibliography audit, reference existence check, or whether a source supports a claim. For drafting a manuscript prefer alterlab-paper-writer; for dead hyperlinks prefer alterlab-link-health. Part of the AlterLab Academic Skills suite.",
+      "description": "Verifies that every bibliography entry actually exists by cross-checking Crossref, Semantic Scholar, Europe PMC, and arXiv, with Open Library for books (no API key required), plus doi.org DOI registration, fuzzy-matching title and authors (difflib ratio >= 0.70), flagging retractions recorded by Crossref (including Retraction Watch data), and emitting per-entry JSON verdicts in the AlterLab citation-hallucination taxonomy (TF/PAC/IH/PH/SH); a companion script scores whether a cited abstract supports a claim (SH). Accepts BibTeX, DOI/arXiv lists, or pasted references, and reports unverified instead of passing anything it could not check. Use when the request mentions verify citations, check references, fabricated or hallucinated references, fake DOI, retraction check, bibliography audit, reference existence check, or whether a source supports a claim. For drafting a manuscript prefer alterlab-paper-writer; for dead hyperlinks prefer alterlab-link-health. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.2.3",
-      "compatibility": "No API key required — stdlib Python (`requests` optional) via `uv run python` against Crossref, Semantic Scholar, arXiv, the doi.org Handle API and (abstracts) Europe PMC; optional S2_API_KEY only raises Semantic Scholar's rate limit; offline runs return 'unverified' verdicts",
+      "version": "1.2.5",
+      "compatibility": "No API key required — stdlib Python (`requests` optional) via `uv run python` against Crossref, Semantic Scholar, Europe PMC, arXiv, Open Library and the doi.org Handle API; optional S2_API_KEY only raises Semantic Scholar's rate limit; offline runs return 'unverified' verdicts",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1436,7 +1436,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 342,
+      "body_lines": 353,
       "references": []
     },
     {
@@ -2499,7 +2499,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 358,
+      "body_lines": 359,
       "references": [
         "getting_started.md",
         "node.md",
@@ -3328,8 +3328,8 @@
       "domain": "domain-specific",
       "description": "Covers geospatial science across remote sensing, GIS, spatial analysis, and machine learning for earth observation — satellite imagery processing (Sentinel, Landsat, MODIS, SAR, hyperspectral), raster and DEM operations, spectral indices (NDVI/EVI/NDWI), spatial statistics, point cloud processing, network analysis, and cloud-native workflows (STAC, COG, Planetary Computer), with examples across Python, R, Julia, JavaScript, C++, Java, Go, and Rust. Use for remote sensing workflows, satellite/raster image classification, terrain/slope/hillshade analysis, spatial ML on earth-observation data, hydrological modeling, marine spatial analysis, or atmospheric science. For pure tabular vector work with no raster/EO aspect (plain GeoPandas sjoin, buffer, overlay, dissolve, choropleths) prefer the geopandas skill; for celestial-sphere astronomy coordinates (ICRS/galactic, FITS, WCS) prefer the astropy skill. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.1",
-      "compatibility": "No API key required. Local raster/vector/DEM analysis (rasterio, GeoPandas, numpy, scikit-learn) runs offline under `uv run python`, and the default cloud routes are keyless: OpenStreetMap Nominatim/Overpass, Natural Earth, and public STAC catalogs (Element 84 Earth Search, Planetary Computer with anonymous signing). Only Google Earth Engine and private cloud-storage buckets use credentials, and those are optional.",
+      "version": "1.1.2",
+      "compatibility": "No API key required. Local raster/vector/DEM analysis (rasterio, GeoPandas, numpy, scikit-learn) runs offline under `uv run python`, and the default cloud routes are keyless: OpenStreetMap Nominatim/Overpass, Natural Earth, public STAC catalogs (Element 84 Earth Search, Planetary Computer with anonymous signing) and ERA5 from Google's public ARCO-ERA5 Zarr store. Earth Engine, Copernicus CDS and private buckets use credentials, all optional.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -3339,7 +3339,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 452,
+      "body_lines": 455,
       "references": [
         "advanced-gis.md",
         "big-data.md",
@@ -3771,8 +3771,8 @@
       "domain": "finance-economics",
       "description": "Retrieves market and company data with no API key — daily OHLCV price history with splits and dividends (Yahoo Finance chart endpoint, unofficial), company fundamentals from SEC EDGAR XBRL (revenue, net income, EPS, shares), FX, crypto, commodity and macro series from FRED's public CSV — and computes technical indicators (SMA, EMA, RSI, MACD, Bollinger Bands) locally; an optional ALPHAVANTAGE_API_KEY adds the Alpha Vantage REST API (news sentiment, earnings transcripts, options, server-side indicators). Use when fetching stock prices (OHLCV), company fundamentals (income statement, EPS, P/E, market cap), forex rates, Bitcoin/crypto prices, oil/gas/gold prices, CPI or treasury yields for finance research, calculating technical indicators, building news-sentiment event studies, or when the Alpha Vantage API is named. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.2.0",
-      "compatibility": "No API key required. Prices come from Yahoo's unofficial chart endpoint, fundamentals from SEC EDGAR (a User-Agent with a contact email, no key), FX, crypto, commodity and macro series from FRED's public CSV, and indicators are computed locally (scripts/market_data.py, standard library only). An optional ALPHAVANTAGE_API_KEY adds Alpha Vantage's own endpoints.",
+      "version": "1.2.1",
+      "compatibility": "No API key required. Prices come from Yahoo's unofficial chart endpoint, fundamentals from SEC EDGAR (efts.sec.gov company search + data.sec.gov XBRL facts; no key, account or e-mail), FX, crypto, commodity and macro series from FRED's public CSV, and indicators are computed locally (scripts/market_data.py, standard library only). An optional ALPHAVANTAGE_API_KEY adds Alpha Vantage's own endpoints.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -3784,7 +3784,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 196,
+      "body_lines": 201,
       "references": [
         "commodities.md",
         "economic-indicators.md",
@@ -4490,8 +4490,8 @@
       "domain": "research-tools",
       "description": "Look up current research and scholarly papers by auto-routing each query to the best backend and saving every result with citations to sources/. Keyless by default — paper searches go to the built-in scholarly backend (Crossref, Europe PMC, arXiv and Semantic Scholar index records with real DOIs, venues and citation counts) and general questions to Claude's WebSearch and WebFetch; the Parallel Chat API and Perplexity sonar-pro-search via OpenRouter are optional backends used when their keys are set. Use when finding papers, gathering research data, verifying scientific claims, or assembling citation lists and unsure which search backend fits. For plain general web search or extracting content from a known URL prefer alterlab-parallel-web; to call Perplexity directly with a chosen Sonar model prefer alterlab-perplexity. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.2.1",
-      "compatibility": "No API key required. The scholarly backend is stdlib Python that queries Crossref, Europe PMC, arXiv and Semantic Scholar keyless; general web questions use Claude's WebSearch/WebFetch. Optional backends, used only when their keys are set or forced - PARALLEL_API_KEY (Parallel Chat API, openai package) and OPENROUTER_API_KEY (Perplexity, requests package) - send queries to those services.",
+      "version": "1.2.2",
+      "compatibility": "No API key required. The scholarly backend is stdlib Python that queries Crossref, Europe PMC, arXiv and (best effort) Semantic Scholar keyless; general web questions use Claude's WebSearch/WebFetch. Optional backends, used only when their keys are set or forced - PARALLEL_API_KEY (Parallel Chat API, openai package) and OPENROUTER_API_KEY (Perplexity, requests package) - send queries to those services.",
       "allowed_tools": [
         "Read",
         "Write",

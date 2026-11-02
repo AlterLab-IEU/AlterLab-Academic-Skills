@@ -47,7 +47,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `doi.org` | DOI resolver | 27 |
 | `drugbank.ca` | Drugs | 1 |
 | `dsmz.de` | other (review) | 4 |
-| `ebi.ac.uk` | EMBL-EBI | 17 |
+| `ebi.ac.uk` | EMBL-EBI | 18 |
 | `elixir.no` | Bioinformatics infra | 3 |
 | `ensembl.org` | Genomics | 3 |
 | `europepmc.org` | Literature (Europe PMC) | 1 |
@@ -75,6 +75,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `oncokb.org` | other (review) | 1 |
 | `openarchives.org` | OAI-PMH | 2 |
 | `opencitations.net` | Open citation index | 1 |
+| `openlibrary.org` | Book catalogue (Open Library) | 1 |
 | `openrouter.ai` | LLM backend (user key) | 17 |
 | `openstreetmap.org` | other (review) | 1 |
 | `opentargets.org` | Target–disease | 1 |
@@ -87,7 +88,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `sanger.ac.uk` | Wellcome Sanger | 7 |
 | `scientific-writer.local` | Local (non-network) | 1 |
 | `sec.gov` | other (review) | 2 |
-| `semanticscholar.org` | Scholarly index | 6 |
+| `semanticscholar.org` | Scholarly index | 7 |
 | `stlouisfed.org` | FRED economics | 14 |
 | `store` | Placeholder (commented docs) | 1 |
 | `string-db.org` | Protein interactions | 5 |
@@ -103,7 +104,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `yahoo.com` | other (review) | 1 |
 | `yok.gov.tr` | YÖK | 3 |
 
-_77 distinct domains._
+_78 distinct domains._
 
 ## Method
 
