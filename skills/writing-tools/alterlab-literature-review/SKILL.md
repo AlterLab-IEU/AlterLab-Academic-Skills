@@ -6,8 +6,8 @@ license: MIT
 compatibility: Needs network access to PubMed, arXiv, bioRxiv, and Semantic Scholar (searches follow the Entrez/Biopython and REST snippets in the references); verify_citations.py needs requests; PDF output requires pandoc and xelatex (check with --check-deps)
 metadata:
     skill-author: AlterLab
-    version: "1.1.1"
-    last_updated: "2026-09-23"
+    version: "1.1.2"
+    last_updated: "2026-11-02"
 ---
 
 # Literature Review
@@ -16,7 +16,7 @@ metadata:
 
 Conduct systematic, comprehensive literature reviews following rigorous academic methodology. Search multiple literature databases, synthesize findings thematically, verify all citations for accuracy, and generate professional output documents in markdown and PDF formats.
 
-This skill integrates with sibling skills for database access (`alterlab-pubmed`, `alterlab-biorxiv`, `alterlab-arxiv`, `alterlab-openalex`, `alterlab-gget`, `alterlab-bioservices`, `alterlab-datacommons`) and provides its own scripts for citation verification, result aggregation, and document generation.
+This skill integrates with sibling skills for database access (`alterlab-pubmed`, `alterlab-biorxiv`, `alterlab-arxiv`, `alterlab-research-lookup`, `alterlab-citation-graph`, `alterlab-gget`, `alterlab-bioservices`, `alterlab-datacommons`) and provides its own scripts for citation verification, result aggregation, and document generation.
 
 ## When to Use This Skill
 

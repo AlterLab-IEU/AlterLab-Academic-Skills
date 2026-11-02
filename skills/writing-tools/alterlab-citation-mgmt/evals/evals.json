@@ -46,7 +46,7 @@
     {
       "id": "near-miss-citation-verifier",
       "prompt": "An AI assistant helped draft my review and I'm worried some of the 80 references in refs.bib are hallucinated. Can you check that every one of them actually exists and flag any that were retracted?",
-      "expected_output": "Defers to alterlab-citation-verifier and does NOT invoke alterlab-citation-mgmt: the user needs an existence and retraction audit of every bibliography entry against scholarly APIs (Crossref, OpenAlex, Semantic Scholar, arXiv) with per-entry verdicts, not BibTeX generation, formatting, or field-completeness validation.",
+      "expected_output": "Defers to alterlab-citation-verifier and does NOT invoke alterlab-citation-mgmt: the user needs an existence and retraction audit of every bibliography entry against scholarly APIs (Crossref, Semantic Scholar, arXiv) with per-entry verdicts, not BibTeX generation, formatting, or field-completeness validation.",
       "assertions": [
         {"type": "should_not_trigger", "value": true},
         {"type": "output_contains", "value": "alterlab-citation-verifier"}

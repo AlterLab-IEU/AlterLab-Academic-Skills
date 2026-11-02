@@ -81,7 +81,7 @@ Expand the search via citation networks:
 
 1. **Forward citations** (papers citing key papers):
    - Use Google Scholar "Cited by"
-   - Use Semantic Scholar or OpenAlex APIs
+   - Use the Semantic Scholar or OpenCitations APIs (both keyless), or `alterlab-citation-graph`
    - Identifies newer research building on seminal work
 2. **Backward citations** (references from key papers):
    - Extract references from included papers
