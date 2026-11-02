@@ -1,13 +1,13 @@
 ---
 name: alterlab-research-lookup
-description: Look up current research and scholarly papers by auto-routing each query to the best backend and saving every result with citations to sources/. Keyless by default — paper searches go to the built-in scholarly backend (Crossref, Europe PMC, arXiv, Semantic Scholar, OpenAlex index records with real DOIs, venues and citation counts) and general questions to Claude's WebSearch and WebFetch; the Parallel Chat API and Perplexity sonar-pro-search via OpenRouter are optional backends used when their keys are set. Use when finding papers, gathering research data, verifying scientific claims, or assembling citation lists and unsure which search backend fits. For plain general web search or extracting content from a known URL prefer alterlab-parallel-web; to call Perplexity directly with a chosen Sonar model prefer alterlab-perplexity. Part of the AlterLab Academic Skills suite.
+description: Look up current research and scholarly papers by auto-routing each query to the best backend and saving every result with citations to sources/. Keyless by default — paper searches go to the built-in scholarly backend (Crossref, Europe PMC, arXiv and Semantic Scholar index records with real DOIs, venues and citation counts) and general questions to Claude's WebSearch and WebFetch; the Parallel Chat API and Perplexity sonar-pro-search via OpenRouter are optional backends used when their keys are set. Use when finding papers, gathering research data, verifying scientific claims, or assembling citation lists and unsure which search backend fits. For plain general web search or extracting content from a known URL prefer alterlab-parallel-web; to call Perplexity directly with a chosen Sonar model prefer alterlab-perplexity. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash WebSearch WebFetch
 license: MIT
-compatibility: No API key required. The scholarly backend is stdlib Python that queries Crossref, Europe PMC, arXiv, Semantic Scholar and OpenAlex keyless; general web questions use Claude's WebSearch/WebFetch. Optional backends, used only when their keys are set or forced - PARALLEL_API_KEY (Parallel Chat API, openai package) and OPENROUTER_API_KEY (Perplexity, requests package) - send queries to those services.
+compatibility: No API key required. The scholarly backend is stdlib Python that queries Crossref, Europe PMC, arXiv and Semantic Scholar keyless; general web questions use Claude's WebSearch/WebFetch. Optional backends, used only when their keys are set or forced - PARALLEL_API_KEY (Parallel Chat API, openai package) and OPENROUTER_API_KEY (Perplexity, requests package) - send queries to those services.
 metadata:
     skill-author: AlterLab
-    version: "1.2.0"
-    last_updated: "2026-10-22"
+    version: "1.2.1"
+    last_updated: "2026-11-02"
     credentials: "optional: PARALLEL_API_KEY (Parallel Chat API synthesized web research reports; paid), OPENROUTER_API_KEY (Perplexity sonar-pro-search synthesized academic answers via OpenRouter; paid). Neither is needed: the keyless scholarly backend and WebSearch/WebFetch do the lookup without them"
 ---
 
@@ -17,7 +17,7 @@ metadata:
 
 This skill provides real-time research information lookup with **intelligent backend routing**, and it works with no API key:
 
-- **Scholarly backend** (keyless, default for paper searches): `scripts/research_lookup.py` queries Crossref, Europe PMC, arXiv, Semantic Scholar and OpenAlex, merges the hits by DOI, and returns index records — title, authors, year, venue, DOI, each index's citation count, an abstract snippet — ordered by influence (or relevance for "recent/latest" requests). You read the records, open the papers you cite, and write the synthesis.
+- **Scholarly backend** (keyless, default for paper searches): `scripts/research_lookup.py` queries Crossref, Europe PMC, arXiv and Semantic Scholar, merges the hits by DOI, and returns index records — title, authors, year, venue, DOI, each index's citation count, an abstract snippet — ordered by influence (or relevance for "recent/latest" requests). You read the records, open the papers you cite, and write the synthesis.
 - **Keyless web lookup** (default for general questions — statistics, market data, news, documentation): you run the search with WebSearch, open the sources with WebFetch, and save the result to `sources/` (procedure below).
 - **Parallel Chat API** (`core` model, optional, `PARALLEL_API_KEY`): synthesized multi-source web research reports with inline citations (`https://api.parallel.ai/v1beta/chat/completions`).
 - **Perplexity sonar-pro-search** (optional, `OPENROUTER_API_KEY`): synthesized academic answers with citations.
@@ -215,9 +215,9 @@ No key is needed. Ask the user to set a key themselves (never paste it into chat
 ### API Specifications
 
 **Scholarly backend (keyless, `scripts/scholarly_backend.py`, stdlib only):**
-- Crossref `api.crossref.org/works` (`query.bibliographic`, `is-referenced-by-count`), Europe PMC REST (`TITLE_ABS:` query, `sort=CITED desc` in cited mode), arXiv `export.arxiv.org/api/query`, Semantic Scholar `graph/v1/paper/search` (keyless pool, one retry on 429), OpenAlex `works?search=` (metered per IP; skipped with a note on 429)
-- A source that fails is listed under "Sources that did not answer"; the rest still return. Every record is merged by DOI and keeps each index's citation count separately
-- Checked live 2026-10-22: "microplastics in human placenta" returned Ragusa et al. 2021, *Environment International*, DOI 10.1016/j.envint.2020.106274, first; `--terms '"testing effect" OR "retrieval practice"'` returned Roediger & Karpicke 2006, DOI 10.1111/j.1467-9280.2006.01693.x, first
+- Crossref `api.crossref.org/works` (`query.bibliographic`, `is-referenced-by-count`), Europe PMC REST (`TITLE_ABS:` query, `sort=CITED desc` in cited mode), arXiv `export.arxiv.org/api/query`, Semantic Scholar `graph/v1/paper/search` (shared keyless pool: backs off 2 + 4 s on 429, then reports it as not checked). OpenAlex is no longer queried: since 2026 its keyless search is metered per IP, so dependable use needed an account
+- A source that fails is listed under "Sources that did not answer" (a 429 there means not checked, not "no results"); the rest still return. Every record is merged by DOI and keeps each index's citation count separately
+- Checked live 2026-10-22 and again on 2026-11-02 without OpenAlex: "microplastics in human placenta" returned Ragusa et al. 2021, *Environment International*, DOI 10.1016/j.envint.2020.106274, first; `--terms '"testing effect" OR "retrieval practice"'` returned Roediger & Karpicke 2006, DOI 10.1111/j.1467-9280.2006.01693.x, first
 
 **Parallel Chat API (Beta):**
 - Endpoint: `POST https://api.parallel.ai/v1beta/chat/completions` (OpenAI SDK with `base_url="https://api.parallel.ai/v1beta"`)
@@ -364,7 +364,7 @@ Treat returned citations as leads: open and check any paper before citing it, be
 
 | Task | Skill |
 |------|------|
-| Scholarly index search (OpenAlex) | `alterlab-openalex` |
+| Citation network / co-citation map grown from a seed paper | `alterlab-citation-graph` |
 | PubMed search | `alterlab-pubmed` |
 | Zotero library / DOI-to-BibTeX management | `alterlab-pyzotero` |
 | Verify that the references you collected exist | `alterlab-citation-verifier` |
@@ -374,7 +374,7 @@ Treat returned citations as leads: open and check any paper before citing it, be
 ## Error Handling and Limitations
 
 **Known Limitations:**
-- Scholarly backend: keyword search, so a field's classic can rank below newer work — use `--terms` and `--rank cited`, and confirm known classics by DOI; Europe PMC citation counts cover only its own corpus; OpenAlex search is skipped when the shared per-IP budget is spent and Semantic Scholar's keyless pool can 429 (both reported, never silent)
+- Scholarly backend: keyword search, so a field's classic can rank below newer work — use `--terms` and `--rank cited`, and confirm known classics by DOI; Europe PMC citation counts cover only its own corpus; Semantic Scholar's shared keyless pool can 429 even after backoff (reported as not checked, never silent)
 - Parallel Chat API (core model): Complex queries may take up to 5 minutes
 - Perplexity: Information cutoff, may not access full text behind paywalls
 - All: Cannot access proprietary or restricted databases
@@ -403,7 +403,7 @@ Backend-key setup and specific error messages: see `references/troubleshooting.m
 
 This skill is the primary research interface with intelligent routing, keyless by default:
 
-- **Scholarly backend** (keyless): real index records from five open scholarly indexes for paper searches
+- **Scholarly backend** (keyless): real index records from four open scholarly indexes for paper searches
 - **Keyless web lookup**: WebSearch + WebFetch with saved, cited sources for everything else
 - **Parallel Chat API / Perplexity sonar-pro-search** (optional keys): synthesized reports and academic answers
 - **Manual override**: force any backend; a forced paid backend never silently falls back

@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """Keyless scholarly backend for research_lookup.py: index records, not a synthesis.
 
-Searches five open scholarly indexes that need no API key and merges the hits by DOI:
+Searches four open scholarly indexes that need no API key and merges the hits by DOI:
 
   - Crossref          api.crossref.org/works       every discipline; is-referenced-by-count
   - Europe PMC        ebi.ac.uk/europepmc REST     life sciences + preprints; abstracts
   - arXiv             export.arxiv.org/api/query   physics, CS, maths, q-bio preprints
   - Semantic Scholar  api.semanticscholar.org      every discipline, strong on CS venues;
-                                                   keyless pool 429s under load (one retry)
-  - OpenAlex          api.openalex.org/works       every discipline; skipped with a note when
-                                                   the shared per-IP keyless budget is spent
+                                                   keyless pool is shared and 429s under load
+                                                   (backs off 2 + 4 s, then "not checked")
 
-A source that fails is listed under "did not answer"; the others still return.
+A source that fails is listed under "did not answer"; the others still return. A
+rate-limited source was not checked, which is not the same as "no results".
+(OpenAlex was removed in v1.2.1: its keyless searches now share a small per-IP daily
+budget, so dependable use needed an account.)
 
 Each record keeps its title, first authors, year, venue, DOI, URL, the citation count each
 index reports, and (Europe PMC / arXiv) an abstract snippet. Claude reads the records, opens
@@ -38,7 +40,10 @@ from typing import Any, Callable, Dict, List, Optional
 
 USER_AGENT = "alterlab-research-lookup/1.2 (https://github.com/AlterLab-IEU)"
 TIMEOUT = 30
-SOURCES = ("crossref", "europepmc", "arxiv", "semanticscholar", "openalex")
+SOURCES = ("crossref", "europepmc", "arxiv", "semanticscholar")
+# Seconds to wait before each retry when a source answers HTTP 429. Semantic Scholar's keyless
+# pool is shared by every unauthenticated caller and sends no Retry-After.
+BACKOFF = {"semanticscholar": (2.0, 4.0), "crossref": (1.0, 2.0)}  # Crossref: one request in flight
 
 # Words that steer routing or describe the wanted output, not the topic. Dropped before the
 # query reaches the indexes, whose relevance ranking treats every word as a search term.
@@ -69,6 +74,18 @@ def _http_get(url: str) -> bytes:
         return resp.read()
 
 
+def _get_with_backoff(get: Callable[[str], bytes], url: str, delays: tuple) -> bytes:
+    """``get(url)``, retried after each delay while the source answers HTTP 429."""
+    for delay in delays:
+        try:
+            return get(url)
+        except urllib.error.HTTPError as exc:
+            if exc.code != 429:
+                raise
+            time.sleep(delay)
+    return get(url)
+
+
 def _doi(value: Optional[str]) -> str:
     if not value:
         return ""
@@ -90,7 +107,8 @@ def crossref(terms: str, n: int, get: Callable[[str], bytes], rank: str = "relev
         "filter": "type:journal-article,type:proceedings-article,type:posted-content,type:book-chapter",
         "select": "DOI,title,author,issued,container-title,is-referenced-by-count,type,URL",
     })
-    items = json.loads(get(f"https://api.crossref.org/works?{qs}"))["message"]["items"]
+    items = json.loads(_get_with_backoff(get, f"https://api.crossref.org/works?{qs}",
+                                         BACKOFF["crossref"]))["message"]["items"]
     out = []
     for it in items:
         year = ((it.get("issued") or {}).get("date-parts") or [[None]])[0][0]
@@ -154,35 +172,12 @@ def arxiv(terms: str, n: int, get: Callable[[str], bytes], rank: str = "relevanc
     return out
 
 
-def openalex(terms: str, n: int, get: Callable[[str], bytes], rank: str = "relevance") -> List[Dict[str, Any]]:
-    qs = urllib.parse.urlencode({
-        "search": terms, "per_page": n,
-        "select": "id,doi,title,publication_year,cited_by_count,primary_location,authorships"})
-    res = json.loads(get(f"https://api.openalex.org/works?{qs}"))
-    out = []
-    for w in res.get("results", []):
-        loc = (w.get("primary_location") or {}).get("source") or {}
-        out.append(_record(
-            title=w.get("title") or "", year=w.get("publication_year"),
-            authors=[(a.get("author") or {}).get("display_name", "")
-                     for a in (w.get("authorships") or [])[:3]],
-            venue=loc.get("display_name", ""), doi=_doi(w.get("doi")), url=w.get("id", ""),
-            cited_by={"openalex": w.get("cited_by_count", 0)}, found_in=["openalex"]))
-    return out
-
-
 def semanticscholar(terms: str, n: int, get: Callable[[str], bytes], rank: str = "relevance") -> List[Dict[str, Any]]:
     qs = urllib.parse.urlencode({
         "query": terms.replace('"', ""), "limit": min(n, 100),
         "fields": "title,year,venue,externalIds,citationCount,authors,url"})
     url = f"https://api.semanticscholar.org/graph/v1/paper/search?{qs}"
-    try:
-        res = json.loads(get(url))
-    except urllib.error.HTTPError as exc:
-        if exc.code != 429:
-            raise
-        time.sleep(2)  # the keyless pool is shared; one polite retry
-        res = json.loads(get(url))
+    res = json.loads(_get_with_backoff(get, url, BACKOFF["semanticscholar"]))
     out = []
     for p in res.get("data") or []:
         ext = p.get("externalIds") or {}
@@ -196,7 +191,7 @@ def semanticscholar(terms: str, n: int, get: Callable[[str], bytes], rank: str =
 
 
 SEARCHERS = {"crossref": crossref, "europepmc": europepmc, "arxiv": arxiv,
-             "semanticscholar": semanticscholar, "openalex": openalex}
+             "semanticscholar": semanticscholar}
 
 
 def _key(rec: Dict[str, Any]) -> str:
@@ -242,8 +237,8 @@ def search(query: str, limit: int = 10, sources: Optional[List[str]] = None,
         try:
             hits = SEARCHERS[name](terms, pool, get, rank)
         except urllib.error.HTTPError as exc:
-            why = ("" if exc.code != 429 else " (keyless daily budget spent)"
-                   if name == "openalex" else " (keyless pool rate-limited; retry later)")
+            why = (" (rate-limited after backoff: not checked, which is not 'no results'; "
+                   "retry later)" if exc.code == 429 else "")
             errors[name] = f"HTTP {exc.code}{why}"
             continue
         except (urllib.error.URLError, OSError, ValueError, KeyError, ET.ParseError) as exc:
@@ -305,7 +300,7 @@ def to_markdown(res: Dict[str, Any]) -> str:
 
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description="Keyless scholarly search (Crossref, Europe PMC, "
-                                 "arXiv, OpenAlex), merged by DOI.")
+                                 "arXiv, Semantic Scholar), merged by DOI.")
     ap.add_argument("query", help="topic or request; routing words are dropped")
     ap.add_argument("--limit", type=int, default=10)
     ap.add_argument("--sources", default=",".join(SOURCES),
@@ -315,8 +310,15 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--terms", help="exact search terms (skips the routing-word filter)")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args(argv)
-    res = search(args.query, args.limit, [s for s in args.sources.split(",") if s in SEARCHERS],
-                 terms=args.terms, rank=args.rank)
+    wanted = [s.strip() for s in args.sources.split(",") if s.strip()]
+    unknown = [s for s in wanted if s not in SEARCHERS]
+    if unknown or not wanted:
+        # An explicitly named source that is not available must not be answered by the others.
+        print(f"error: unknown source(s) {', '.join(unknown) or '(none given)'}; choose from "
+              f"{','.join(SOURCES)}" + (" (OpenAlex was removed: its keyless search is metered "
+                                        "per IP)" if "openalex" in unknown else ""), file=sys.stderr)
+        return 2
+    res = search(args.query, args.limit, wanted, terms=args.terms, rank=args.rank)
     print(json.dumps(res, indent=2, ensure_ascii=False) if args.json else to_markdown(res))
     return 0 if res["records"] else 1
 

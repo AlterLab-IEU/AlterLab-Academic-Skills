@@ -3,8 +3,8 @@
 Research Information Lookup Tool
 
 Routes research queries to the best backend. No API key is needed:
-  - scholarly (keyless, stdlib): Crossref, Europe PMC, arXiv, Semantic Scholar and OpenAlex
-    index records merged by DOI (scripts/scholarly_backend.py). Used for academic queries
+  - scholarly (keyless, stdlib): Crossref, Europe PMC, arXiv and Semantic Scholar index
+    records merged by DOI (scripts/scholarly_backend.py). Used for academic queries
     when OPENROUTER_API_KEY is not set, and for every query when no key is set.
   - Parallel Chat API (core model): general research, when PARALLEL_API_KEY is set
   - Perplexity sonar-pro-search (via OpenRouter): academic paper searches, when
@@ -324,7 +324,7 @@ class ResearchLookup:
     # ------------------------------------------------------------------
 
     def _scholarly_lookup(self, query: str) -> Dict[str, Any]:
-        """Index records (no synthesis) from Crossref, Europe PMC, arXiv, S2, OpenAlex."""
+        """Index records (no synthesis) from Crossref, Europe PMC, arXiv and Semantic Scholar."""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         res = scholarly_backend.search(query, limit=self.limit, terms=self.terms, rank=self.rank)
         model = "keyless/" + "+".join(s for s in res["queried"] if s not in res["errors"])
@@ -495,7 +495,7 @@ Remember: Quality over quantity. Prioritize influential, highly-cited papers fro
         if not self.force_backend:
             if not (self.parallel_available or self.perplexity_available):
                 print("[Research] No PARALLEL_API_KEY / OPENROUTER_API_KEY set: using the keyless "
-                      "scholarly backend (Crossref, Europe PMC, arXiv, Semantic Scholar, OpenAlex).",
+                      "scholarly backend (Crossref, Europe PMC, arXiv, Semantic Scholar).",
                       file=sys.stderr)
             if not self.is_academic(query):
                 print("[Research] Note: this is not a paper search. The scholarly backend returns "

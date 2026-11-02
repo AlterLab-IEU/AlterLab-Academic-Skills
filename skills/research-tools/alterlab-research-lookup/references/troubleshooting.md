@@ -25,10 +25,14 @@ in `scripts/research_lookup.py` is the full interface (batch, force-backend, JSO
   OPENROUTER_API_KEY"** — the user asked for a paid backend whose key is not set. Nothing was
   written. Ask them to set the key, or use `--force-backend scholarly` / the keyless web lookup
   and say which route answered.
-- **"Sources that did not answer: openalex: HTTP 429 (keyless daily budget spent)"** — OpenAlex
-  meters keyless search per IP; the other indexes still answered. Nothing to fix.
-- **"semanticscholar: HTTP 429"** — Semantic Scholar's shared keyless pool is busy; rerun later
-  or ignore (Crossref, Europe PMC and arXiv still answered).
+- **"semanticscholar: HTTP 429 (rate-limited after backoff: not checked ...)"** — Semantic
+  Scholar's shared keyless pool is busy; the backend already backed off 2 + 4 s. Rerun later, or
+  report the records from Crossref, Europe PMC and arXiv and say Semantic Scholar was not
+  checked (not "found nothing").
+- **"crossref: HTTP 429"** — Crossref's public pool allows one request in flight per IP, so
+  another process on the same network was querying it; rerun after a few seconds.
+- **"unknown source(s) openalex"** — OpenAlex was removed (its keyless search is metered per IP);
+  drop it from `--sources`. The script exits 2 rather than answer from the other indexes.
 - **"every source failed"** — no network to the indexes; check connectivity
   (`curl -sS "https://api.crossref.org/works?rows=1"`).
 - **"no records matched"** — the routing-word filter left too little or too much; pass

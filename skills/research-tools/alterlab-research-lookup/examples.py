@@ -8,7 +8,7 @@ Demonstrates:
 3. Batch query processing
 
 With no keys set, every query goes to the keyless scholarly backend (Crossref,
-Europe PMC, arXiv, Semantic Scholar, OpenAlex). With keys, the router (ResearchLookup)
+Europe PMC, arXiv, Semantic Scholar). With keys, the router (ResearchLookup)
 sends academic-keyword queries to Perplexity sonar-pro-search and everything else to
 the Parallel Chat API (core model); the preview below stubs both keys to show that.
 """
