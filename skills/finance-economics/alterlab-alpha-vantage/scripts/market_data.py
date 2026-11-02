@@ -285,7 +285,7 @@ def main(argv=None) -> int:
     p = sub.add_parser("fundamentals")
     p.add_argument("ticker")
     p.add_argument("--years", type=int, default=3)
-    p.add_argument("--user-agent", help="optional identity sent to SEC, e.g. \"Name you@uni.edu\" "
+    p.add_argument("--user-agent", help="optional identity sent to SEC, e.g. \"Name you@example.org\" "
                    "(default: EDGAR_IDENTITY / SEC_USER_AGENT / ALTERLAB_CONTACT_EMAIL, else none)")
     p = sub.add_parser("fred")
     p.add_argument("series")

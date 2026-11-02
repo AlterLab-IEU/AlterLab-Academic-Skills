@@ -42,19 +42,20 @@ Every skill's eval cases were answered once with the skill and once without it, 
 Claude Code CLI login with no API key, from 2026-10-15 to 2026-11-02. Method, per-domain
 results and limits: `docs/behavioral-results.md`.
 
-- 241 of 241 skills, 1,605 cases: 1,539 graded, 50 not runnable here (they need a key,
+- 241 of 241 skills, 1,598 cases: 1,532 graded, 50 not runnable here (they need a key,
   connector, host or program the runner lacks), 16 infrastructure errors or refusals.
-- With the skill, 1,358 of 1,539 graded cases passed (88.2%); without it, 820 of the
-  same cases (53.3%). The skill turned a bare FAIL into a PASS on 560 cases and the reverse
-  on 26. The skilled answer faces more checks than the bare one, grading reads only the final
+- With the skill, 1,351 of 1,532 graded cases passed (88.2%); without it, 816 of the
+  same cases (53.3%). The skill turned a bare FAIL into a PASS on 555 cases and the reverse
+  on 27. The skilled answer faces more checks than the bare one, grading reads only the final
   message, and each case ran once.
-- On the 1,535 cases with both a first and a final run, skilled PASS went from 1,115 to 1,309
+- On the 1,525 cases with both a first and a final run, skilled PASS went from 1,109 to 1,300
   (fixes to skills, evals and the harness in between; not a controlled comparison).
 - Every case the skill made worse after the last full round (32) was read by hand. The six
-  caused by missing routing rows are fixed and re-run; seven skill defects remain open and are
-  listed in the results page.
-- 13 cases ran while OpenAlex's shared keyless budget was used up; they are re-run after
-  its daily reset.
+  caused by missing routing rows, five more routing gaps, two timeouts that were skill defects
+  and the alpha-vantage contact prompt are fixed and re-run; six skill defects remain open and
+  are listed in the results page.
+- `alterlab-openalex`'s cases are not counted (the skill was removed), and every skill that
+  used OpenAlex was rewritten and re-run.
 
 ### Changed — behavior that can affect existing users
 
@@ -156,7 +157,8 @@ results and limits: `docs/behavioral-results.md`.
   needs an OpenAlex account. The suite must work without logging in to a third-party service.
   OpenAlex is removed from the other skills' scripts, instructions, evals and workflows as well.
   Replacements, all keyless: `alterlab-citation-verifier` resolves references against
-  Crossref / Semantic Scholar / arXiv (plus doi.org and the Retraction Watch flag via Crossref);
+  Crossref / Semantic Scholar / Europe PMC / arXiv, with Open Library for books (plus doi.org
+  and the Retraction Watch flag via Crossref);
   `alterlab-citation-graph` builds citation graphs from OpenCitations + Semantic Scholar;
   `alterlab-research-lookup` handles scholarly search and metadata. Routing rows that named
   `alterlab-openalex` now name research-lookup, citation-graph, pubmed, arxiv or
@@ -202,7 +204,27 @@ results and limits: `docs/behavioral-results.md`.
   deep-research (thesis supervision → thesis-supervisor), jaspar (protein-protein interaction
   networks → string-db), literature-review (DOI → BibTeX → citation-mgmt; manuscript prose →
   scientific-writing), scientific-slides (manuscript prose → scientific-writing) and uspto
-  (compound look-ups → pubchem).
+  (compound look-ups → pubchem); then aeon (it wrote its own Navier-Stokes solver instead of
+  naming fluidsim), datacommons (clinical trials → clinicaltrials; bibliometrics →
+  research-lookup), histolab (single-cell .h5ad → scanpy), primekg (one molecule's SMILES and
+  descriptors → rdkit) and tiledbvcf (differential expression → pydeseq2).
+- chembl's broad activity queries (EGFR IC50 ≤ 100 nM is 10,665 records) timed out iterating
+  the client 20 records per request; the skill now counts first and pages the REST API at
+  `limit=1000`. biorxiv's `--author` scanned a year of bioRxiv (about 1,400 requests) and timed
+  out; it now asks Europe PMC's server-side author filter (seconds), with the scan kept as
+  `--author-source scan`.
+- Services that need a login in practice (found by a probe of every host on a default path):
+  Semantic Scholar's shared keyless search pool is exhausted in practice, so it is best-effort
+  in citation-verifier and research-lookup, and a reference with no DOI can be TF on Crossref
+  plus Europe PMC, arXiv or Open Library; geomaster's only ERA5 route was the Copernicus CDS
+  (an account), now Google's public ARCO-ERA5 Zarr store read anonymously; pyhealth assumed
+  credentialed MIMIC-IV, now the open MIMIC-IV / eICU demos by default; alpha-vantage's
+  fundamentals needed a contact e-mail for www.sec.gov, now contact-free efts.sec.gov and
+  data.sec.gov.
+- citation-verifier checked a bibliography's heading line and intro paragraph as references;
+  once TF no longer waited on Semantic Scholar they would have been reported as fabricated. Text
+  that is not a reference is now skipped and counted apart, and a thin free-form entry can be
+  unverified at most.
 
 ### Fixed — documentation
 

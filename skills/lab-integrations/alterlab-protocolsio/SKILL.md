@@ -24,7 +24,7 @@ The protocols.io API needs a Bearer token even for public content (`status_code`
 1. **Discover protocols and DOIs through Crossref** — every published protocols.io version is registered under DOI prefix `10.17504`:
    ```bash
    curl -s "https://api.crossref.org/works?filter=prefix:10.17504\
-&query.bibliographic=CRISPR+Cas9&rows=10&select=DOI,title,URL&mailto=you@uni.edu"
+&query.bibliographic=CRISPR+Cas9&rows=10&select=DOI,title,URL&mailto=you@example.org"
    ```
    (Verified keyless, HTTP 200, 2026-10-22; add your email in `mailto=` for the polite pool.)
 2. **Read a public protocol's full content** from the public web, no token:

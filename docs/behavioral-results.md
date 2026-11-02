@@ -5,9 +5,10 @@ and without it, and graded against each case's assertions and rubric. The method
 [`evals.md`](evals.md); the five-task benchmark, which is scored without an LLM judge, is
 reported separately in [`benchmark-results.md`](benchmark-results.md).
 
-> **Status, 2026-11-02.** Every skill has a final run. Thirteen cases ran while OpenAlex's
-> shared daily budget was used up (see [Known limits](#known-limits)); they will be re-run after
-> the budget resets and the generated blocks on this page regenerated.
+> **Status, 2026-11-02.** Every one of the 241 skills has a final run made at its current
+> content. `alterlab-openalex` was removed in 4.0.0 (OpenAlex now needs an account for real
+> use), so its cases are no longer counted, and every skill that used OpenAlex was rewritten and
+> re-run (see [Known limits](#known-limits)).
 
 A PASS means an answer met the checks its case's author wrote, on this runner, on the day it
 ran. It does not show research correctness beyond what those checks ask, and it is not a
@@ -53,12 +54,17 @@ case was run again. Two runs per case are used:
   skills). Those rounds are the result folders `after4`, `sweep183`, `final59`, `retest1`,
   `final_a`, `final_b` and `final_c` under `eval-results/`, plus `final_d` (one re-run, with a
   900 s timeout, of the cases whose last run was an infrastructure error, a timeout or
-  inconclusive) and `final_e` (a full re-run of five skills after the routing fix described in
-  [Where the skill made answers worse](#where-the-skill-made-answers-worse)).
+  inconclusive), `final_e` (a full re-run of five skills after the routing fix described in
+  [Where the skill made answers worse](#where-the-skill-made-answers-worse)), `final_f` (one
+  more try, on an idle runner, of three light look-ups that had timed out only under load), and
+  `final_g`, `final_h` and `final_i` (full re-runs of every skill changed by the removal of
+  OpenAlex, the login fixes and the later routing and timeout fixes).
   A refusal that runs before commit `8ffe74c` recorded as INFRA_ERROR (the CLI's newer
   acceptable-use wording) is counted as REFUSED, which is how the runner records it now. A run counts only if the commit it
   recorded contains `d7d26cc`; collect-only runs, which call no judge, are skipped. Each case's
-  final run comes from whichever commit it was last run at, so the final results mix commits.
+  final run is its latest run made at the skill's current content (the skill's files outside
+  `evals/` identical to this release); every counted case has one. Cases of skills no longer in
+  the suite are left out.
 - **First run (baseline):** for the 59 priority skills, the case's earliest run in the
   `priority` round of 2026-10-15, made before the isolation fix; for the other skills, its
   earliest run in `sweep183`.
@@ -111,11 +117,11 @@ The tables use these terms:
 **Headline numbers (2026-11-02):**
 
 <!-- BEGIN generated:summary -->
-- **242 of 242 skills** have a final run, covering **1,605 cases**.
-- **1,539 cases graded** (skilled arm PASS or FAIL); 50 not runnable here; 16 skilled-arm outcomes that are neither (infrastructure error, refusal, inconclusive).
-- **Skilled arm: 1,358 of 1,539 graded cases passed (88.2%).** Bare arm on the same 1,539 cases: 820 passed (53.3%).
-- **The skill helped on 560 cases and hurt on 26.**
-- Claude Code CLI version, by number of final cases answered: 2.1.300 (131), 2.1.308 (216), 2.1.309 (658), 2.1.316 (600).
+- **241 of 241 skills** have a final run, covering **1,598 cases**.
+- **1,532 cases graded** (skilled arm PASS or FAIL); 50 not runnable here; 16 skilled-arm outcomes that are neither (infrastructure error, refusal, inconclusive).
+- **Skilled arm: 1,351 of 1,532 graded cases passed (88.2%).** Bare arm on the same 1,532 cases: 816 passed (53.3%).
+- **The skill helped on 555 cases and hurt on 27.**
+- Claude Code CLI version, by number of final cases answered: 2.1.300 (114), 2.1.308 (208), 2.1.309 (598), 2.1.316 (678).
 <!-- END generated:summary -->
 
 By domain:
@@ -123,25 +129,25 @@ By domain:
 <!-- BEGIN generated:domain-table -->
 | Domain | Skills | Cases | Graded | Skilled PASS | Bare PASS (same cases) | Skill helped / hurt | Not runnable here | Infra / inconclusive |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| bioinformatics | 38 | 224 | 220 | 205 (93%) | 117 (53%) | 88 / 1 | 1 | 3 |
+| bioinformatics | 38 | 224 | 220 | 204 (93%) | 117 (53%) | 87 / 1 | 1 | 3 |
 | cheminformatics | 12 | 74 | 69 | 62 (90%) | 28 (41%) | 34 / 1 | 5 | 0 |
-| clinical-research | 7 | 48 | 47 | 44 (94%) | 23 (49%) | 21 / 0 | 0 | 1 |
-| core | 10 | 80 | 80 | 66 (82%) | 40 (50%) | 27 / 1 | 0 | 0 |
-| data-science | 22 | 142 | 135 | 121 (90%) | 70 (52%) | 52 / 1 | 0 | 7 |
-| databases | 39 | 249 | 237 | 210 (89%) | 150 (63%) | 66 / 6 | 10 | 2 |
+| clinical-research | 7 | 48 | 46 | 43 (93%) | 24 (52%) | 19 / 0 | 0 | 2 |
+| core | 10 | 80 | 79 | 67 (85%) | 41 (52%) | 25 / 0 | 0 | 1 |
+| data-science | 22 | 142 | 135 | 121 (90%) | 69 (51%) | 52 / 0 | 0 | 7 |
+| databases | 38 | 242 | 231 | 208 (90%) | 146 (63%) | 68 / 7 | 10 | 1 |
 | document-tools | 3 | 19 | 19 | 18 (95%) | 9 (47%) | 9 / 0 | 0 | 0 |
-| domain-specific | 18 | 120 | 115 | 104 (90%) | 62 (54%) | 42 / 0 | 4 | 1 |
+| domain-specific | 18 | 120 | 116 | 106 (91%) | 63 (54%) | 43 / 0 | 4 | 0 |
 | faculty-life | 6 | 39 | 39 | 37 (95%) | 20 (51%) | 17 / 0 | 0 | 0 |
-| finance-economics | 7 | 59 | 57 | 45 (79%) | 35 (61%) | 11 / 3 | 2 | 0 |
+| finance-economics | 7 | 59 | 57 | 45 (79%) | 35 (61%) | 10 / 2 | 2 | 0 |
 | lab-integrations | 9 | 77 | 74 | 64 (86%) | 29 (39%) | 37 / 2 | 3 | 0 |
 | methodology | 3 | 19 | 19 | 12 (63%) | 7 (37%) | 7 / 2 | 0 | 0 |
-| research-tools | 14 | 107 | 92 | 77 (84%) | 57 (62%) | 23 / 3 | 15 | 0 |
+| research-tools | 14 | 107 | 91 | 73 (80%) | 56 (62%) | 21 / 4 | 15 | 1 |
 | social-science-workflow | 17 | 91 | 91 | 89 (98%) | 55 (60%) | 36 / 2 | 0 | 0 |
-| turkish-academia | 13 | 93 | 87 | 77 (89%) | 41 (47%) | 37 / 1 | 6 | 0 |
+| turkish-academia | 13 | 93 | 87 | 76 (87%) | 41 (47%) | 36 / 1 | 6 | 0 |
 | visualization | 9 | 63 | 60 | 54 (90%) | 31 (52%) | 25 / 2 | 3 | 0 |
-| workflows | 1 | 7 | 7 | 6 (86%) | 3 (43%) | 3 / 0 | 0 | 0 |
-| writing-tools | 14 | 94 | 91 | 67 (74%) | 43 (47%) | 25 / 1 | 1 | 2 |
-| **All** | **242** | **1605** | **1539** | **1358 (88%)** | **820 (53%)** | **560 / 26** | **50** | **16** |
+| workflows | 1 | 7 | 7 | 5 (71%) | 3 (43%) | 3 / 1 | 0 | 0 |
+| writing-tools | 14 | 94 | 92 | 67 (73%) | 42 (46%) | 26 / 2 | 1 | 1 |
+| **All** | **241** | **1598** | **1532** | **1351 (88%)** | **816 (53%)** | **555 / 27** | **50** | **16** |
 <!-- END generated:domain-table -->
 
 *Cases* counts every case with a final run, and *Graded* those with a PASS or FAIL in the
@@ -158,7 +164,7 @@ prompts; none of the seven dynamic workflows was run.
   cases did.
 - Most of that gap is on cases where the skill should do the task. On near-miss cases, where the
   right answer is to hand the request to a sibling skill, both arms passed most of the time.
-- Hurt cases are few next to helped ones (26 against 560). Many of them failed only a check
+- Hurt cases are few next to helped ones (27 against 555). Many of them failed only a check
   that the bare arm is never given; they still count as failures. See
   [Where the skill made answers worse](#where-the-skill-made-answers-worse).
 - Methodology has the lowest skilled pass rate in this snapshot. It, document-tools and
@@ -179,7 +185,7 @@ cause:
 | Check too strict | 8 | the answer was right, but a required phrase or a narrow rubric missed it |
 | One-off model slip | 7 | an error in that answer that the skill's text does not explain |
 | Runner environment | 2 | a cut-off reply, or a sibling skill the single-skill harness cannot load |
-| Outside service | 1 | OpenAlex refused the search (its shared daily budget, see [Known limits](#known-limits)) |
+| Outside service | 1 | OpenAlex refused the search (its shared daily budget; OpenAlex has since been removed) |
 | Judge error | 1 | the rubric verdict contradicts the answer, and a behavior check on the same point passed |
 
 Two things inflate the hurt count. In 17 of the 32, the skilled answer passed the same rubric
@@ -196,9 +202,32 @@ supervision), `alterlab-jaspar` (protein-protein interaction networks), `alterla
 All six now pass with the skill. No other case in those five skills got worse because of the
 change: one `alterlab-uspto` case failed on the re-run only because the answer wrote the patent
 number as "10,902,286" where the check wanted "10902286"; the check now takes either spelling of
-the same number, and the case passes. That is why the final hurt count is 26, not 32.
+the same number, and the case passes.
 
-**Known, not yet fixed.** The other seven skill defects are open:
+A static check of every near-miss eval against its skill's routing table then found five more
+skills that never named the expected sibling; one of them, `alterlab-aeon`, had just failed
+the same way (it wrote its own Navier-Stokes solver instead of naming `alterlab-fluidsim`). Rows
+were added to `alterlab-aeon`, `alterlab-datacommons`, `alterlab-histolab`, `alterlab-primekg`
+and `alterlab-tiledbvcf`. Two timeouts turned out to be skill defects too: `alterlab-chembl`
+iterated 10,665 activity records 20 at a time (it now counts first and pages the REST API at
+1,000), and `alterlab-biorxiv` scanned a year of bioRxiv to find one author (it now asks Europe
+PMC's server-side author filter). `alterlab-alpha-vantage` no longer stops to ask for a contact
+e-mail: its SEC fundamentals now come from contact-free endpoints. All of these skills were
+re-run.
+
+Those last re-runs (`final_g` to `final_i`, 239 cases in the 33 skills changed by the removal of
+OpenAlex and the fixes above) moved 12 cases from not passing to PASS and 17 from PASS to not
+passing. Of the 17, five failed only a required phrase and one only a behavior check while the
+rubric passed, five ended in a timeout or infrastructure error, and six failed the rubric. Four
+of those six were read by hand and look reasonable (a seed paper asked for when the prompt
+gives none, a correct hand-off, a correct import file, a correct TR Dizin result table); the
+other two, in `alterlab-alpha-vantage` (daily prices) and `alterlab-denario`, were not
+investigated. The rewritten `build_graph.py`
+finishes in under 20 s on the seeds tried, including a paper with about 73,000 citations, so the
+`alterlab-citation-graph` timeout comes from what that answer chose to run, not from the script.
+With one run per case, part of this movement in both directions is run-to-run variation.
+
+**Known, not yet fixed.** Six skill defects from the triage are open:
 
 - Three near-miss answers in `alterlab-preregistration-discipline`, `alterlab-ssci-design-gate`
   and `alterlab-arxiv` named the right sibling and then did part of the work anyway. The cause
@@ -206,8 +235,6 @@ the same number, and the case passes. That is why the final hurt count is 26, no
   which is in every skill, so changing it needs its own re-run.
 - `alterlab-hypothesis-gen` handed an open brainstorming request to its sibling with no ideas of
   its own; the bare model simply brainstormed.
-- `alterlab-alpha-vantage` stopped to ask for a contact e-mail before reading SEC EDGAR, which
-  asks for one in the User-Agent; the bare model went ahead without.
 - `alterlab-datacommons` called an empty coordinate look-up a keyless limit, where a rounded
   coordinate may resolve.
 
@@ -220,9 +247,9 @@ answers, assertions, `requires` tags), and in the harness itself (see the
 and the final run on the cases that have both.
 
 <!-- BEGIN generated:before-after -->
-- **1,535 cases** have both a first run and a final run.
-- Skilled arm PASS: **1,115 → 1,309**. Bare arm PASS: **795 → 804**.
-- Skilled-arm outcome changes: FAIL → PASS 234, PASS → FAIL 48, FAIL → NOT_RUN 37, INFRA_ERROR → PASS 16, PASS → NOT_RUN 9, INFRA_ERROR → FAIL 8, FAIL → INFRA_ERROR 3, PASS → INFRA_ERROR 3, NOT_RUN → PASS 3, INFRA_ERROR → NOT_RUN 1, INCONCLUSIVE → PASS 1.
+- **1,525 cases** have both a first run and a final run.
+- Skilled arm PASS: **1,109 → 1,300**. Bare arm PASS: **788 → 798**.
+- Skilled-arm outcome changes: FAIL → PASS 234, PASS → FAIL 52, FAIL → NOT_RUN 37, INFRA_ERROR → PASS 17, PASS → NOT_RUN 9, INFRA_ERROR → FAIL 8, FAIL → INFRA_ERROR 4, PASS → INFRA_ERROR 3, NOT_RUN → PASS 3, INFRA_ERROR → NOT_RUN 1, INCONCLUSIVE → PASS 1.
 <!-- END generated:before-after -->
 
 **This is not a controlled comparison.** Read it as a record of what changed, not as a measure
@@ -305,12 +332,13 @@ A case can need more than one thing, so it can appear in more than one row.
   and were graded without live access to the site.
 - **`bcftools` not installed.** `bcftools` is not installed on the runner; the case that needs
   it is not runnable here.
-- **OpenAlex budget.** *Status 2026-11-02:* OpenAlex's free daily budget for requests without
-  a key ($0.10 a day, shared by everyone on the same IP address; single-work look-ups by DOI
-  stay free) ran out during the final round. In 13 final cases an answer reports it. With the
-  skill, 9 of them still passed by falling back to Crossref, Semantic Scholar or Europe PMC,
-  and 4 failed, all in `alterlab-openalex`. Those 13 cases will be re-run after the daily
-  reset.
+- **OpenAlex removed; Semantic Scholar search best-effort.** OpenAlex's budget for requests
+  without a key ($0.10 a day, shared by everyone on the same IP address) ran out during the
+  final round, so real use needs an account. 4.0.0 removes `alterlab-openalex` and every use of
+  OpenAlex, and the skills that used it were rewritten on keyless sources and re-run. A probe of
+  every host on the skills' default paths then found Semantic Scholar's shared keyless search
+  pool exhausted from this runner too; its search is now best-effort and never a precondition.
+  Answers in the final runs still report Semantic Scholar rate limits on some look-ups.
 - **Denied tool calls.** The arms get exactly the skill's `allowed-tools`. In the final set after
   `final_c`, 429 of 1,529 answered skilled runs had at least one tool call denied, mostly commands that began with
   `cd …;`, which patterns such as `Bash(python:*)` do not match. Arms usually retried with a
