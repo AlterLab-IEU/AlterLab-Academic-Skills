@@ -3,11 +3,12 @@
 A 24-entry bibliography submitted for a citation-existence audit. It is a deliberate
 fixture: most entries are real, and a handful seed the TF/PAC/IH taxonomy and a
 retraction so the verifier has something to catch. The verifier should resolve each entry
-against Crossref / Semantic Scholar / arXiv (plus doi.org for DOIs) and return a
-per-entry verdict. Expected verdicts were re-checked against the live APIs on 2026-09-23;
-entries marked TF may come back `unverified` when Semantic Scholar is rate-limited (not
-checked), and must then go through the WebSearch fallback. So may the real books (6, 14,
-15), or as PAC, when Crossref holds only a later edition or a book review of them.
+against Crossref / Semantic Scholar / Europe PMC / arXiv (Open Library for books, doi.org
+for DOIs) and return a per-entry verdict. Expected verdicts were re-checked against the live
+APIs on 2026-09-23 and 2026-11-02; entries marked TF come back `unverified` only when no index
+besides Crossref answered, and must then go through the WebSearch fallback. The real books
+(6, 14, 15) are matched through Open Library; when it does not answer they may come back PAC
+or unverified, because Crossref holds only a later edition or a book review of them.
 
 1. Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, L., & Polosukhin, I. (2017). Attention is all you need. *Advances in Neural Information Processing Systems, 30*. [REAL — expected VERIFIED]
 

@@ -1,6 +1,6 @@
 ---
 name: cite-check
-description: Verify that citations actually exist and that the claims they support are faithful to the cited source. Runs deterministic existence checks (Crossref / Semantic Scholar / arXiv) plus a claim-faithfulness pass via the alterlab-citation-verifier skill.
+description: Verify that citations actually exist and that the claims they support are faithful to the cited source. Runs deterministic existence checks (Crossref / Semantic Scholar / Europe PMC / arXiv) plus a claim-faithfulness pass via the alterlab-citation-verifier skill.
 argument-hint: [path to .bib / manuscript, or pasted references]
 disable-model-invocation: true
 allowed-tools: Read Write Edit Bash WebFetch WebSearch
@@ -18,7 +18,8 @@ Steps:
    path, or a pasted list). If nothing was given, ask for the references or file.
 2. **Existence check** — Run
    `${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/scripts/verify_citations.py` over the references. It
-   resolves each one against Crossref, Semantic Scholar, and arXiv (no API key
+   resolves each one against Crossref, Semantic Scholar, Europe PMC and arXiv, with
+   Open Library for books (no API key
    required; an optional `S2_API_KEY` raises Semantic Scholar's rate limit),
    checks DOI registration at doi.org, matches title and authors with the difflib
    `SequenceMatcher` ratio (≥ 0.70), and maps each entry to the TF / PAC / IH / PH

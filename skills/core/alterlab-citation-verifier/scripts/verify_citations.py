@@ -2,9 +2,9 @@
 """verify_citations.py — Existence-verify a bibliography against public scholarly APIs.
 
 Given a bibliography (BibTeX, a list of DOIs/arXiv IDs, or free-form references),
-this checks whether each entry ACTUALLY EXISTS by querying three public scholarly
-APIs (Crossref, Semantic Scholar, arXiv), plus the doi.org Handle API to confirm
-whether a cited DOI is registered at all. It resolves DOI / arXiv
+this checks whether each entry ACTUALLY EXISTS by querying public scholarly indexes
+(Crossref, Semantic Scholar, Europe PMC, arXiv, and Open Library for books), plus the
+doi.org Handle API to confirm whether a cited DOI is registered at all. It resolves DOI / arXiv
 identifiers, fuzzy-matches title and authors (difflib SequenceMatcher ratio —
 Ratcliff/Obershelp, not edit-distance — default threshold 0.70), flags retractions
 (Crossref ``updated-by`` / ``update-to`` records, which since 2025 include the
@@ -17,9 +17,13 @@ Design constraints:
   never logged. (OpenAlex was removed in v1.3.0: its keyless searches now draw on a
   small per-IP daily budget, so real use needed an account.)
 - Semantic Scholar's keyless pool is shared by every unauthenticated caller and often
-  answers HTTP 429. The script backs off (exponentially) and, if the pool is still
-  busy, records Semantic Scholar as *not checked* for that entry and pauses it briefly
-  for the rest of the run. A rate-limited source is never read as "not found".
+  answers HTTP 429 — its *search* endpoint almost always does from busy networks, while
+  DOI / arXiv-ID lookups mostly answer. The script backs off and, if the pool is still
+  busy, records Semantic Scholar as *not checked* for that entry and pauses that endpoint
+  (search and lookups separately) for the rest of the run. A rate-limited source is
+  never read as "not found", and no verdict depends on Semantic Scholar search: a Total
+  Fabrication without an identifier needs Crossref plus at least one other index that
+  actually answered (Semantic Scholar, Europe PMC, arXiv or Open Library).
 - NO third-party deps required: uses ``requests`` if present, else the stdlib
   (``urllib``). Mirrors the integrity_verification_agent taxonomy exactly (see
   ../SKILL.md and ../../alterlab-research-pipeline/agents/integrity_verification_agent.md).
@@ -44,7 +48,8 @@ Usage:
                                           [--out report.json] [--offline]
   uv run python verify_citations.py - < refs.bib        # read stdin
 
-Optional environment: S2_API_KEY (Semantic Scholar, x-api-key header);
+Optional environment: S2_API_KEY (Semantic Scholar, x-api-key header: raises its shared
+keyless rate limit);
 ALTERLAB_CONTACT_EMAIL (opt-in contact address for Crossref's polite pool).
 A rate-limited source (HTTP 429) is reported in ``source_status`` and
 ``summary.notes`` as not checked; it never counts as "not found".
@@ -106,7 +111,7 @@ from typing import Any, Callable, Optional, Sequence
 # HTTP layer — prefer requests, fall back to urllib (stdlib). Keys optional.  #
 # --------------------------------------------------------------------------- #
 
-TOOL_VERSION = "1.3.0"
+TOOL_VERSION = "1.4.0"
 # Contact email for Crossref's polite pool: opt-in (--mailto or ALTERLAB_CONTACT_EMAIL). With
 # none, requests carry no address and use the public pool; no default address is ever sent.
 DEFAULT_MAILTO = os.environ.get("ALTERLAB_CONTACT_EMAIL", "").strip()
@@ -137,19 +142,33 @@ S2_API_KEY = (os.environ.get("S2_API_KEY") or os.environ.get("SEMANTIC_SCHOLAR_A
 # between calls; Semantic Scholar's key tier is 1 request/second; Crossref's public
 # pool allows 5 requests/s with one in flight (checked 2026-11-02).
 MIN_INTERVAL = {"export.arxiv.org": 3.0, "arxiv.org": 3.0, "api.semanticscholar.org": 1.0,
-                "api.crossref.org": 0.25}
+                "api.crossref.org": 0.25, "openlibrary.org": 1.0, "www.ebi.ac.uk": 0.1}
 _LAST_CALL: dict[str, float] = {}
 
-# Per-host retry policy for HTTP 429 / 5xx: (retries, base backoff in seconds), doubling
-# per attempt. Semantic Scholar's keyless pool is shared by every unauthenticated caller
-# and sends no Retry-After, so it gets the longest backoff (2 + 4 + 8 s); Crossref's
-# public pool answers 429 whenever a second request from the same IP is in flight.
-RETRY_POLICY = {"api.semanticscholar.org": (3, 2.0), "api.crossref.org": (3, 1.0)}
-# After a host's retries are spent on HTTP 429, calls to it fail fast for this long (s),
+# Retry policy for HTTP 429 / 5xx per rate-limit key (a host, or host + "/search" for
+# Semantic Scholar search): (retries, base backoff in seconds), doubling per attempt.
+# Semantic Scholar's keyless pool is shared by every unauthenticated caller and sends no
+# Retry-After, so lookups get the longest backoff (2 + 4 + 8 s). Its search pool is
+# usually spent from busy networks (checked 2026-11-02: 429 on every try for minutes), so
+# search gets one retry and then a long pause. Crossref's public pool answers 429
+# whenever a second request from the same IP is in flight.
+RETRY_POLICY = {"api.semanticscholar.org": (3, 2.0), "api.semanticscholar.org/search": (1, 2.0),
+                "api.crossref.org": (3, 1.0)}
+# After a key's retries are spent on HTTP 429, calls to it fail fast for this long (s),
 # so one busy shared pool cannot stall a long bibliography. Each skipped call is
 # reported as rate-limited (not checked), never as "not found".
-RATE_LIMIT_COOLDOWN = {"api.semanticscholar.org": 30.0}
+RATE_LIMIT_COOLDOWN = {"api.semanticscholar.org": 30.0, "api.semanticscholar.org/search": 300.0}
 _COOLDOWN_UNTIL: dict[str, float] = {}
+
+
+def _rate_key(url: str) -> str:
+    """Rate-limit bucket for a URL: its host, with Semantic Scholar search kept separate
+    from its lookups (they are limited separately, and search is far more often refused)."""
+    parts = urllib.parse.urlsplit(url)
+    host = parts.hostname or ""
+    if host == "api.semanticscholar.org" and parts.path.rstrip("/").endswith("/search"):
+        return host + "/search"
+    return host
 
 try:  # pragma: no cover - environment dependent
     import requests as _requests  # type: ignore
@@ -207,6 +226,8 @@ _RATE_LIMIT_HINTS = {
                                 "later or set the optional S2_API_KEY"),
     "api.crossref.org": ("Crossref rate limit: not checked; slow down (public pool 5 req/s with one "
                          "request in flight; polite pool with --mailto 10 req/s)"),
+    "www.ebi.ac.uk": "Europe PMC rate limit: not checked; retry later",
+    "openlibrary.org": "Open Library rate limit: not checked; retry later",
 }
 
 
@@ -225,13 +246,15 @@ def _http_get(url: str, mailto: str, accept: str = "application/json",
     SourceError, so the entry records that source as not checked.
     """
     host = urllib.parse.urlsplit(url).hostname or ""
-    if time.monotonic() < _COOLDOWN_UNTIL.get(host, 0.0):
+    key = _rate_key(url)
+    if time.monotonic() < _COOLDOWN_UNTIL.get(key, 0.0):
         raise SourceError("HTTP 429 — " + _RATE_LIMIT_HINTS.get(host, "rate limited; retry later"))
-    retries, base = RETRY_POLICY.get(host, (RETRIES, BACKOFF))
+    retries, base = RETRY_POLICY.get(key, (RETRIES, BACKOFF))
     headers = {"User-Agent": _user_agent(mailto), "Accept": accept}
     headers.update(extra_headers or {})
     last_exc: Optional[Exception] = None
     wait_hint = 0.0  # a short Retry-After the server asked for
+    reset_retried = False  # one connection reset is retried before "offline" is concluded
     for attempt in range(retries + 1):
         _throttle(url)
         try:
@@ -267,8 +290,10 @@ def _http_get(url: str, mailto: str, accept: str = "application/json",
         except urllib.error.URLError as exc:
             if isinstance(exc.reason, (socket.timeout, TimeoutError)):
                 last_exc = exc  # slow source, not an offline machine
-            else:
+            elif reset_retried or attempt >= retries:
                 raise NetworkUnavailable(str(exc.reason)) from exc  # DNS / no route
+            else:
+                reset_retried, last_exc = True, exc  # a dropped connection: try once more
         except (socket.timeout, TimeoutError) as exc:
             last_exc = exc
         except ValueError as exc:  # malformed JSON body
@@ -280,16 +305,18 @@ def _http_get(url: str, mailto: str, accept: str = "application/json",
             if "Timeout" in name:
                 last_exc = exc
             elif any(k in name for k in ("Connection", "DNS", "SSL")):
-                raise NetworkUnavailable(str(exc)) from exc
+                if reset_retried or attempt >= retries:
+                    raise NetworkUnavailable(str(exc)) from exc
+                reset_retried, last_exc = True, exc
             else:
                 last_exc = exc
         if attempt < retries:
-            delay = base * (2 ** attempt) if host in RETRY_POLICY else BACKOFF * (attempt + 1)
+            delay = base * (2 ** attempt) if key in RETRY_POLICY else BACKOFF * (attempt + 1)
             time.sleep(max(delay, wait_hint))
     code = getattr(last_exc, "status", None) or getattr(last_exc, "code", None)
     if code == 429:
-        if host in RATE_LIMIT_COOLDOWN:
-            _COOLDOWN_UNTIL[host] = time.monotonic() + RATE_LIMIT_COOLDOWN[host]
+        if key in RATE_LIMIT_COOLDOWN:
+            _COOLDOWN_UNTIL[key] = time.monotonic() + RATE_LIMIT_COOLDOWN[key]
         raise SourceError("HTTP 429 — " + _RATE_LIMIT_HINTS.get(host, "rate limited; retry later"))
     raise SourceError(f"no answer after retries ({last_exc})")
 
@@ -1316,6 +1343,11 @@ def parse_bibliography(text: str, fmt: str) -> list[Entry]:
 # --------------------------------------------------------------------------- #
 
 
+# Returned by a lookup that had nothing to query with, so the source is not counted as
+# having answered (an answer of "no match" is None).
+NOT_ASKED: dict = {"not_asked": True}
+
+
 def crossref_by_doi(doi: str, mailto: str) -> Optional[dict]:
     url = f"https://api.crossref.org/works/{urllib.parse.quote(doi)}{_mailto_param(mailto, '?')}"
     data = _http_get(url, mailto)
@@ -1386,6 +1418,8 @@ def _crossref_norm(msg: dict) -> dict:
 
 
 def semanticscholar_lookup(entry: Entry, mailto: str) -> Optional[dict]:
+    if not (entry.doi or entry.arxiv_id or entry.title):
+        return NOT_ASKED
     fields = "title,year,authors,externalIds"
     hdrs = {"x-api-key": S2_API_KEY} if S2_API_KEY else {}
     if entry.doi:
@@ -1434,6 +1468,103 @@ def _ss_norm(p: dict) -> dict:
     }
 
 
+_EPMC_SEARCH = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
+
+
+def _phrase(text: str) -> str:
+    """Text safe inside a quoted search phrase: punctuation becomes spaces (the indexes
+    tokenise on it anyway), so quotes or colons in a title cannot break the query."""
+    t = text or ""
+    if "\\" in t:
+        t = _fold_latex(t)
+    t = t.replace("{", "").replace("}", "")  # BibTeX grouping braces are not word breaks
+    return _WS.sub(" ", re.sub(r"[^\w\s-]", " ", t)).strip()
+
+
+def _main_title(title: str) -> str:
+    """The title before a subtitle separator, when that part is long enough to search on."""
+    m = re.match(r"(.+?)(?::|\s[-—]\s|\?)", title or "")
+    return m.group(1).strip() if m and len(m.group(1).strip()) >= 12 else (title or "")
+
+
+def europepmc_lookup(entry: Entry, mailto: str) -> Optional[dict]:
+    """Europe PMC REST search: by DOI when cited, else by title phrase + first author.
+    Life sciences first, but it also indexes many other journals and preprint servers."""
+    def search(query: str) -> list:
+        qs = urllib.parse.urlencode({"query": query, "format": "json", "resultType": "lite",
+                                     "pageSize": 5})
+        data = _http_get(f"{_EPMC_SEARCH}?{qs}", mailto)
+        return ((data or {}).get("resultList") or {}).get("result") or []
+
+    if entry.doi:
+        hits = [r for r in search(f'DOI:"{entry.doi}"') if (r.get("doi") or "").lower() == entry.doi.lower()]
+        if hits:
+            rec = _epmc_norm(hits[0])
+            rec["method"] = "id"
+            return rec
+    phrase = _phrase(entry.title)
+    if len(phrase) < 6:
+        return None if entry.doi else NOT_ASKED
+    query = f'TITLE:"{phrase}"'
+    if entry.authors and _surname(entry.authors[0]):
+        query += f' AND AUTH:"{_surname(entry.authors[0])}"'
+    items = search(query)
+    if not items:
+        return None
+    rec = max((_epmc_norm(r) for r in items[:5]), key=lambda r: _rank(entry, r))
+    rec["method"] = "title"
+    return rec
+
+
+def _epmc_norm(r: dict) -> dict:
+    # authorString: "Roediger HL, Karpicke JD." -> surnames
+    surnames = [a.strip().split(" ")[0] for a in (r.get("authorString") or "").rstrip(".").split(",")
+                if a.strip()]
+    return {
+        "source": "europepmc",
+        "title": (r.get("title") or "").strip().rstrip("."),
+        "authors": [s for s in surnames if s],
+        "year": str(r.get("pubYear") or ""),
+        "doi": (r.get("doi") or "").lower(),
+        "retracted": False,  # the lite record carries no retraction flag; Crossref supplies it
+    }
+
+
+def openlibrary_lookup(entry: Entry, mailto: str) -> Optional[dict]:
+    """Open Library search (keyless) for books: main title + first author. Every edition's
+    publication year is kept, so a later edition cited by its own year still matches."""
+    if len(_phrase(entry.title)) < 6 or entry.doi or entry.arxiv_id:
+        return NOT_ASKED
+    params = {"title": _phrase(_main_title(entry.title)), "limit": 5,
+              "fields": "title,subtitle,author_name,first_publish_year,publish_year"}
+    if entry.authors and _surname(entry.authors[0]):
+        params["author"] = _surname(entry.authors[0])
+    data = _http_get("https://openlibrary.org/search.json?" + urllib.parse.urlencode(params), mailto)
+    docs = (data or {}).get("docs") or []
+    if not docs:
+        return None
+    rec = max((_openlibrary_norm(d) for d in docs[:5]), key=lambda r: _rank(entry, r))
+    rec["method"] = "title"
+    return rec
+
+
+def _openlibrary_norm(d: dict) -> dict:
+    title = d.get("title") or ""
+    if d.get("subtitle"):
+        title = f"{title}: {d['subtitle']}"
+    years = sorted({str(y) for y in (d.get("publish_year") or []) if y})
+    first = str(d.get("first_publish_year") or "")
+    return {
+        "source": "openlibrary",
+        "title": title,
+        "authors": [n.split()[-1] for n in d.get("author_name") or [] if n.split()],
+        "year": first or (years[0] if years else ""),
+        "years": sorted(set(years) | ({first} if first else set())),
+        "doi": "",
+        "retracted": False,
+    }
+
+
 def arxiv_lookup(entry: Entry, mailto: str) -> Optional[dict]:
     if entry.arxiv_id:
         url = f"https://export.arxiv.org/api/query?id_list={urllib.parse.quote(entry.arxiv_id)}&max_results=1"
@@ -1441,7 +1572,7 @@ def arxiv_lookup(entry: Entry, mailto: str) -> Optional[dict]:
         q = urllib.parse.quote(f'ti:"{entry.title}"')
         url = f"https://export.arxiv.org/api/query?search_query={q}&max_results=5"
     else:
-        return None
+        return NOT_ASKED
     text = _http_get(url, mailto, accept="application/atom+xml")
     if not text or "<entry>" not in text:
         return None
@@ -1505,6 +1636,11 @@ def doi_registered(doi: str, mailto: str) -> Optional[bool]:
 # --------------------------------------------------------------------------- #
 # Verdict engine                                                              #
 # --------------------------------------------------------------------------- #
+
+# Indexes that, besides Crossref, can back a Total Fabrication for an entry with no
+# identifier when they answer with no match. Semantic Scholar search is one of them but
+# never required: its keyless pool is often spent.
+TF_SECOND_INDEXES = ("semanticscholar", "europepmc", "arxiv", "openlibrary")
 
 VERDICTS = {
     "verified": "Entry exists; title+authors match an authoritative record.",
@@ -1571,13 +1707,16 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
             # A DOI that does not resolve may still belong to a real work cited
             # with a wrong identifier; the title search lets that surface as PAC.
             return rec or (crossref_by_title(entry, mailto) if entry.title else None)
-        return crossref_by_title(entry, mailto) if entry.title else None
+        return crossref_by_title(entry, mailto) if entry.title else NOT_ASKED
 
     sources: list[tuple[str, Callable[[], Optional[dict]]]] = [
         ("crossref", _crossref),
         ("semanticscholar", lambda: semanticscholar_lookup(entry, mailto)),
+        ("europepmc", lambda: europepmc_lookup(entry, mailto)),
         ("arxiv", lambda: arxiv_lookup(entry, mailto)),
     ]
+    if not has_identifier:  # books rarely carry a DOI; a cited DOI is settled by Crossref / doi.org
+        sources.append(("openlibrary", lambda: openlibrary_lookup(entry, mailto)))
     for name, fn in sources:
         try:
             rec = fn()
@@ -1588,6 +1727,8 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
         except SourceError as exc:
             status[name] = f"error: {exc}"
             continue
+        if rec is NOT_ASKED:
+            continue  # nothing to query this source with: it neither answered nor failed
         status[name] = "record" if rec else "no_record"
         if rec:
             matches.append(rec)
@@ -1689,25 +1830,29 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
         near_mashup = (best is not None and a_overlap is not None and a_overlap >= 0.5
                        and t_ratio >= 0.5)
         if not near_mashup:
-            # TF needs Crossref plus a broad index (Semantic Scholar) to have answered:
-            # Crossref alone misses books and grey literature, and arXiv covers preprints
-            # only. A rate-limited Semantic Scholar therefore leaves the entry unverified.
-            if answered("crossref") and answered("semanticscholar"):
+            # TF needs Crossref plus at least one other index that actually answered, with
+            # no match in any of them: Crossref alone misses books and grey literature. A
+            # source that was rate-limited or failed never counts as having answered.
+            others = [src for src in TF_SECOND_INDEXES if answered(src)]
+            unchecked = [f"{src} {'rate-limited (HTTP 429)' if '429' in st else 'failed'}"
+                         for src, st in status.items() if st.startswith("error") or st == "offline"]
+            if answered("crossref") and others:
                 closest = (f" Closest record: '{best['title']}' (title ratio {t_ratio:.2f})."
                            if best else "")
                 return _verdict(entry, ref_id, "TF",
                                 detail=("No source returned a record matching the cited title and "
-                                        "authors — entry appears fabricated." + closest),
+                                        "authors — entry appears fabricated. Answered with no "
+                                        f"match: crossref, {', '.join(others)}."
+                                        + (f" Not checked: {', '.join(unchecked)}." if unchecked else "")
+                                        + closest),
                                 matches=matches, status=status)
-            limited = [f"{src} {'rate-limited (HTTP 429)' if '429' in st else 'failed'}"
-                       for src, st in status.items()
-                       if src in ("crossref", "semanticscholar") and st.startswith("error")]
             return _unverified(entry, ref_id,
-                               reason=("no matching record in the sources that answered, and "
-                                       "Crossref and Semantic Scholar were not both checked, so "
-                                       "books and grey literature cannot be ruled out"
-                                       + (" (" + ", ".join(limited) + "; see summary.notes)"
-                                          if limited else "")),
+                               reason=("no matching record in the sources that answered, but "
+                                       + ("only Crossref answered" if answered("crossref")
+                                          else "Crossref did not answer")
+                                       + ", so books and grey literature cannot be ruled out"
+                                       + (" (" + ", ".join(unchecked) + "; see summary.notes)"
+                                          if unchecked else "")),
                                status=status, matches=matches)
         pac_reasons.append(f"title ratio {t_ratio:.2f} < {threshold:.2f} but the closest record "
                            f"shares the cited authors — possible mashup of real references")

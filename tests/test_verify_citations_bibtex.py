@@ -4,8 +4,10 @@ Covers the reported defects (single-line entries and indented closing braces par
 zero entries; mixed bibliographies silently losing entries), the BibTeX syntax the
 tokenizer must handle, actionable diagnostics for malformed input, the rule that a
 partial audit can never pass, and conservative network behaviour: the sources are
-Crossref, Semantic Scholar and arXiv (plus doi.org), and a rate-limited Semantic Scholar is
-reported as not checked — it can never turn an unresolved entry into a verified one or a TF.
+Crossref, Semantic Scholar, Europe PMC, arXiv and (for books) Open Library, plus doi.org.
+A rate-limited source is reported as not checked — it never counts as "not found", so it
+can never turn an unresolved entry into a verified one or a TF. A TF without an identifier
+needs Crossref plus at least one other index that actually answered.
 
 No test touches the network: an autouse fixture replaces the HTTP layer with a guard
 that fails the test on any outbound call, and the network tests inject failures.
@@ -728,29 +730,34 @@ def test_rate_limited_run_is_unverified_with_notes(monkeypatch, capsys):
 
 
 # --------------------------------------------------------------------------- #
-# Sources: Crossref / Semantic Scholar / arXiv (OpenAlex removed)              #
+# Sources: Crossref / Semantic Scholar / Europe PMC / arXiv (+ Open Library)   #
 # --------------------------------------------------------------------------- #
 
 NO_ID = "@article{noid, title={A study with no identifier}, author={Doe, J.}, year={2020}}"
 _ARXIV_EMPTY = '<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"></feed>'
 _RATE_LIMIT = vc.SourceError("HTTP 429 — " + vc._RATE_LIMIT_HINTS["api.semanticscholar.org"])
+_EPMC_EMPTY = {"hitCount": 0, "resultList": {"result": []}}
+_OL_EMPTY = {"numFound": 0, "docs": []}
+_DOWN = vc.SourceError("no answer after retries (HTTP 503)")
 
 
-def _fake_sources(monkeypatch, crossref=None, s2=None, calls=None):
-    """Route _http_get by host. ``crossref`` / ``s2`` are a JSON answer, None (no match),
-    or an exception to raise; arXiv answers an empty feed and doi.org 'registered'."""
+def _fake_sources(monkeypatch, crossref=None, s2=None, epmc=_EPMC_EMPTY, openlibrary=_OL_EMPTY,
+                  arxiv=_ARXIV_EMPTY, calls=None):
+    """Route _http_get by host. Each source is a JSON answer (arXiv: an Atom feed), None
+    (no match), or an exception to raise. By default Europe PMC, Open Library and arXiv
+    answer with no match, and doi.org says 'registered'."""
     calls = [] if calls is None else calls
+    answers = {"api.crossref.org": crossref, "api.semanticscholar.org": s2, "www.ebi.ac.uk": epmc,
+               "openlibrary.org": openlibrary, "export.arxiv.org": arxiv}
 
     def fake(url, mailto, accept="application/json", extra_headers=None):
         calls.append(url)
         host = vc.urllib.parse.urlsplit(url).hostname
-        ans = {"api.crossref.org": crossref, "api.semanticscholar.org": s2}.get(host)
-        if host in ("export.arxiv.org",):
-            return _ARXIV_EMPTY
         if host == "doi.org":
             return {"responseCode": 1}
-        if host not in ("api.crossref.org", "api.semanticscholar.org"):
+        if host not in answers:
             pytest.fail(f"unexpected host contacted: {url}")
+        ans = answers[host]
         if isinstance(ans, Exception):
             raise ans
         return ans
@@ -763,12 +770,13 @@ def _cr_items(*items):
     return {"message": {"items": list(items)}}
 
 
-def test_only_crossref_semantic_scholar_and_arxiv_are_queried(monkeypatch):
+def test_only_the_keyless_indexes_are_queried(monkeypatch):
     calls = _fake_sources(monkeypatch, crossref=None, s2=None)
     r = vc.verify_entry(_entry(NO_ID), "", 0.7, False)
-    assert set(r["source_status"]) == {"crossref", "semanticscholar", "arxiv"}
+    assert set(r["source_status"]) == {"crossref", "semanticscholar", "europepmc", "arxiv", "openlibrary"}
     hosts = {vc.urllib.parse.urlsplit(u).hostname for u in calls}
-    assert hosts == {"api.crossref.org", "api.semanticscholar.org", "export.arxiv.org"}
+    assert hosts == {"api.crossref.org", "api.semanticscholar.org", "www.ebi.ac.uk",
+                     "export.arxiv.org", "openlibrary.org"}
     assert not any("openalex" in u for u in calls)
     assert not hasattr(vc, "openalex_lookup") and "openalex_api_key" not in vc.build_report(
         [r], "", 0.7, False)["config"]
@@ -781,28 +789,123 @@ def test_no_identifier_and_no_record_in_crossref_and_s2_is_tf(monkeypatch):
 
 
 def test_rate_limited_semantic_scholar_never_yields_tf(monkeypatch):
-    _fake_sources(monkeypatch, crossref=None, s2=_RATE_LIMIT)
+    # Only Crossref answered: Semantic Scholar is rate-limited and the other indexes are
+    # down, so nothing besides Crossref backs a TF and the entry stays unverified.
+    _fake_sources(monkeypatch, crossref=None, s2=_RATE_LIMIT, epmc=_DOWN, openlibrary=_DOWN, arxiv=_DOWN)
     r = vc.verify_entry(_entry(NO_ID), "", 0.7, False)
     assert r["verdict"] == "unverified" and r["verdict"] != "TF"
     assert r["source_status"]["semanticscholar"].startswith("error: HTTP 429")
     assert "not checked" in r["source_status"]["semanticscholar"]
     assert "semanticscholar rate-limited (HTTP 429)" in r["detail"]
+    assert "only Crossref answered" in r["detail"]
     report = vc.build_report([r], "", 0.7, False)
-    assert report["summary"]["source_errors"] == {"semanticscholar": 1}
+    assert report["summary"]["source_errors"] == {"semanticscholar": 1, "europepmc": 1, "arxiv": 1,
+                                                  "openlibrary": 1}
     assert any("not checked" in n for n in report["summary"]["notes"])
     assert report["summary"]["verdict"] == "UNVERIFIED"
 
 
+def test_tf_via_crossref_and_europe_pmc_while_semantic_scholar_is_rate_limited(monkeypatch):
+    _fake_sources(monkeypatch, crossref=None, s2=_RATE_LIMIT, epmc=_EPMC_EMPTY, openlibrary=_DOWN,
+                  arxiv=_DOWN)
+    r = vc.verify_entry(_entry(NO_ID), "", 0.7, False)
+    assert r["verdict"] == "TF" and r["severity"] == "SERIOUS"
+    assert r["source_status"]["europepmc"] == "no_record"
+    assert r["source_status"]["semanticscholar"].startswith("error: HTTP 429")
+    assert "Answered with no match: crossref, europepmc." in r["detail"]
+    assert "semanticscholar rate-limited (HTTP 429)" in r["detail"]  # named as not checked
+
+
+@pytest.mark.parametrize("second", ["europepmc", "arxiv", "openlibrary", "semanticscholar"])
+def test_any_second_index_that_answered_backs_a_tf(monkeypatch, second):
+    down = {"s2": _RATE_LIMIT, "epmc": _DOWN, "openlibrary": _DOWN, "arxiv": _DOWN}
+    answer = {"semanticscholar": ("s2", None), "europepmc": ("epmc", _EPMC_EMPTY),
+              "openlibrary": ("openlibrary", _OL_EMPTY), "arxiv": ("arxiv", _ARXIV_EMPTY)}[second]
+    down[answer[0]] = answer[1]
+    _fake_sources(monkeypatch, crossref=None, **down)
+    r = vc.verify_entry(_entry(NO_ID), "", 0.7, False)
+    assert r["verdict"] == "TF" and f"crossref, {second}." in r["detail"]
+
+
+@pytest.mark.parametrize("crossref", [_RATE_LIMIT, _DOWN], ids=["crossref-429", "crossref-down"])
+def test_tf_needs_crossref_to_have_answered(monkeypatch, crossref):
+    _fake_sources(monkeypatch, crossref=crossref, s2=None)  # every other index answered
+    r = vc.verify_entry(_entry(NO_ID), "", 0.7, False)
+    assert r["verdict"] == "unverified" and "Crossref did not answer" in r["detail"]
+
+
+def test_a_rate_limit_is_never_read_as_not_found(monkeypatch):
+    every = vc.SourceError("HTTP 429 — rate limited; retry later")
+    _fake_sources(monkeypatch, crossref=None, s2=every, epmc=every, openlibrary=every, arxiv=every)
+    r = vc.verify_entry(_entry(NO_ID), "", 0.7, False)
+    assert r["verdict"] == "unverified"
+    assert all(st == "no_record" for src, st in r["source_status"].items() if src == "crossref")
+    assert all(st.startswith("error: HTTP 429") for src, st in r["source_status"].items() if src != "crossref")
+
+
+def test_a_source_with_nothing_to_query_does_not_count_as_answered(monkeypatch):
+    # The title is too short to search Europe PMC or Open Library with, and arXiv / Semantic
+    # Scholar are down: only Crossref answered, so no TF.
+    short = "@article{s, title={Ab cd}, author={Doe, J.}, year={2020}}"
+    _fake_sources(monkeypatch, crossref=None, s2=_RATE_LIMIT, arxiv=_DOWN)
+    r = vc.verify_entry(_entry(short), "", 0.7, False)
+    assert "europepmc" not in r["source_status"] and "openlibrary" not in r["source_status"]
+    assert r["verdict"] == "unverified"
+
+
+def test_open_library_verifies_a_book_cited_by_its_edition_year(monkeypatch):
+    book = "@book{selwyn, title={Education and technology: Key issues and debates}, author={Selwyn, Neil}, year={2016}}"
+    later = {"title": ["Education and Technology: Key Issues and Debates"], "author": [{"family": "Selwyn"}],
+             "issued": {"date-parts": [[2022]]}, "DOI": "10.5040/9781350145573"}
+    ol = {"numFound": 1, "docs": [{"title": "Education and Technology", "subtitle": "Key Issues and Debates",
+                                   "author_name": ["Neil Selwyn"], "first_publish_year": 2011,
+                                   "publish_year": [2011, 2016]}]}
+    calls = _fake_sources(monkeypatch, crossref=_cr_items(later), s2=_RATE_LIMIT, openlibrary=ol)
+    r = vc.verify_entry(_entry(book), "", 0.7, False)
+    assert r["verdict"] == "verified", r["detail"]
+    assert "openlibrary" in r["detail"] and r["source_status"]["openlibrary"] == "record"
+    (ol_url,) = [u for u in calls if "openlibrary.org" in u]
+    q = vc.urllib.parse.parse_qs(vc.urllib.parse.urlsplit(ol_url).query)
+    assert q["title"] == ["Education and technology"] and q["author"] == ["selwyn"]
+    _fake_sources(monkeypatch, crossref=_cr_items(later), s2=_RATE_LIMIT)  # no Open Library record
+    assert vc.verify_entry(_entry(book), "", 0.7, False)["verdict"] == "PAC"  # year 2016 vs 2022
+
+
+def test_europe_pmc_title_search_query_and_match(monkeypatch):
+    hit = {"resultList": {"result": [{"title": "A study with no identifier.", "authorString": "Doe J, Roe R.",
+                                      "pubYear": "2020", "doi": "10.1000/epmc"}]}}
+    calls = _fake_sources(monkeypatch, crossref=None, s2=_RATE_LIMIT, epmc=hit)
+    r = vc.verify_entry(_entry(NO_ID), "", 0.7, False)
+    assert r["verdict"] == "verified" and r["detail"] == "Matched in europepmc."
+    (url,) = [u for u in calls if "ebi.ac.uk" in u]
+    q = vc.urllib.parse.parse_qs(vc.urllib.parse.urlsplit(url).query)
+    assert q["query"] == ['TITLE:"A study with no identifier" AND AUTH:"doe"']
+
+
+def test_europe_pmc_doi_lookup_needs_the_exact_doi(monkeypatch):
+    other = {"resultList": {"result": [{"title": "Unrelated", "doi": "10.1000/other", "pubYear": "2001"}]}}
+    calls = []
+    _fake_sources(monkeypatch, crossref=None, s2=None, epmc=other, calls=calls)
+    e = _entry("@article{d, title={A study with a DOI}, author={Doe, J.}, year={2020}, doi={10.1000/cited}}")
+    rec = vc.europepmc_lookup(e, "")
+    assert rec is not None and rec["method"] == "title"  # the DOI query hit is not an id match
+    assert [vc.urllib.parse.parse_qs(vc.urllib.parse.urlsplit(u).query)["query"][0] for u in calls] == [
+        'DOI:"10.1000/cited"', 'TITLE:"A study with a DOI" AND AUTH:"doe"']
+
+
 def test_losing_semantic_scholar_never_verifies_an_unresolved_entry(monkeypatch):
-    # Crossref's closest hit is an unrelated work; with Semantic Scholar rate-limited the
-    # entry stays unresolved: it must be unverified, never verified and never TF.
+    # Crossref's closest hit is an unrelated work; with Semantic Scholar rate-limited and the
+    # other indexes down the entry stays unresolved: unverified, never verified and never TF.
     unrelated = {"title": ["Grain yields under drought in the Sahel"], "author": [{"family": "Roe"}],
                  "issued": {"date-parts": [[2011]]}, "DOI": "10.1000/unrelated"}
-    _fake_sources(monkeypatch, crossref=_cr_items(unrelated), s2=_RATE_LIMIT)
+    _fake_sources(monkeypatch, crossref=_cr_items(unrelated), s2=_RATE_LIMIT, epmc=_DOWN,
+                  openlibrary=_DOWN, arxiv=_DOWN)
     r = vc.verify_entry(_entry(NO_ID), "", 0.7, False)
     assert r["verdict"] == "unverified"
     _fake_sources(monkeypatch, crossref=_cr_items(unrelated), s2=None)
     assert vc.verify_entry(_entry(NO_ID), "", 0.7, False)["verdict"] == "TF"  # both answered
+    _fake_sources(monkeypatch, crossref=_cr_items(unrelated), s2=_RATE_LIMIT)
+    assert vc.verify_entry(_entry(NO_ID), "", 0.7, False)["verdict"] == "TF"  # EPMC/arXiv/OL answered
 
 
 def test_crossref_match_still_verifies_while_semantic_scholar_is_rate_limited(monkeypatch):
@@ -875,3 +978,63 @@ def test_short_retry_after_is_honoured(monkeypatch):
     monkeypatch.setattr(vc.time, "sleep", sleeps.append)
     assert REAL_HTTP_GET("https://api.crossref.org/works/10.1000/x", "") == {"message": {}}
     assert 7.0 in sleeps
+
+
+def test_semantic_scholar_search_pause_does_not_block_its_lookups(monkeypatch):
+    calls = []
+
+    class _Ok:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def read(self):
+            return b'{"title": "T", "year": 2020}'
+
+    def fake_urlopen(request, timeout=None):
+        calls.append(request.full_url)
+        if "/paper/search" in request.full_url:
+            raise _http_error(429)  # the shared keyless search pool is spent
+        return _Ok()
+
+    monkeypatch.setattr(vc.urllib.request, "urlopen", fake_urlopen)
+    search = "https://api.semanticscholar.org/graph/v1/paper/search?query=x&limit=5"
+    with pytest.raises(vc.SourceError, match="not checked"):
+        REAL_HTTP_GET(search, "")
+    retries, _ = vc.RETRY_POLICY["api.semanticscholar.org/search"]
+    assert len(calls) == retries + 1
+    with pytest.raises(vc.SourceError, match="not checked"):  # search is paused: no new call
+        REAL_HTTP_GET(search, "")
+    assert len(calls) == retries + 1
+    lookup = "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1000/x?fields=title"
+    assert REAL_HTTP_GET(lookup, "") == {"title": "T", "year": 2020}  # lookups still answer
+    assert calls[-1] == lookup
+
+
+def test_one_dropped_connection_is_retried_before_offline(monkeypatch):
+    answers = [urllib.error.URLError(ConnectionResetError("reset by peer")), None]
+
+    class _Ok:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def read(self):
+            return b'{"numFound": 0, "docs": []}'
+
+    def fake_urlopen(request, timeout=None):
+        exc = answers.pop(0) if answers else urllib.error.URLError(ConnectionResetError("again"))
+        if exc:
+            raise exc
+        return _Ok()
+
+    monkeypatch.setattr(vc.urllib.request, "urlopen", fake_urlopen)
+    url = "https://openlibrary.org/search.json?title=x"
+    assert REAL_HTTP_GET(url, "") == {"numFound": 0, "docs": []}
+    answers[:] = [urllib.error.URLError(ConnectionResetError("1")), urllib.error.URLError(ConnectionResetError("2"))]
+    with pytest.raises(vc.NetworkUnavailable):  # two in a row: the network is down
+        REAL_HTTP_GET(url, "")

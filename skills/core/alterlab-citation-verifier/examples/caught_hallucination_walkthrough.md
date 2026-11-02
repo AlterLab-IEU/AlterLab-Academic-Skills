@@ -17,7 +17,7 @@ distortion lives in the gap between the claim and the source.
 and keeps their verdicts separate:
 
 1. `scripts/verify_citations.py` — *does this work exist?* (Crossref / Semantic Scholar /
-   arXiv resolution, title+author similarity >= 0.70 via difflib `SequenceMatcher`,
+   Europe PMC / arXiv resolution, title+author similarity >= 0.70 via difflib `SequenceMatcher`,
    DOI/arXiv-ID resolution, retraction flag from Crossref `updated-by` / `update-to` —
    including Retraction Watch data).
 2. `scripts/claim_faithfulness.py` — *does this work support the claim?* (compares the user's
@@ -54,8 +54,8 @@ $ echo "Mueller, P. A., & Oppenheimer, D. M. (2014). The pen is mightier than th
 
 # Summary of the JSON entry:
   verdict:        verified   (severity NONE)
-  detail:         Matched in crossref, semanticscholar.
-  source_status:  crossref=record  semanticscholar=record  arxiv=no_record
+  detail:         Matched in crossref, europepmc, semanticscholar.
+  source_status:  crossref=record  semanticscholar=record  europepmc=record  arxiv=no_record
   title_ratio:    1.0   (Crossref stores the subtitle separately; the script rejoins it)
   author_overlap: 1.0   (Mueller, Oppenheimer)
   retracted:      false (no retraction notice in Crossref updated-by / update-to)
@@ -154,7 +154,7 @@ Do NOT cite Mueller & Oppenheimer (2014) for this sentence. Either:
       actually reports it — this paper is not it.
 
 ## Audit trail
-- verify_citations.py: verified in Crossref/Semantic Scholar; title ratio 1.00; no retraction flag.
+- verify_citations.py: verified in Crossref/Europe PMC/Semantic Scholar; title ratio 1.00; no retraction flag.
 - claim_faithfulness.py: heuristic tier abstained (unsupported, 0% overlap); llm tier returned contradict —
   intervention mismatch, effect-direction contradiction, "31%" absent from the abstract (abstract_only: true).
 ```
