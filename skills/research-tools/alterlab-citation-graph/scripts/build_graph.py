@@ -1,53 +1,57 @@
 #!/usr/bin/env python3
-"""Build a citation/co-citation graph from a seed DOI using open citation data.
+"""Build a citation/co-citation graph from seed papers using open, keyless citation data.
 
-A free ResearchRabbit analog that needs no API key. Starting from one or more
-seed works (DOI, OpenAlex ID, or arXiv ID), this walks the citation graph in
-both directions:
+A free ResearchRabbit analog that needs no API key, account or subscription. Starting from
+one or more seed works (DOI or arXiv ID), this walks the citation graph in both directions:
 
   - references  (works the seed *cites*, i.e. its backward edges), and
-  - citations   (works that *cite* the seed, i.e. its forward / "cited_by" edges).
+  - citations   (works that *cite* the seed, i.e. its forward edges).
 
-It then ranks the discovered neighbourhood by **co-citation strength** — how many
-of the seed set a candidate work connects to — surfacing the papers most central
-to the seed's local literature, like ResearchRabbit's "Similar Work" panels but
-with no subscription.
+It then ranks the discovered neighbourhood by **co-citation strength** — how many of the
+seed set a candidate work connects to — surfacing the papers most central to the seed's
+local literature, like ResearchRabbit's "Similar Work" panels but with no subscription.
 
-Data sources, all keyless (policy checked 2026-10-22):
-  - OpenAlex single-work lookups (/works/<id>) are free and unmetered: seeds,
-    their referenced_works, citer metadata and title hydration can all use them.
-  - OpenAlex list/filter calls (cites:, openalex:A|B) cost $0.0001 each against a
-    daily budget. Keyless calls share $0.10/day per IP address (`mailto=` no
-    longer changes that), which a campus or cloud network often spends early
-    (HTTP 429 "Insufficient budget"). A free key (OPENALEX_API_KEY, from
-    https://openalex.org/settings/api) gives a private $1/day; it is optional.
-  - OpenCitations Index v2 (api.opencitations.net) lists the works citing a DOI
-    with their OpenAlex ids, no key. Its answer is one unpaginated JSON array, so
-    the script reads it as a stream and stops after --per-seed records.
-With --citers-source auto (default) the walk uses OpenAlex list calls while they
-work and switches to OpenCitations plus free single-work lookups when a list call
-returns 429, saying so on stderr. The key, when set, is sent as a Bearer header.
+Data sources, all keyless (checked live 2026-11-02):
+  - OpenCitations Index v2 (api.opencitations.net/index/v2): ``/references/doi:<doi>`` and
+    ``/citations/doi:<doi>`` list the DOIs a work cites and the DOIs citing it (open
+    Crossref, DataCite and PubMed citation data). The citations answer is one unpaginated
+    JSON array — tens of thousands of records for a classic paper — so it is read as a
+    stream and cut at --per-seed.
+  - Semantic Scholar Graph API (api.semanticscholar.org/graph/v1): references and citations
+    (with titles, years and citation counts) for works OpenCitations has no data for —
+    typically preprints and works whose publisher deposits no reference list — and
+    metadata for DOIs Crossref does not register. Its keyless pool is shared and often
+    answers HTTP 429: the script backs off (2, 4, 8 s), then pauses Semantic Scholar for
+    30 s and says on stderr which works it could not check. An optional S2_API_KEY gives
+    a dedicated rate limit; it is never needed.
+  - Crossref (api.crossref.org/works?filter=doi:...): titles, years and citation counts of
+    the seeds and the ranked works, 40 DOIs per call; doi.org content negotiation fills
+    in any DOI that neither Crossref nor Semantic Scholar described (e.g. DataCite DOIs).
+OpenAlex is no longer used (removed in v1.3.0): its keyless list calls now share a small
+per-IP daily budget, so dependable use needed an account.
+
+Node ids are lowercase DOIs (an arXiv preprint is ``10.48550/arxiv.<id>``, its DataCite
+DOI); a work with no DOI is ``pmid:<n>`` or ``s2:<paperId>``.
 
 Outputs:
   - GraphML (.graphml)  — open in Gephi / Cytoscape / yEd / networkx.
   - JSON    (.json)     — nodes + edges + ranked co-citation table, for code.
 
-Stdlib only (urllib, json, argparse) — no third-party dependency, so it runs in
-a bare `uv run python` with nothing installed.
+Stdlib only (urllib, json, argparse) — no third-party dependency, so it runs in a bare
+`uv run python` with nothing installed.
 
 Examples
 --------
     # One seed DOI, default depth, write both formats next to a basename:
-    export OPENALEX_API_KEY=...        # free; recommended
     uv run python build_graph.py --seed 10.1038/nphys1170 --out graph/seed1
 
-    # Several seeds (mix DOI / OpenAlex / arXiv), deeper walk, more neighbours:
-    uv run python build_graph.py \
-        --seed 10.1038/nphys1170 --seed W2741809807 --seed arXiv:2310.06825 \
+    # Several seeds (DOI / arXiv), deeper walk, more neighbours:
+    uv run python build_graph.py \\
+        --seed 10.1038/nphys1170 --seed 10.18653/v1/N19-1423 --seed arXiv:1706.03762 \\
         --depth 2 --per-seed 50 --top 40 --out graph/transformer
 
-    # Never touch the metered OpenAlex list budget (citers from OpenCitations):
-    uv run python build_graph.py --seed 10.1038/nature14539 --citers-source opencitations
+    # Citing works from Semantic Scholar only (never OpenCitations):
+    uv run python build_graph.py --seed 10.1038/nature14539 --citers-source semanticscholar
 
     # Offline / CI smoke test with no network:
     uv run python build_graph.py --self-test
@@ -68,147 +72,186 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
-OPENALEX_BASE = "https://api.openalex.org/works"
 OPENCITATIONS_BASE = "https://api.opencitations.net/index/v2"
-USER_AGENT = "alterlab-citation-graph/1.2 (https://github.com/AlterLab-IEU)"
+S2_BASE = "https://api.semanticscholar.org/graph/v1"
+CROSSREF_BASE = "https://api.crossref.org/works"
+USER_AGENT = "alterlab-citation-graph/1.3 (https://github.com/AlterLab-IEU)"
 DEFAULT_TIMEOUT = 30
-# OpenAlex caps per_page (and OR-values per filter) at 100; 200 is deprecated legacy.
-MAX_PER_PAGE = 100
-# Fields a single-work lookup needs for a graph node plus its backward edges.
-WORK_FIELDS = "id,doi,title,publication_year,cited_by_count,referenced_works,ids"
+S2_FIELDS = "externalIds,title,year,citationCount"
+S2_MAX_LIMIT = 1000  # Semantic Scholar's page cap for /references and /citations
+S2_BACKOFF = (2.0, 4.0, 8.0)  # seconds between retries on HTTP 429 (no Retry-After is sent)
+S2_PAUSE = 30.0  # after the backoff is spent, skip Semantic Scholar for this long
+CROSSREF_BACKOFF = (1.0, 2.0, 4.0)  # public pool: one request in flight per IP
+CROSSREF_BATCH = 40  # DOIs per filter=doi:... call (keeps the URL short)
 _CITING_RE = re.compile(r'"citing"\s*:\s*"([^"]*)"')
-_OC_OPENALEX_RE = re.compile(r"\bopenalex:(W\d+)")
 _OC_DOI_RE = re.compile(r"\bdoi:(10\.\S+)")
+_OC_PMID_RE = re.compile(r"\bpmid:(\d+)")
+_ARXIV_DOI_RE = re.compile(r"^10\.48550/arxiv\.(.+)$", re.IGNORECASE)
 
 
 # --------------------------------------------------------------------------- #
-# Seed normalisation                                                          #
+# Seed normalisation and node ids                                             #
 # --------------------------------------------------------------------------- #
 
 _DOI_RE = re.compile(r"10\.\d{4,9}/\S+", re.IGNORECASE)
-_OPENALEX_ID_RE = re.compile(r"^W\d+$", re.IGNORECASE)
 _ARXIV_RE = re.compile(r"^(arxiv:)?(\d{4}\.\d{4,5})(v\d+)?$", re.IGNORECASE)
+_W_ID_RE = re.compile(r"^W\d+$", re.IGNORECASE)
+
+
+def arxiv_doi(arxiv_id: str) -> str:
+    """arXiv's DataCite DOI for an arXiv id (version suffix dropped)."""
+    return "10.48550/arxiv." + re.sub(r"v\d+$", "", arxiv_id.strip()).lower()
 
 
 def normalize_seed(raw: str) -> str:
-    """Turn a user-supplied seed into an OpenAlex `/works/<id>` selector.
+    """Turn a user-supplied seed into a node id: a lowercase DOI.
 
-    Accepts a bare DOI, a DOI URL, an OpenAlex work ID (W...), an OpenAlex URL,
-    or an arXiv ID (with or without the ``arXiv:`` prefix). Raises ValueError on
-    anything unrecognisable.
+    Accepts a bare DOI, a DOI URL, ``doi:<doi>``, or an arXiv id (with or without the
+    ``arXiv:`` prefix, which becomes its DataCite DOI ``10.48550/arxiv.<id>``). Raises
+    ValueError on anything else, including the OpenAlex work ids an older version took.
     """
     s = raw.strip()
     if not s:
         raise ValueError("empty seed")
-
-    # Full OpenAlex URL -> trailing work id.
-    if "openalex.org/" in s.lower():
-        s = s.rstrip("/").split("/")[-1]
-
-    if _OPENALEX_ID_RE.match(s):
-        return s.upper()
-
-    # arXiv -> OpenAlex indexes arXiv preprints under their DataCite DOI
-    # (10.48550/arXiv.<id>), so resolve via the DOI namespace. The bare
-    # https://arxiv.org/abs/<id> URL is NOT an OpenAlex selector and 404s.
-    # Coverage caveat: if a preprint was later merged into a published-version
-    # record, OpenAlex may carry only the publisher DOI; pass that DOI instead.
+    if _W_ID_RE.match(s) or "openalex.org/" in s.lower():
+        raise ValueError(f"{raw!r} is an OpenAlex work id; OpenAlex is no longer used (its keyless "
+                         "access is metered per IP). Pass the work's DOI or arXiv id instead.")
     m = _ARXIV_RE.match(s)
     if m:
-        return f"https://doi.org/10.48550/arXiv.{m.group(2)}"
-
-    # DOI URL or bare DOI.
+        return arxiv_doi(m.group(2))
     doi = s
-    for prefix in ("https://doi.org/", "http://doi.org/", "doi:"):
+    for prefix in ("https://doi.org/", "http://doi.org/", "https://dx.doi.org/", "doi:"):
         if doi.lower().startswith(prefix):
             doi = doi[len(prefix):]
             break
-    if _DOI_RE.search(doi):
-        return f"https://doi.org/{doi}"
+    if _DOI_RE.fullmatch(doi):
+        return doi.lower()
+    raise ValueError(f"unrecognised seed (not a DOI or arXiv id): {raw!r}")
 
-    raise ValueError(f"unrecognised seed (not a DOI, OpenAlex W-id, or arXiv id): {raw!r}")
+
+def _oc_node_id(ids: str) -> str:
+    """Node id from an OpenCitations id list ("omid:br/1 pmid:2 doi:10.x/y ...")."""
+    d = _OC_DOI_RE.search(ids)
+    if d:
+        return d.group(1).lower()
+    p = _OC_PMID_RE.search(ids)
+    return f"pmid:{p.group(1)}" if p else ""
+
+
+def _oc_selector(node_id: str) -> Optional[str]:
+    if node_id.startswith("10."):
+        return "doi:" + node_id
+    if node_id.startswith("pmid:"):
+        return node_id
+    return None
+
+
+def _s2_selector(node_id: str) -> Optional[str]:
+    m = _ARXIV_DOI_RE.match(node_id)
+    if m:
+        return "ARXIV:" + m.group(1)
+    if node_id.startswith("10."):
+        return "DOI:" + node_id
+    if node_id.startswith("pmid:"):
+        return "PMID:" + node_id[5:]
+    if node_id.startswith("s2:"):
+        return node_id[3:]
+    return None
+
+
+def _s2_work(p: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalise a Semantic Scholar paper to {id, doi, title, year, cited_by_count}."""
+    ext = p.get("externalIds") or {}
+    doi = (ext.get("DOI") or "").lower()
+    if not doi and ext.get("ArXiv"):
+        doi = arxiv_doi(str(ext["ArXiv"]))
+    pmid = str(ext.get("PubMed") or "")
+    nid = doi or (f"pmid:{pmid}" if pmid else "") or (f"s2:{p['paperId']}" if p.get("paperId") else "")
+    return {"id": nid, "doi": doi or None, "title": p.get("title") or "",
+            "year": p.get("year"), "cited_by_count": p.get("citationCount") or 0}
+
+
+class RateLimited(Exception):
+    """A shared keyless pool answered HTTP 429 after backoff: the call was not checked."""
 
 
 # --------------------------------------------------------------------------- #
-# OpenAlex client                                                             #
+# Keyless client: OpenCitations + Semantic Scholar + Crossref (+ doi.org)      #
 # --------------------------------------------------------------------------- #
 
 @dataclass
-class OpenAlexClient:
-    api_key: Optional[str] = None  # optional free key from openalex.org/settings/api
+class CitationClient:
     timeout: int = DEFAULT_TIMEOUT
-    sleep: float = 0.0  # optional inter-request delay (OpenAlex allows <=100 req/s)
-    citers_source: str = "auto"  # auto | openalex | opencitations
-    _fetch: Optional[Any] = None  # injectable for tests: url -> parsed JSON
-    _stream: Optional[Any] = None  # injectable for tests: url -> iterable of byte chunks
-    list_budget_spent: bool = False  # set once a keyless list call returns 429
+    sleep: float = 0.0  # optional delay after every request (politeness throttle)
+    citers_source: str = "auto"  # auto | opencitations | semanticscholar
+    s2_api_key: Optional[str] = None  # optional; only raises Semantic Scholar's rate limit
+    _fetch: Optional[Callable[..., Any]] = None  # test seam: (url, data=None, accept=...) -> parsed JSON
+    _stream: Optional[Callable[[str], Iterable[bytes]]] = None  # test seam: url -> byte chunks
+    _sleep: Callable[[float], None] = time.sleep
+    s2_paused_until: float = 0.0
+    s2_skipped: List[str] = field(default_factory=list)  # works whose S2 lookup was not checked
+    _noted: set = field(default_factory=set)
 
-    @staticmethod
-    def _params(extra: Dict[str, str]) -> str:
-        return urllib.parse.urlencode(extra)
-
-    def _get(self, url: str) -> Dict[str, Any]:
-        if self._fetch is not None:  # test seam
-            return self._fetch(url)
-        headers = {"User-Agent": USER_AGENT}
-        if self.api_key and url.startswith(OPENALEX_BASE):
-            # Bearer header rather than ?api_key= so the key never shows up in
-            # logged or printed URLs, and only ever sent to OpenAlex.
-            headers["Authorization"] = f"Bearer {self.api_key}"
-        req = urllib.request.Request(url, headers=headers)
+    # -- transport ---------------------------------------------------------
+    def _request(self, url: str, data: Optional[dict] = None,
+                 accept: str = "application/json") -> Any:
+        if self._fetch is not None:
+            return self._fetch(url, data=data, accept=accept)
+        headers = {"User-Agent": USER_AGENT, "Accept": accept}
+        body = None
+        if data is not None:
+            body = json.dumps(data).encode("utf-8")
+            headers["Content-Type"] = "application/json"
+        if self.s2_api_key and url.startswith(S2_BASE):
+            headers["x-api-key"] = self.s2_api_key  # header, so it never shows in a URL
+        req = urllib.request.Request(url, data=body, headers=headers)
         with urllib.request.urlopen(req, timeout=self.timeout) as resp:
             payload = resp.read().decode("utf-8")
         if self.sleep:
             time.sleep(self.sleep)
         return json.loads(payload)
 
-    def get_work(self, selector: str, select: Optional[str] = None) -> Dict[str, Any]:
-        """Fetch a single work by OpenAlex id / DOI url / arXiv url selector (free call)."""
-        quoted = urllib.parse.quote(selector, safe=":/")
-        url = f"{OPENALEX_BASE}/{quoted}"
-        if select:
-            url += "?" + self._params({"select": select})
-        return self._get(url)
-
-    def opencitations_citers(self, ids: List[str], limit: int) -> List[str]:
-        """Keyless forward edges: up to `limit` works citing any of `ids` (``doi:``/``pmid:``).
-
-        Returns OpenAlex selectors (W-ids, or DOI URLs when OpenCitations has no
-        OpenAlex id for the citer). The endpoint returns every citation as one
-        unpaginated array — tens of thousands for a classic paper — so the body is
-        read in chunks and the connection closed once `limit` citers are found.
-        """
-        found: List[str] = []
-        seen: set = set()
-        for oc_id in ids:
-            url = f"{OPENCITATIONS_BASE}/citations/{urllib.parse.quote(oc_id, safe=':/')}"
-            decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
-            buf = ""
+    def _with_backoff(self, url: str, backoff: Tuple[float, ...], data: Optional[dict] = None,
+                      accept: str = "application/json") -> Any:
+        for attempt in range(len(backoff) + 1):
             try:
-                for chunk in self._chunks(url):
-                    buf += decoder.decode(chunk)
-                    last = 0
-                    for m in _CITING_RE.finditer(buf):
-                        last = m.end()
-                        w = _OC_OPENALEX_RE.search(m.group(1))
-                        d = _OC_DOI_RE.search(m.group(1))
-                        sel = w.group(1) if w else (f"https://doi.org/{d.group(1)}" if d else "")
-                        if sel and sel not in seen:
-                            seen.add(sel)
-                            found.append(sel)
-                        if len(found) >= limit:
-                            return found
-                    buf = buf[last:]
-            except (OSError, http.client.HTTPException):
-                if not found:
-                    raise  # nothing usable; a cut after some records still counts
-            if found:
-                return found  # first id that OpenCitations knows is enough
-        return found
+                return self._request(url, data=data, accept=accept)
+            except urllib.error.HTTPError as exc:
+                if exc.code != 429:
+                    raise
+                if attempt == len(backoff):
+                    raise RateLimited(url) from exc
+                self._sleep(backoff[attempt])
+        raise RateLimited(url)  # pragma: no cover - loop always returns or raises
 
-    def _chunks(self, url: str, size: int = 65536):
+    def note(self, key: str, text: str) -> None:
+        if key not in self._noted:
+            self._noted.add(key)
+            print("note: " + text, file=sys.stderr)
+
+    def _s2(self, url: str, data: Optional[dict] = None, what: str = "") -> Any:
+        """Semantic Scholar call with backoff; None on 404; RateLimited when the pool stays busy."""
+        if time.monotonic() < self.s2_paused_until:
+            self.s2_skipped.append(what or url)
+            raise RateLimited(url)
+        try:
+            return self._with_backoff(url, S2_BACKOFF, data=data)
+        except RateLimited:
+            self.s2_paused_until = time.monotonic() + S2_PAUSE
+            self.s2_skipped.append(what or url)
+            self.note("s2-429", "Semantic Scholar's shared keyless pool answered HTTP 429 after "
+                      "backoff; works OpenCitations has no data for are listed as not checked "
+                      "(retry later, or set the optional S2_API_KEY).")
+            raise
+        except urllib.error.HTTPError as exc:
+            if exc.code in (400, 404):
+                return None  # unknown id: Semantic Scholar answered "no such paper"
+            raise
+
+    # -- OpenCitations -----------------------------------------------------
+    def _chunks(self, url: str, size: int = 65536) -> Iterable[bytes]:
         if self._stream is not None:  # test seam
             yield from self._stream(url)
             return
@@ -220,99 +263,153 @@ class OpenAlexClient:
                     return
                 yield chunk
 
-    def cited_by(self, openalex_id: str, per_page: int) -> List[Dict[str, Any]]:
-        """Forward edges: works that cite `openalex_id` (its cited_by set)."""
-        per_page = max(1, min(per_page, MAX_PER_PAGE))
-        qs = self._params(
-            {
-                "filter": f"cites:{openalex_id}",
-                "per_page": str(per_page),
-                "select": "id,doi,title,publication_year,cited_by_count,referenced_works",
-            }
-        )
-        data = self._get(f"{OPENALEX_BASE}?{qs}")
-        return data.get("results", [])
+    def oc_references(self, node_id: str) -> Optional[List[str]]:
+        """Node ids the work cites, per OpenCitations; None when it cannot be asked (no DOI/PMID)."""
+        sel = _oc_selector(node_id)
+        if not sel:
+            return None
+        rows = self._request(f"{OPENCITATIONS_BASE}/references/{urllib.parse.quote(sel, safe=':/')}")
+        ids = [_oc_node_id(r.get("cited", "")) for r in rows or []]
+        return list(dict.fromkeys(i for i in ids if i and i != node_id))
 
-    def get_many(self, ids: List[str]) -> List[Dict[str, Any]]:
-        """Batch-fetch metadata for W-ids: one OR-filter list call per 100 ids."""
+    def oc_citers(self, node_id: str, limit: int) -> Optional[List[str]]:
+        """Up to `limit` node ids citing the work, per OpenCitations (read as a stream)."""
+        sel = _oc_selector(node_id)
+        if not sel:
+            return None
+        url = f"{OPENCITATIONS_BASE}/citations/{urllib.parse.quote(sel, safe=':/')}"
+        decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
+        found: List[str] = []
+        buf = ""
+        try:
+            for chunk in self._chunks(url):
+                buf += decoder.decode(chunk)
+                last = 0
+                for m in _CITING_RE.finditer(buf):
+                    last = m.end()
+                    nid = _oc_node_id(m.group(1))
+                    if nid and nid != node_id and nid not in found:
+                        found.append(nid)
+                    if len(found) >= limit:
+                        return found
+                buf = buf[last:]
+        except (OSError, http.client.HTTPException):
+            if not found:
+                raise  # nothing usable; a cut after some records still counts
+        return found
+
+    # -- Semantic Scholar --------------------------------------------------
+    def s2_references(self, node_id: str) -> Optional[List[Dict[str, Any]]]:
+        sel = _s2_selector(node_id)
+        if not sel:
+            return None
+        url = (f"{S2_BASE}/paper/{urllib.parse.quote(sel, safe=':/')}/references?"
+               + urllib.parse.urlencode({"fields": S2_FIELDS, "limit": S2_MAX_LIMIT}))
+        data = self._s2(url, what=node_id)
+        if data is None:
+            return []
+        works = [_s2_work(r.get("citedPaper") or {}) for r in data.get("data") or []]
+        return [w for w in works if w["id"] and w["id"] != node_id]
+
+    def s2_citers(self, node_id: str, limit: int) -> Optional[List[Dict[str, Any]]]:
+        sel = _s2_selector(node_id)
+        if not sel:
+            return None
+        url = (f"{S2_BASE}/paper/{urllib.parse.quote(sel, safe=':/')}/citations?"
+               + urllib.parse.urlencode({"fields": S2_FIELDS, "limit": max(1, min(limit, S2_MAX_LIMIT))}))
+        data = self._s2(url, what=node_id)
+        if data is None:
+            return []
+        works = [_s2_work(r.get("citingPaper") or {}) for r in data.get("data") or []]
+        return [w for w in works if w["id"] and w["id"] != node_id][:limit]
+
+    def s2_batch(self, node_ids: List[str]) -> List[Dict[str, Any]]:
+        sels = {_s2_selector(n): n for n in node_ids if _s2_selector(n)}
         out: List[Dict[str, Any]] = []
-        for start in range(0, len(ids), MAX_PER_PAGE):
-            chunk = ids[start:start + MAX_PER_PAGE]
-            qs = self._params(
-                {
-                    "filter": "openalex:" + "|".join(chunk),
-                    "per_page": str(len(chunk)),
-                    "select": "id,doi,title,publication_year,cited_by_count",
-                }
-            )
-            out.extend(self._get(f"{OPENALEX_BASE}?{qs}").get("results", []))
+        keys = list(sels)
+        for start in range(0, len(keys), 500):
+            chunk = keys[start:start + 500]
+            data = self._s2(f"{S2_BASE}/paper/batch?fields={S2_FIELDS}", data={"ids": chunk},
+                            what=f"metadata for {len(chunk)} works")
+            for sel, p in zip(chunk, data or []):
+                if p:
+                    w = _s2_work(p)
+                    w["id"] = sels[sel]  # keep the node id it was asked under
+                    out.append(w)
         return out
 
-    def get_many_singly(self, ids: List[str]) -> List[Dict[str, Any]]:
-        """Keyless hydration: one free single-work lookup per W-id (no list budget used)."""
+    # -- Crossref and doi.org ---------------------------------------------
+    def crossref_batch(self, dois: List[str]) -> List[Dict[str, Any]]:
         out: List[Dict[str, Any]] = []
-        for wid in ids:
-            try:
-                out.append(self.get_work(wid, select="id,doi,title,publication_year,cited_by_count"))
-            except urllib.error.URLError as exc:  # includes HTTPError
-                print(f"warning: could not look up {wid} ({exc}); left untitled", file=sys.stderr)
+        for start in range(0, len(dois), CROSSREF_BATCH):
+            chunk = dois[start:start + CROSSREF_BATCH]
+            qs = urllib.parse.urlencode({
+                "filter": ",".join(f"doi:{d}" for d in chunk), "rows": len(chunk),
+                "select": "DOI,title,issued,is-referenced-by-count"})
+            data = self._with_backoff(f"{CROSSREF_BASE}?{qs}", CROSSREF_BACKOFF)
+            for it in (data.get("message") or {}).get("items", []):
+                year = ((it.get("issued") or {}).get("date-parts") or [[None]])[0][0]
+                out.append({"id": (it.get("DOI") or "").lower(), "doi": (it.get("DOI") or "").lower(),
+                            "title": " ".join(((it.get("title") or [""])[0] or "").split()),
+                            "year": year, "cited_by_count": it.get("is-referenced-by-count") or 0})
         return out
 
-    def note_list_budget_spent(self) -> None:
-        if not self.list_budget_spent:
-            self.list_budget_spent = True
-            who = "this key's" if self.api_key else "the shared per-IP (keyless)"
-            print(f"note: OpenAlex list calls returned HTTP 429 ({who} daily budget is spent); "
-                  "continuing keyless: citing works from OpenCitations, metadata from free "
-                  "OpenAlex single-work lookups.", file=sys.stderr)
+    def doi_csl(self, doi: str) -> Optional[Dict[str, Any]]:
+        """Title and year from doi.org content negotiation (any registration agency)."""
+        data = self._with_backoff(f"https://doi.org/{urllib.parse.quote(doi, safe='/')}",
+                                  CROSSREF_BACKOFF, accept="application/vnd.citationstyles.csl+json")
+        if not data:
+            return None
+        title = data.get("title") or ""
+        title = " ".join((title[0] if isinstance(title, list) else title).split())
+        year = ((data.get("issued") or {}).get("date-parts") or [[None]])[0][0]
+        return {"id": doi, "doi": doi, "title": title, "year": year, "cited_by_count": 0}
 
 
-def _oc_ids(work: Dict[str, Any], raw_seed: Optional[str] = None) -> List[str]:
-    """OpenCitations identifiers to try for a work: the DOI the user gave, OpenAlex's DOI, PMID."""
-    ids: List[str] = []
-    if raw_seed:
-        sel = normalize_seed(raw_seed)
-        if sel.startswith("https://doi.org/"):
-            ids.append("doi:" + sel[len("https://doi.org/"):].lower())
-    doi = (work.get("doi") or "").lower()
-    if doi.startswith("https://doi.org/"):
-        ids.append("doi:" + doi[len("https://doi.org/"):])
-    pmid = ((work.get("ids") or {}).get("pmid") or "").rstrip("/").split("/")[-1]
-    if pmid.isdigit():
-        ids.append("pmid:" + pmid)
-    return list(dict.fromkeys(ids))
+# --------------------------------------------------------------------------- #
+# Edges: OpenCitations first, Semantic Scholar where it has nothing            #
+# --------------------------------------------------------------------------- #
+
+_NET_ERRORS = (urllib.error.URLError, OSError, http.client.HTTPException, ValueError, RateLimited)
 
 
-def fetch_citers(client: OpenAlexClient, wid: str, oc_ids: List[str], per_seed: int) -> List[Dict[str, Any]]:
-    """Works citing `wid`, as OpenAlex work dicts (with referenced_works).
-
-    OpenAlex ``cites:`` list call first (unless --citers-source opencitations, or an
-    earlier call already hit 429); on 429 switch to OpenCitations for the citer ids
-    and free single-work lookups for their metadata. Raises the last error when no
-    source answers, so a seed never silently loses its forward edges.
-    """
-    use_openalex = client.citers_source == "openalex" or (
-        client.citers_source == "auto" and not client.list_budget_spent)
-    if use_openalex:
+def _edges(client: CitationClient, node_id: str, oc_call: Callable[[], Optional[List[str]]],
+           s2_call: Callable[[], Optional[List[Dict[str, Any]]]], order: Tuple[str, ...]
+           ) -> Tuple[List[Dict[str, Any]], List[str], List[str]]:
+    """Ask the sources in `order` until one returns edges. Returns (works, answered, failed):
+    `answered` names the sources that answered (possibly with nothing), `failed` those that
+    could not be checked, with the reason."""
+    answered: List[str] = []
+    failed: List[str] = []
+    for src in order:
         try:
-            return client.cited_by(wid, per_page=per_seed)
-        except urllib.error.HTTPError as exc:
-            if exc.code != 429 or client.citers_source == "openalex":
-                raise
-            client.note_list_budget_spent()
-    if not oc_ids:
-        raise ValueError(f"{wid} has no DOI or PMID, so OpenCitations cannot list its citers")
-    try:
-        selectors = client.opencitations_citers(oc_ids, per_seed)
-    except (urllib.error.URLError, OSError) as exc:  # OSError covers a stream cut mid-read
-        raise urllib.error.URLError(f"OpenCitations: {exc}") from exc
-    works: List[Dict[str, Any]] = []
-    for sel in selectors:
-        try:
-            works.append(client.get_work(sel, select=WORK_FIELDS))
-        except urllib.error.URLError as exc:
-            print(f"warning: could not look up citer {sel} ({exc}); skipped", file=sys.stderr)
-    return works
+            res = oc_call() if src == "opencitations" else s2_call()
+        except RateLimited:
+            failed.append(f"{src}: rate-limited (HTTP 429), not checked")
+            continue
+        except _NET_ERRORS as exc:
+            failed.append(f"{src}: {exc}")
+            continue
+        if res is None:  # this source cannot be asked about this id
+            continue
+        answered.append(src)
+        if res:
+            works = [{"id": r} if isinstance(r, str) else r for r in res]
+            return works, answered, failed
+    return [], answered, failed
+
+
+def fetch_references(client: CitationClient, node_id: str) -> Tuple[List[Dict[str, Any]], List[str], List[str]]:
+    return _edges(client, node_id, lambda: client.oc_references(node_id),
+                  lambda: client.s2_references(node_id), ("opencitations", "semanticscholar"))
+
+
+def fetch_citers(client: CitationClient, node_id: str, per_seed: int
+                 ) -> Tuple[List[Dict[str, Any]], List[str], List[str]]:
+    order = {"opencitations": ("opencitations",), "semanticscholar": ("semanticscholar",)}.get(
+        client.citers_source, ("opencitations", "semanticscholar"))
+    return _edges(client, node_id, lambda: client.oc_citers(node_id, per_seed),
+                  lambda: client.s2_citers(node_id, per_seed), order)
 
 
 # --------------------------------------------------------------------------- #
@@ -362,141 +459,127 @@ class Graph:
         self.edges.append(key)
 
 
-def _short_id(openalex_url: str) -> str:
-    """OpenAlex ids are URLs; keep the bare W-id for compactness."""
-    if not openalex_url:
-        return ""
-    return openalex_url.rstrip("/").split("/")[-1]
-
-
 def _mk_node(work: Dict[str, Any], role: str) -> Node:
-    return Node(
-        id=_short_id(work.get("id", "")),
-        title=work.get("title") or work.get("display_name") or "",
-        year=work.get("publication_year"),
-        doi=work.get("doi"),
-        cited_by_count=work.get("cited_by_count") or 0,
-        role=role,
-    )
+    nid = work.get("id", "")
+    doi = work.get("doi") or (nid if nid.startswith("10.") else None)
+    return Node(id=nid, title=work.get("title") or "", year=work.get("year"), doi=doi,
+                cited_by_count=work.get("cited_by_count") or 0, role=role)
 
 
 # --------------------------------------------------------------------------- #
 # Graph builder                                                               #
 # --------------------------------------------------------------------------- #
 
-def build_graph(
-    seeds: List[str],
-    client: OpenAlexClient,
-    depth: int = 1,
-    per_seed: int = 25,
-) -> Graph:
-    """Walk OpenAlex outward from each seed and assemble a citation graph.
+def _expand_refs(client: CitationClient, graph: Graph, node_id: str, fatal: bool) -> None:
+    """Add a work's references as backward edges (work -> reference)."""
+    refs, answered, failed = fetch_references(client, node_id)
+    if not answered and failed:
+        msg = f"could not fetch the references of {node_id} ({'; '.join(failed)})"
+        if fatal:
+            raise urllib.error.URLError(msg)
+        print(f"warning: {msg}; skipped", file=sys.stderr)
+    for ref in refs:
+        graph.add_node(_mk_node(ref, "reference"))
+        graph.add_edge(node_id, ref["id"])
+
+
+def build_graph(seeds: List[str], client: CitationClient, depth: int = 1, per_seed: int = 25) -> Graph:
+    """Walk outward from each seed and assemble a citation graph.
 
     For every seed we add:
-      - backward edges from the seed's ``referenced_works`` (seed -> reference),
-      - forward edges from the seed's cited_by set    (citation -> seed).
+      - backward edges from the seed's reference list (seed -> reference),
+      - forward edges from the works citing it      (citation -> seed),
+    and the reference list of every citing work, which is what co-citation and
+    bibliographic coupling are computed from. With ``depth >= 2`` the forward
+    expansion is applied to first-hop citers too. ``per_seed`` caps the forward fan-out
+    per work to keep the walk bounded and polite.
 
-    With ``depth >= 2`` the same expansion is applied to first-hop neighbours,
-    growing the local neighbourhood. ``per_seed`` caps the forward fan-out per
-    work to keep the walk bounded and polite.
+    A seed whose citing works or references no source could answer for stops the run
+    (URLError) instead of yielding a silently truncated graph; deeper nodes warn and skip.
     """
     graph = Graph()
     seed_ids: List[str] = []
-    oc_ids: Dict[str, List[str]] = {}  # OpenCitations ids per node, for the keyless route
-
-    # Resolve seeds first so we have canonical OpenAlex ids to expand from.
-    # Single-work lookups are free, even when the keyless list budget is spent.
-    frontier: List[str] = []
     for raw in seeds:
-        selector = normalize_seed(raw)
-        work = client.get_work(selector)
-        node = _mk_node(work, "seed")
-        if not node.id:
-            continue
-        graph.add_node(node)
-        seed_ids.append(node.id)
-        frontier.append(node.id)
-        oc_ids[node.id] = _oc_ids(work, raw)
-        _expand_work(work, graph)
+        nid = normalize_seed(raw)
+        graph.add_node(Node(id=nid, doi=nid, role="seed"))
+        if nid not in seed_ids:
+            seed_ids.append(nid)
+    for nid in seed_ids:
+        _expand_refs(client, graph, nid, fatal=True)
 
+    frontier = list(seed_ids)
     visited: set = set(seed_ids)
-    for _level in range(max(0, depth - 1) + 1):
+    for _level in range(max(1, depth)):
         next_frontier: List[str] = []
         for wid in frontier:
-            # Forward edges: who cites this work.
-            try:
-                citers = fetch_citers(client, wid, oc_ids.get(wid, []), per_seed)
-            except (urllib.error.URLError, ValueError) as exc:
+            citers, answered, failed = fetch_citers(client, wid, per_seed)
+            if not answered:
+                why = "; ".join(failed) or "it has no DOI or PMID the citation sources know"
                 if wid in seed_ids:
-                    # A seed with no forward edges is a broken graph: stop instead
-                    # of silently writing a truncated one.
-                    raise
-                print(f"warning: could not fetch citers of {wid} ({exc}); skipped",
-                      file=sys.stderr)
-                citers = []
+                    raise urllib.error.URLError(f"no source could list the works citing seed {wid} ({why})")
+                print(f"warning: could not fetch citers of {wid} ({why}); skipped", file=sys.stderr)
+                continue
             for citer in citers:
                 cnode = _mk_node(citer, "citation")
                 if not cnode.id:
                     continue
                 graph.add_node(cnode)
                 graph.add_edge(cnode.id, wid)  # citer cites wid
-                _expand_work(citer, graph, mark_refs="reference")
                 if cnode.id not in visited:
-                    next_frontier.append(cnode.id)
                     visited.add(cnode.id)
-                    oc_ids[cnode.id] = _oc_ids(citer)
-        if _level + 1 >= depth:
-            break
+                    _expand_refs(client, graph, cnode.id, fatal=False)
+                    next_frontier.append(cnode.id)
         frontier = next_frontier
-
     return graph
 
 
-def hydrate(graph: Graph, ids: List[str], client: OpenAlexClient) -> int:
-    """Fill title/year/DOI/cited_by_count for nodes known only by their W-id.
+def hydrate(graph: Graph, ids: List[str], client: CitationClient) -> int:
+    """Fill title / year / DOI / cited_by_count for nodes known only by their id.
 
-    Reference nodes come from ``referenced_works``, which lists bare ids, so
-    without this step the most co-cited works would print as untitled. Costs one
-    list call per 100 ids; once the list budget is spent (or with --citers-source
-    opencitations) it uses one free single-work lookup per id instead. Returns the
-    number of nodes filled.
+    OpenCitations lists bare DOIs, so without this step the most co-cited works would print
+    as untitled. Crossref answers first (40 DOIs per call, with its citation count); works it
+    does not describe go to Semantic Scholar's batch endpoint, then doi.org content
+    negotiation. Returns the number of nodes filled. A source that fails is skipped with a
+    warning; the node keeps its id.
     """
     missing = [i for i in dict.fromkeys(ids) if i in graph.nodes and not graph.nodes[i].title]
     filled = 0
-    works: List[Dict[str, Any]] = []
-    if missing and (client.list_budget_spent or client.citers_source == "opencitations"):
-        works = client.get_many_singly(missing)
-    elif missing:
+
+    def apply(works: List[Dict[str, Any]]) -> None:
+        nonlocal filled
+        for w in works:
+            node = graph.nodes.get(w.get("id", ""))
+            if node is None or not w.get("title"):
+                continue
+            if not node.title:
+                filled += 1
+            node.title = w["title"]
+            node.year = w.get("year") or node.year
+            node.doi = w.get("doi") or node.doi
+            node.cited_by_count = max(node.cited_by_count, w.get("cited_by_count") or 0)
+
+    def still() -> List[str]:
+        return [i for i in missing if not graph.nodes[i].title]
+
+    dois = [i for i in missing if i.startswith("10.") and not _ARXIV_DOI_RE.match(i)]
+    if dois:
         try:
-            works = client.get_many(missing)
-        except urllib.error.HTTPError as exc:
-            if exc.code != 429:
-                raise
-            client.note_list_budget_spent()
-            works = client.get_many_singly(missing)
-    for work in works:
-        node = graph.nodes.get(_short_id(work.get("id", "")))
-        if node is None:
+            apply(client.crossref_batch(dois))
+        except _NET_ERRORS as exc:
+            print(f"warning: Crossref titles unavailable ({exc}); trying Semantic Scholar", file=sys.stderr)
+    if still():
+        try:
+            apply(client.s2_batch(still()))
+        except _NET_ERRORS as exc:
+            print(f"warning: Semantic Scholar metadata not checked ({exc})", file=sys.stderr)
+    for nid in [i for i in still() if i.startswith("10.")][:50]:
+        try:
+            w = client.doi_csl(nid)
+        except _NET_ERRORS:
             continue
-        node.title = work.get("title") or work.get("display_name") or node.title
-        node.year = work.get("publication_year") or node.year
-        node.doi = work.get("doi") or node.doi
-        node.cited_by_count = max(node.cited_by_count, work.get("cited_by_count") or 0)
-        filled += 1
+        if w:
+            apply([w])
     return filled
-
-
-def _expand_work(work: Dict[str, Any], graph: Graph, mark_refs: str = "reference") -> None:
-    """Add a work's ``referenced_works`` as backward edges (work -> reference)."""
-    src = _short_id(work.get("id", ""))
-    if not src:
-        return
-    for ref_url in work.get("referenced_works", []) or []:
-        ref_id = _short_id(ref_url)
-        if not ref_id:
-            continue
-        graph.add_node(Node(id=ref_id, role=mark_refs))
-        graph.add_edge(src, ref_id)
 
 
 # --------------------------------------------------------------------------- #
@@ -660,143 +743,112 @@ def write_outputs(graph: Graph, seeds: List[str], ranking: List[Dict[str, Any]],
 # --------------------------------------------------------------------------- #
 
 def _self_test() -> int:
-    """Exercise the full pipeline against an in-memory fake OpenAlex."""
-    # Fake corpus: seed W1 cites W10, W11; W20 and W21 cite W1; both also cite W10.
-    works = {
-        "https://api.openalex.org/works/W1": {
-            "id": "https://openalex.org/W1",
-            "doi": "https://doi.org/10.1000/seed",
-            "title": "Seed paper",
-            "publication_year": 2020,
-            "cited_by_count": 99,
-            "referenced_works": ["https://openalex.org/W10", "https://openalex.org/W11"],
-        },
-    }
-    cites_index = {
-        "W1": [
-            {
-                "id": "https://openalex.org/W20",
-                "title": "Citing paper A",
-                "publication_year": 2022,
-                "cited_by_count": 5,
-                "referenced_works": ["https://openalex.org/W1", "https://openalex.org/W10"],
-            },
-            {
-                "id": "https://openalex.org/W21",
-                "title": "Citing paper B",
-                "publication_year": 2023,
-                "cited_by_count": 3,
-                "referenced_works": ["https://openalex.org/W1", "https://openalex.org/W10"],
-            },
-        ]
-    }
+    """Exercise the full pipeline against in-memory fakes of the keyless APIs."""
+    # Seed S cites R10 and R11; A and B cite S and R10; arXiv preprint P cites S but
+    # OpenCitations knows none of P's references, so they come from Semantic Scholar.
+    seed, r10, r11, a, b = "10.1000/seed", "10.1000/r10", "10.1000/r11", "10.1000/a", "10.1000/b"
+    p = arxiv_doi("2401.00001")
+    oc_refs = {seed: [r10, r11], a: [seed, r10], b: [seed, r10], p: []}
+    oc_cites = {seed: [a, b, p, "10.1000/capped"]}
+    s2_refs = {"ARXIV:2401.00001": [{"externalIds": {"DOI": r10}, "title": "Shared reference",
+                                     "year": 2015, "citationCount": 500}]}
+    crossref = {r10: ("Shared reference", 2015, 500), seed: ("Seed paper", 2020, 99),
+                a: ("Citing paper A", 2022, 5), b: ("Citing paper B", 2023, 3)}
 
-    batch_index = {
-        "W10": {
-            "id": "https://openalex.org/W10",
-            "doi": "https://doi.org/10.1000/shared",
-            "title": "Shared reference",
-            "publication_year": 2015,
-            "cited_by_count": 500,
-        },
-    }
+    def oc_body(ids: List[str], field_name: str, me: str) -> List[Dict[str, str]]:
+        # Real OpenCitations rows also list omid: and openalex: ids; only doi:/pmid: are used.
+        other = "cited" if field_name == "citing" else "citing"
+        return [{field_name: f"omid:br/{i} doi:{x} openalex:W{i}", other: f"doi:{me}"}
+                for i, x in enumerate(ids)]
 
-    def fake_fetch(url: str) -> Dict[str, Any]:
-        if "filter=cites%3A" in url or "filter=cites:" in url:
-            wid = re.search(r"cites%3A(W\d+)|cites:(W\d+)", url)
-            key = (wid.group(1) or wid.group(2)) if wid else ""
-            return {"results": cites_index.get(key, [])}
-        if "filter=openalex%3A" in url or "filter=openalex:" in url:
-            wanted = set(re.findall(r"W\d+", urllib.parse.unquote(url.split("filter=", 1)[1])))
-            return {"results": [w for k, w in batch_index.items() if k in wanted]}
-        for selector, work in works.items():
-            if url.startswith(selector):
-                return work
-        # DOI/normalised selector path.
-        return works["https://api.openalex.org/works/W1"]
-
-    client = OpenAlexClient(_fetch=fake_fetch)
-    graph = build_graph(["10.1000/seed"], client, depth=1, per_seed=10)
-
-    assert "W1" in graph.nodes, "seed missing"
-    assert graph.nodes["W1"].role == "seed"
-    assert ("W1", "W10") in graph._edge_set, "seed->reference edge missing"
-    assert ("W20", "W1") in graph._edge_set, "citer->seed edge missing"
-    assert ("W21", "W1") in graph._edge_set, "citer->seed edge missing"
-
-    ranking = cocitation_ranking(graph, ["W1"], top=10)
-    # W10 is co-cited by W20 and W21 alongside the seed -> should rank.
-    ranked_ids = {r["id"] for r in ranking}
-    assert "W10" in ranked_ids, f"co-cited W10 missing from ranking: {ranked_ids}"
-
-    # Reference-only nodes arrive untitled; hydration fills them in one batch call.
-    assert graph.nodes["W10"].title == "", "reference node unexpectedly pre-titled"
-    assert hydrate(graph, [r["id"] for r in ranking], client) == 1, "hydration filled nothing"
-    assert graph.nodes["W10"].title == "Shared reference", "W10 title not hydrated"
-    ranking = cocitation_ranking(graph, ["W1"], top=10)
-    assert any(r["id"] == "W10" and r["title"] for r in ranking), "hydrated title not ranked"
-
-    graphml = to_graphml(graph)
-    parsed = ET.fromstring(graphml)
-    assert parsed.tag.endswith("graphml"), "GraphML root malformed"
-
-    payload = to_json(graph, ["W1"], ranking)
-    round_trip = json.loads(json.dumps(payload))
-    assert round_trip["node_count"] == len(graph.nodes)
-    assert round_trip["edge_count"] == len(graph.edges)
-    assert round_trip["cocitation_ranking"], "empty ranking in JSON"
-
-    # Keyless fallback: every list call answers 429 (shared per-IP budget spent), so
-    # citers must come from a streamed OpenCitations answer and metadata from free
-    # single-work lookups -- the same edges and ranking as the list-call route.
-    singles = {f"https://api.openalex.org/works/{c['id'].split('/')[-1]}": c
-               for c in cites_index["W1"]}
-    singles.update({f"https://api.openalex.org/works/{k}": w for k, w in batch_index.items()})
-    singles["https://api.openalex.org/works/W11"] = {
-        "id": "https://openalex.org/W11", "title": "Other reference", "cited_by_count": 7}
-    oc_calls: List[str] = []
-
-    def fetch_429(url: str) -> Dict[str, Any]:
-        if "filter=" in url:
-            raise urllib.error.HTTPError(url, 429, "Insufficient budget", None, None)
-        for selector, work in singles.items():
-            if url.startswith(selector + "?") or url == selector:
-                return work
-        if "/works/W" in url:
-            raise urllib.error.HTTPError(url, 404, "Not Found", None, None)
-        return works["https://api.openalex.org/works/W1"]
+    def make_fetch(s2_rate_limited: bool) -> Callable[..., Any]:
+        def fetch(url: str, data: Optional[dict] = None, accept: str = "") -> Any:
+            calls.append(url)
+            if url.startswith(OPENCITATIONS_BASE + "/references/doi:"):
+                me = urllib.parse.unquote(url.split("/references/doi:", 1)[1])
+                return oc_body(oc_refs.get(me, []), "cited", me)
+            if url.startswith(S2_BASE):
+                if s2_rate_limited:
+                    raise urllib.error.HTTPError(url, 429, "Too Many Requests", None, None)
+                if "/references?" in url:
+                    sel = urllib.parse.unquote(url.split("/paper/", 1)[1].split("/references", 1)[0])
+                    return {"data": [{"citedPaper": w} for w in s2_refs.get(sel, [])]}
+                if "/citations?" in url:
+                    return {"data": [{"citingPaper": {"externalIds": {"DOI": x}, "title": x}}
+                                     for x in oc_cites[seed]]}
+                return [None for _ in (data or {}).get("ids", [])]
+            if url.startswith(CROSSREF_BASE):
+                wanted = re.findall(r"doi:([^,&]+)", urllib.parse.unquote(url))
+                return {"message": {"items": [
+                    {"DOI": d, "title": [crossref[d][0]], "issued": {"date-parts": [[crossref[d][1]]]},
+                     "is-referenced-by-count": crossref[d][2]} for d in wanted if d in crossref]}}
+            if url.startswith("https://doi.org/"):
+                raise urllib.error.HTTPError(url, 404, "Not Found", None, None)
+            raise AssertionError(f"unexpected URL {url}")
+        return fetch
 
     def stream(url: str):
-        oc_calls.append(url)
-        body = ('[{"oci":"1-2","citing":"omid:br/1 openalex:W20 doi:10.1000/a",'
-                '"cited":"doi:10.1000/seed"},{"oci":"3-2","citing":"omid:br/3 doi:10.1000/b '
-                'openalex:W21","cited":"doi:10.1000/seed"},{"oci":"4-2","citing":"omid:br/4 '
-                'openalex:W99","cited":"doi:10.1000/seed"}]').encode()
+        calls.append(url)
+        me = urllib.parse.unquote(url.split("/citations/doi:", 1)[1])
+        body = json.dumps(oc_body(oc_cites.get(me, []), "citing", me)).encode()
         yield from (body[i:i + 40] for i in range(0, len(body), 40))  # split mid-record
 
-    keyless = OpenAlexClient(_fetch=fetch_429, _stream=stream)
-    g2 = build_graph(["10.1000/seed"], keyless, depth=1, per_seed=2)
-    assert keyless.list_budget_spent, "429 did not switch to the keyless route"
-    assert oc_calls and oc_calls[0].endswith("/citations/doi:10.1000/seed"), oc_calls
-    assert {("W20", "W1"), ("W21", "W1")} <= g2._edge_set, "OpenCitations citers missing"
-    assert "W99" not in g2.nodes, "per-seed cap ignored on the stream"
-    r2 = cocitation_ranking(g2, ["W1"], top=10)
-    assert hydrate(g2, [r["id"] for r in r2], keyless) == 2, "single-lookup hydration failed"
-    assert g2.nodes["W10"].title == "Shared reference"
-    assert [r["id"] for r in cocitation_ranking(g2, ["W1"], top=10)] == \
-        [r["id"] for r in cocitation_ranking(graph, ["W1"], top=10)], "routes rank differently"
+    calls: List[str] = []
+    client = CitationClient(_fetch=make_fetch(False), _stream=stream, _sleep=lambda s: None)
+    graph = build_graph(["https://doi.org/10.1000/SEED"], client, depth=1, per_seed=3)
+
+    assert graph.nodes[seed].role == "seed", "seed missing"
+    assert (seed, r10) in graph._edge_set, "seed->reference edge missing"
+    assert {(a, seed), (b, seed), (p, seed)} <= graph._edge_set, "citer->seed edge missing"
+    assert "10.1000/capped" not in graph.nodes, "per-seed cap ignored on the stream"
+    assert (p, r10) in graph._edge_set, "Semantic Scholar did not fill OpenCitations' gap"
+    assert not any("openalex" in c for c in calls), "an OpenAlex URL was requested"
+
+    ranking = cocitation_ranking(graph, [seed], top=10)
+    ranked_ids = [r["id"] for r in ranking]
+    assert r10 in ranked_ids, f"co-cited reference missing from ranking: {ranked_ids}"
+    assert graph.nodes[a].title == "", "OpenCitations node unexpectedly pre-titled"
+    assert hydrate(graph, [seed] + ranked_ids, client) >= 3, "hydration filled too little"
+    assert graph.nodes[seed].title == "Seed paper" and graph.nodes[a].year == 2022
+    ranking = cocitation_ranking(graph, [seed], top=10)
+    assert ranking[0]["id"] == r10 and ranking[0]["cited_by_count"] == 500, ranking[0]
+
+    parsed = ET.fromstring(to_graphml(graph))
+    assert parsed.tag.endswith("graphml"), "GraphML root malformed"
+    payload = json.loads(json.dumps(to_json(graph, [seed], ranking)))
+    assert payload["node_count"] == len(graph.nodes) and payload["edge_count"] == len(graph.edges)
+    assert payload["cocitation_ranking"], "empty ranking in JSON"
+
+    # Semantic Scholar rate-limited throughout: backoff, then pause; OpenCitations still
+    # answers, so the graph is built and only the preprint's references are not checked.
+    calls.clear()
+    slept: List[float] = []
+    limited = CitationClient(_fetch=make_fetch(True), _stream=stream, _sleep=slept.append)
+    g2 = build_graph([seed], limited, depth=1, per_seed=3)
+    assert slept == list(S2_BACKOFF), f"no exponential backoff on 429: {slept}"
+    assert limited.s2_skipped == [p], limited.s2_skipped
+    assert {(a, seed), (b, seed), (seed, r10)} <= g2._edge_set and (p, r10) not in g2._edge_set
+
+    # Citers from Semantic Scholar only.
+    calls.clear()
+    s2_only = CitationClient(_fetch=make_fetch(False), _stream=stream, citers_source="semanticscholar",
+                             _sleep=lambda s: None)
+    g3 = build_graph([seed], s2_only, depth=1, per_seed=2)
+    assert {(a, seed), (b, seed)} <= g3._edge_set and (p, seed) not in g3._edge_set
+    assert not any("/citations/" in c for c in calls), "OpenCitations used despite --citers-source"
 
     # normalize_seed coverage.
-    assert normalize_seed("W2741809807") == "W2741809807"
-    assert normalize_seed("10.1038/nphys1170") == "https://doi.org/10.1038/nphys1170"
-    assert normalize_seed("https://doi.org/10.1038/x") == "https://doi.org/10.1038/x"
-    assert normalize_seed("arXiv:1706.03762") == "https://doi.org/10.48550/arXiv.1706.03762"
-    try:
-        normalize_seed("not-an-id")
-    except ValueError:
-        pass
-    else:  # pragma: no cover
-        raise AssertionError("normalize_seed accepted garbage")
+    assert normalize_seed("10.1038/nphys1170") == "10.1038/nphys1170"
+    assert normalize_seed("https://doi.org/10.1038/X") == "10.1038/x"
+    assert normalize_seed("arXiv:1706.03762v5") == "10.48550/arxiv.1706.03762"
+    assert _s2_selector("10.48550/arxiv.1706.03762") == "ARXIV:1706.03762"
+    for bad in ("not-an-id", "W2741809807"):
+        try:
+            normalize_seed(bad)
+        except ValueError:
+            pass
+        else:  # pragma: no cover
+            raise AssertionError(f"normalize_seed accepted {bad!r}")
 
     print("SELF-TEST OK:", len(graph.nodes), "nodes,", len(graph.edges), "edges,",
           len(ranking), "ranked")
@@ -809,32 +861,29 @@ def _self_test() -> int:
 
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(
-        description="Build an OpenAlex citation / co-citation graph from seed DOIs.",
+        description="Build a citation / co-citation graph from seed DOIs with keyless open "
+                    "citation data (OpenCitations, Semantic Scholar, Crossref).",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    p.add_argument("--seed", action="append", default=[], metavar="DOI|W-id|arXiv",
-                   help="seed work (repeatable): a DOI, OpenAlex W-id, or arXiv id.")
-    p.add_argument("--api-key", default=os.environ.get("OPENALEX_API_KEY"),
-                   help="optional OpenAlex API key (free at openalex.org/settings/api): a private "
-                        "daily budget for list calls. Not needed; prefer the OPENALEX_API_KEY env "
-                        "var so a key stays out of shell history.")
-    p.add_argument("--citers-source", choices=["auto", "openalex", "opencitations"], default="auto",
-                   help="where citing works come from: auto (default) = OpenAlex list calls, "
-                        "switching to OpenCitations when they return 429; openalex = list calls "
-                        "only; opencitations = never spend the OpenAlex list budget.")
-    p.add_argument("--mailto", default=None,
-                   help="deprecated no-op: OpenAlex has ignored mailto since Feb 2026, when "
-                        "API keys replaced the polite pool. Accepted so older commands still run.")
+    p.add_argument("--seed", action="append", default=[], metavar="DOI|arXiv",
+                   help="seed work (repeatable): a DOI, DOI URL, or arXiv id.")
+    p.add_argument("--citers-source", choices=["auto", "opencitations", "semanticscholar", "openalex"],
+                   default="auto", metavar="{auto,opencitations,semanticscholar}",
+                   help="where citing works come from: auto (default) = OpenCitations, then "
+                        "Semantic Scholar for works it has none for; opencitations or "
+                        "semanticscholar = that source only.")
+    p.add_argument("--api-key", default=None, help=argparse.SUPPRESS)  # retired OpenAlex key: ignored
+    p.add_argument("--mailto", default=None, help=argparse.SUPPRESS)  # retired: no source needs it
     p.add_argument("--depth", type=int, default=1,
                    help="how many citation hops to expand (default 1).")
     p.add_argument("--per-seed", type=int, default=25,
-                   help="max citing works fetched per work (default 25, OpenAlex max 100).")
+                   help="max citing works fetched per work (default 25).")
     p.add_argument("--top", type=int, default=25,
                    help="size of the co-citation ranking table (default 25).")
     p.add_argument("--out", default="citation_graph",
                    help="output basename; writes <out>.graphml and <out>.json.")
     p.add_argument("--sleep", type=float, default=0.0,
-                   help="seconds to sleep between API calls (throttle; OpenAlex allows <=100 req/s).")
+                   help="seconds to sleep after each API call (extra politeness throttle).")
     p.add_argument("--self-test", action="store_true",
                    help="run the offline self-test and exit (no network).")
     return p.parse_args(argv)
@@ -848,44 +897,40 @@ def main(argv: Optional[List[str]] = None) -> int:
     if not args.seed:
         print("error: at least one --seed is required (or use --self-test).", file=sys.stderr)
         return 2
+    if args.api_key or args.citers_source == "openalex":
+        print("note: OpenAlex is no longer used (its keyless access is metered per IP); "
+              "--api-key is ignored and --citers-source openalex runs as auto.", file=sys.stderr)
+        args.citers_source = "auto" if args.citers_source == "openalex" else args.citers_source
     if args.mailto:
-        print("note: --mailto is ignored by OpenAlex since Feb 2026 (it changes no limit); "
-              "nothing else is needed.", file=sys.stderr)
-    if not args.api_key:
-        print("note: keyless mode (no OPENALEX_API_KEY). Single-work lookups are free; if the "
-              "shared per-IP list budget is spent (HTTP 429), citing works come from "
-              "OpenCitations instead. An optional free key only adds a private budget.",
-              file=sys.stderr)
+        print("note: --mailto is ignored; no source needs a contact address.", file=sys.stderr)
+    s2_key = os.environ.get("S2_API_KEY") or os.environ.get("SEMANTIC_SCHOLAR_API_KEY")
+    print("note: keyless run: edges from OpenCitations (Semantic Scholar where it has none), "
+          "titles from Crossref" + (" (S2_API_KEY set: dedicated Semantic Scholar limit)." if s2_key
+                                   else "; no account or key needed."), file=sys.stderr)
 
-    client = OpenAlexClient(api_key=args.api_key, sleep=args.sleep,
-                            citers_source=args.citers_source)
+    client = CitationClient(sleep=args.sleep, citers_source=args.citers_source, s2_api_key=s2_key)
     try:
         graph = build_graph(args.seed, client, depth=args.depth, per_seed=args.per_seed)
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
     except urllib.error.HTTPError as exc:
-        if exc.code == 429:
-            print("error: OpenAlex HTTP 429 with --citers-source openalex (daily list budget "
-                  "spent). Rerun with --citers-source auto or opencitations (keyless), or "
-                  "retry after midnight UTC.", file=sys.stderr)
-        else:
-            print(f"error: HTTP {exc.code} — {exc.reason} ({exc.url})", file=sys.stderr)
+        print(f"error: HTTP {exc.code} — {exc.reason} ({exc.url})", file=sys.stderr)
         return 1
     except urllib.error.URLError as exc:
         print(f"error: network failure — {exc.reason}", file=sys.stderr)
         return 1
-    except ValueError as exc:
-        print(f"error: {exc}", file=sys.stderr)
-        return 2
 
     seed_ids = [n.id for n in graph.nodes.values() if n.role == "seed"]
     ranking = cocitation_ranking(graph, seed_ids, top=args.top)
-    try:
-        # Reference nodes carry only W-ids; fetch titles for the ranked ones, then
-        # re-rank because hydrated cited_by_count values break ties.
-        if hydrate(graph, [r["id"] for r in ranking], client):
-            ranking = cocitation_ranking(graph, seed_ids, top=args.top)
-    except urllib.error.URLError as exc:  # includes HTTPError (e.g. 429)
-        print(f"warning: could not fetch titles for ranked works ({exc}); "
-              "writing W-ids only.", file=sys.stderr)
+    # OpenCitations nodes carry only DOIs; fetch titles for the seeds and ranked works,
+    # then re-rank because hydrated cited_by_count values break ties.
+    if hydrate(graph, seed_ids + [r["id"] for r in ranking], client):
+        ranking = cocitation_ranking(graph, seed_ids, top=args.top)
+    if client.s2_skipped:
+        print(f"note: Semantic Scholar was rate-limited (HTTP 429) for {len(client.s2_skipped)} "
+              "lookup(s), which were not checked: " + ", ".join(client.s2_skipped[:8])
+              + (" ..." if len(client.s2_skipped) > 8 else ""), file=sys.stderr)
     graphml_path, json_path = write_outputs(graph, args.seed, ranking, args.out)
 
     print(f"nodes={len(graph.nodes)} edges={len(graph.edges)} ranked={len(ranking)}")
@@ -895,7 +940,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("\nTop co-citation neighbours:")
         for r in ranking[:10]:
             title = (r["title"] or "(untitled)")[:70]
-            print(f"  {r['cocitation']:>3}  {r['id']:<14} {title}")
+            print(f"  {r['cocitation']:>3}  {r['id']:<30} {title}")
     return 0
 
 
