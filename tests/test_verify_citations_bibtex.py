@@ -398,15 +398,21 @@ def test_parser_survives_random_brace_soup():
 # --------------------------------------------------------------------------- #
 
 
-def test_freeform_fixture_parses_as_before():
+def test_freeform_fixture_parses_to_exactly_its_numbered_references():
     res = parse((FIXTURES / "bibliography_24_entries.md").read_text(encoding="utf-8"))
     assert res.format_detected == "freeform" and res.complete
-    # 24 numbered references plus the heading and intro paragraph, exactly as v1.1.0 split it.
-    assert len(res.entries) == 26
+    # Exactly the 24 numbered references. v1.1.0 to v1.4.0 also returned the heading and the
+    # intro paragraph as entries (26), which a TF-capable run then called fabricated; they
+    # are now skipped as non-references, listed in ignored_text, and given no verdict.
+    assert len(res.entries) == 24
     numbered = [e for e in res.entries if e.raw[:3].rstrip(". ").isdigit()]
     assert len(numbered) == 24
     assert numbered[0].title == "Attention is all you need" and numbered[0].year == "2017"
     assert [e.line for e in res.entries] == sorted(e.line for e in res.entries)
+    assert [(d["line"], d["reason"].split(" (")[0]) for d in res.ignored_text] == [
+        (1, "skipped: not a reference"), (3, "skipped: not a reference")]
+    assert "Markdown heading" in res.ignored_text[0]["reason"]
+    assert "prose" in res.ignored_text[1]["reason"]
 
 
 def test_doi_list_is_unchanged():
@@ -1038,3 +1044,104 @@ def test_one_dropped_connection_is_retried_before_offline(monkeypatch):
     answers[:] = [urllib.error.URLError(ConnectionResetError("1")), urllib.error.URLError(ConnectionResetError("2"))]
     with pytest.raises(vc.NetworkUnavailable):  # two in a row: the network is down
         REAL_HTTP_GET(url, "")
+
+
+
+# --------------------------------------------------------------------------- #
+# Non-reference text is skipped, never checked (and never TF)                 #
+# --------------------------------------------------------------------------- #
+
+NOT_REFERENCES = [
+    # text, reason fragment
+    ("# Reference List — Literature Review Draft (APA 7.0)", "Markdown heading"),
+    ("## References", "Markdown heading"),
+    ("References", "no year, identifier or author name"),
+    ("1. Install the tool before running it.", "no year, identifier or author name"),
+    ("A 24-entry bibliography submitted for a citation-existence audit. It is a deliberate fixture: "
+     "most entries are real. Expected verdicts were re-checked against the live APIs on 2026-09-23.",
+     "prose"),
+    # A prose line with a year: the year is in running text ("in 2019", not "(2019)" or a
+    # reference's "2019."), there is no author name and no identifier, and it reads as prose.
+    ("These references were collected in 2019 for the review of the field.", "prose"),
+    ("The list below was compiled in 2019.", "prose"),
+]
+
+STILL_REFERENCES = [
+    "Smith J. 2019. Title of a terse paper. Journal 3:1-2.",  # terse Vancouver-like reference
+    "Smith, J. (2019). Title. Journal, 3, 1-2.",
+    "Roediger HL, Karpicke JD. Test-enhanced learning. Psychol Sci. 2006;17(3):249-55.",
+    "J. Smith and A. Jones, 'A paper title', in Proc. X, 2018, pp. 1-10.",
+    "Selwyn, Neil. 2016. Education and Technology. London: Bloomsbury.",
+    "OECD (2021). OECD digital education outlook 2021: Pushing the frontiers. OECD Publishing.",
+    "The state of the world's children (2019). UNICEF.",  # no author, citation-style year
+    "World Health Organization. Global report on diabetes. Geneva: WHO; 2016.",
+    "Annual Report 2019 World Health Organization Geneva",  # odd, but not prose: checked
+    "Anonymous. Title of a pamphlet. 1999.",
+    "ISBN 978-0-262-03384-8",
+    "See https://example.org/report for the full list",
+]
+
+
+@pytest.mark.parametrize("text, why", NOT_REFERENCES, ids=[t[:30] for t, _ in NOT_REFERENCES])
+def test_non_reference_text_is_skipped_with_a_reason(text, why):
+    assert why in (vc.not_a_reference(text) or "")
+    res = parse(text, "freeform")
+    assert not res.entries and res.detected == 0
+    (d,) = res.ignored_text
+    assert d["reason"].startswith("skipped: not a reference") and why in d["reason"]
+
+
+@pytest.mark.parametrize("text", STILL_REFERENCES, ids=[t[:30] for t in STILL_REFERENCES])
+def test_real_but_oddly_formatted_references_are_still_checked(text):
+    assert vc.not_a_reference(text) is None
+    res = parse(text, "freeform")
+    assert len(res.entries) == 1 and not res.ignored_text
+
+
+def test_terse_reference_is_parsed_with_title_author_and_year():
+    (e,) = parse("Smith J. 2019. Title of a terse paper. Journal 3:1-2.", "freeform").entries
+    assert (e.year, e.title) == ("2019", "Title of a terse paper") and e.authors == ["Smith J"]
+    assert vc._tf_eligible(e)
+
+
+def test_skipped_text_gets_no_verdict_and_is_counted_separately(capsys):
+    text = ("# References\n\nThese references were collected in 2019 for the review of the field.\n\n"
+            "Smith, J. (2019). A real-looking title. Journal, 3, 1-2.\n")
+    rc, stdout, stderr = run_main(capsys, text, "--offline")
+    report = json.loads(stdout)
+    assert rc == 0 and report["status"] == "complete"
+    assert report["summary"]["total"] == 1 and [e["input"]["line"] for e in report["entries"]] == [5]
+    acc = report["input_accounting"]
+    assert acc["detected"] == 1 and acc["ignored_text_segments"] == 2
+    assert all(d["reason"].startswith("skipped: not a reference") for d in acc["ignored_text"])
+    assert any("skipped: not a reference" in n for n in report["summary"]["notes"])
+    assert "2 text segment(s) skipped: not a reference" in stderr
+
+
+def test_heading_and_prose_never_reach_tf_even_when_every_index_answers(monkeypatch):
+    _fake_sources(monkeypatch, crossref=None, s2=None)  # every index answers "no match"
+    text = ("# Reference List\n\nThese references were collected in 2019 for the review of the field.\n\n"
+            "Doe, J. (2020). A study with no identifier. Journal of Nothing, 1, 1-2.\n")
+    res = vc.parse_input(text)
+    results = [vc.verify_entry(e, "", 0.7, False) for e in res.entries]
+    assert [r["input"]["line"] for r in results] == [5]  # the heading and prose were not checked
+    assert [r["verdict"] for r in results] == ["TF"]
+
+
+@pytest.mark.parametrize("raw", ["1. Install the tool before running it.",
+                                 "Some words without structure"])
+def test_tf_guard_thin_freeform_entry_is_unverified_at_most(monkeypatch, raw):
+    # Even if such text reached the checker, a free-form entry needs a title-like segment
+    # plus an author or year before it can be called fabricated.
+    _fake_sources(monkeypatch, crossref=None, s2=None)
+    e = vc.Entry(raw=raw, title=raw, fmt="freeform", line=1)
+    assert vc._tf_eligible(e) is False
+    r = vc.verify_entry(e, "", 0.7, False)
+    assert r["verdict"] == "unverified" and "too little reference structure" in r["detail"]
+
+
+def test_tf_guard_does_not_spare_a_structured_fabrication(monkeypatch):
+    _fake_sources(monkeypatch, crossref=None, s2=None)
+    (e,) = vc.parse_input("Haverbrook, I. (2019). Mycorrhizal signalling networks predict bond "
+                          "default rates. Ecological Finance Letters, 4, 1-9.").entries
+    assert vc._tf_eligible(e) and vc.verify_entry(e, "", 0.7, False)["verdict"] == "TF"

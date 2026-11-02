@@ -6,7 +6,7 @@ allowed-tools: Read Write Edit Bash(python:*) Bash WebSearch WebFetch
 compatibility: "No API key required — stdlib Python (`requests` optional) via `uv run python` against Crossref, Semantic Scholar, Europe PMC, arXiv, Open Library and the doi.org Handle API; optional S2_API_KEY only raises Semantic Scholar's rate limit; offline runs return 'unverified' verdicts"
 metadata:
   skill-author: AlterLab
-  version: "1.2.4"
+  version: "1.2.5"
   last_updated: "2026-11-02"
   credentials: "optional: S2_API_KEY or SEMANTIC_SCHOLAR_API_KEY (raises Semantic Scholar's shared keyless rate limit: a dedicated 1 request/s; never needed for a verdict)"
   depends_on: "alterlab-research-pipeline (shares the integrity taxonomy), alterlab-deep-research"
@@ -81,6 +81,11 @@ For each bibliography entry the script:
    Every detected entry ends up parsed, **rejected** (malformed — with line, key, and
    reason) or **unsupported**; see `input_accounting`. Mixed BibTeX + free-form/DOI
    input is handled piecewise, and a broken entry cannot swallow the ones after it.
+   Text that is not a reference — a Markdown heading, an intro or prose paragraph,
+   a line with no year, no DOI/arXiv/ISBN/URL and no author name — is **skipped**
+   (`input_accounting.ignored_text`, reason "skipped: not a reference") and gets no
+   verdict. A year in running text ("compiled in 2019 for the review") does not make
+   prose a reference; a terse real one (`Smith J. 2019. Title. Journal 3:1-2.`) is checked.
 2. **Resolves identifiers** — looks up the cited DOI/arXiv ID directly when present,
    and asks the doi.org Handle API whether a DOI is registered with any agency.
 3. **Searches by title + first author + year** as a fallback across the sources
@@ -135,7 +140,7 @@ SERIOUS / MEDIUM / MINOR scale used in the Integrity Report schema.
 | Code | Name | Severity | Script trigger |
 |------|------|----------|----------------|
 | `verified` | — (exists, matches) | NONE | Title ratio >= threshold AND author overlap OK AND year consistent in >=1 authoritative source |
-| `TF` | Total Fabrication | **SERIOUS** | Cited DOI is not registered at doi.org, or cited arXiv ID does not exist on arXiv, and no close title match exists; OR (no identifier) no record matches title + authors in Crossref plus at least one other index that actually answered (Semantic Scholar, Europe PMC, arXiv or Open Library); `detail` names the indexes that answered and those not checked. If only Crossref answered, the entry is `unverified` |
+| `TF` | Total Fabrication | **SERIOUS** | Cited DOI is not registered at doi.org, or cited arXiv ID does not exist on arXiv, and no close title match exists; OR (no identifier) no record matches title + authors in Crossref plus at least one other index that actually answered (Semantic Scholar, Europe PMC, arXiv or Open Library); `detail` names the indexes that answered and those not checked. If only Crossref answered, or a free-form entry lacks a title plus an author or year, the entry is `unverified` |
 | `PAC` | Partial Attribute Corruption | MEDIUM | Entry found but >=1 metadata field disagrees (year, author overlap < 50%, a cited identifier that does not resolve to it, or a garbled title whose closest record shares the authors — possible mashup) |
 | `IH` | Identifier Hijacking | **SERIOUS** | Cited DOI/arXiv ID **resolved** (method=id) but the resolved record's title is unrelated (ratio < threshold) |
 | `PH` | Placeholder Hallucination | **SERIOUS** | Unresolved template/placeholder (`[CITATION NEEDED]`, `\cite{}`, `et al., YYYY`, `TODO`, `forthcoming`, `in press`) — caught pre-network |
@@ -291,7 +296,7 @@ uv run python .../claim_faithfulness.py --input pairs.json --tier llm --json
 ```json
 {
   "tool": "alterlab-citation-verifier/verify_citations.py",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "status": "complete",
   "warning": null,
   "summary": {

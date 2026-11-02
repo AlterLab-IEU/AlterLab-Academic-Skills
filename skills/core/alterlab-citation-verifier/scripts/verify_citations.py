@@ -66,6 +66,11 @@ Input formats (``--format auto`` detects them, and a mixed file is handled piece
 - A bare DOI / arXiv-ID list (one per line, ``#`` comments).
 - Free-form references (APA-style lines, numbered lists, blank-line-separated blocks).
   In ``auto`` mode, reference-like text outside BibTeX entries is verified as free-form.
+- Text that is not a reference is skipped, never checked: Markdown headings, prose
+  paragraphs, and text with no year, identifier (DOI / arXiv / ISBN / URL) or author
+  name (see ``not_a_reference``). It is listed in ``input_accounting.ignored_text`` as
+  "skipped: not a reference", counted in ``ignored_text_segments``, and gets no verdict.
+  As a second safety net a free-form entry is TF only with a title plus an author or year.
 
 Input accounting: every detected entry ends up in exactly one bucket. It is either
 *parsed* (and then verified, unverified, or flagged), *rejected* (malformed, with a
@@ -111,7 +116,7 @@ from typing import Any, Callable, Optional, Sequence
 # HTTP layer — prefer requests, fall back to urllib (stdlib). Keys optional.  #
 # --------------------------------------------------------------------------- #
 
-TOOL_VERSION = "1.4.0"
+TOOL_VERSION = "1.4.1"
 # Contact email for Crossref's polite pool: opt-in (--mailto or ALTERLAB_CONTACT_EMAIL). With
 # none, requests carry no address and use the public pool; no default address is ever sent.
 DEFAULT_MAILTO = os.environ.get("ALTERLAB_CONTACT_EMAIL", "").strip()
@@ -981,10 +986,80 @@ def _bibtex_entry(raw: str, body: str, key: str, kind: str, values: dict[str, st
     )
 
 
+_MD_HEADING_RE = re.compile(r"^\s{0,3}#{1,6}(?:\s|$)")
+_ISBN_RE = re.compile(r"(?i)\bISBN(?:-1[03])?:?\s*[0-9][0-9\s-]{8,}[0-9X]\b")
+_YEAR_RE = re.compile(r"(?<!\d)(?:19|20)\d{2}(?!\d)")
+# A year written the way references write it: "(2019)", "(2019a)", "(2019, May 3)", or
+# "2019." / "2019," / "2019;" / "2019:" — not a year inside running text or a date.
+_CITED_YEAR_RE = re.compile(r"\((?:19|20)\d{2}[a-z]?(?:,[^)]{0,30})?\)"
+                            r"|(?<![\d-])(?:19|20)\d{2}[a-z]?(?=[.,;:](?:\s|$))")
+# Author name shapes, looked for only in the part before the first year (where a
+# reference puts its authors): "Surname, I." anywhere there; "Smith J." / "Smith JA,"
+# (Vancouver); "J. Smith"; "et al".
+_AUTHOR_SHAPES_RE = re.compile(
+    r"[A-Z][\w'’\-]+,\s+(?:[A-Z]\.\s?){1,3}"
+    r"|\b[A-Z][a-z][\w'’\-]+\s[A-Z]{1,3}[.,](?:\s|$)"
+    r"|\b(?:[A-Z]\.\s?){1,3}[A-Z][a-z][\w'’\-]+"
+    r"|\bet al\b")
+_LIST_MARKER_RE = re.compile(r"^\s*\[?\d{1,3}[\].)]\s+")
+# "compiled in 2019." — a year after a preposition is running text, not a citation year.
+_RUNNING_YEAR_RE = re.compile(r"(?i)\b(?:in|since|until|till|during|from|by|before|after|of|on|"
+                              r"around|circa|throughout|between|and|to)$")
+_FUNCTION_WORDS = frozenset("""
+a an the is are was were be been being it its this that these those and or but of to in on
+for with by as at from into should may must will would can could not no when which who each
+so has have had we you they our your their if then than only also more most here there such
+""".split())
+
+
+def _reads_as_prose(text: str) -> bool:
+    """Running text rather than a citation: six or more words, at least 30% function words."""
+    words = re.findall(r"[A-Za-z][A-Za-z'’\-]*", text)
+    return len(words) >= 6 and sum(w.lower() in _FUNCTION_WORDS for w in words) / len(words) >= 0.3
+
+
+def not_a_reference(text: str) -> Optional[str]:
+    """Why ``text`` is not a reference (it is skipped, never checked), or None to check it.
+
+    Deliberately conservative — anything that might be a reference is checked:
+      * a Markdown heading ("# References") is skipped;
+      * a DOI, arXiv ID, ISBN or URL, or an author name before the first year (or a
+        numbered-list / "Surname, I." / "Organisation (2019)" lead), makes it a reference;
+      * otherwise text with no year is skipped (no year, identifier or author name);
+      * a list number alone ("1. Install the tool") is not an author name;
+      * a year with no author name and no identifier is a reference when written as
+        references write years ("(2019)", "Geneva: WHO; 2016.") and not after a
+        preposition; otherwise it is skipped only when the text reads as prose ("The
+        list was compiled in 2019 for the review"), and checked when it does not
+        ("Annual Report 2019 World Health Organization").
+    """
+    t = _WS.sub(" ", text or "").strip()
+    if not t:
+        return "empty"
+    if _MD_HEADING_RE.match(t):
+        return "a Markdown heading"
+    if (_first_doi(t) or _first_arxiv(t) or _ISBN_RE.search(t)
+            or re.search(r"(?i)\bhttps?://|\bwww\.", t)):
+        return None
+    body = _LIST_MARKER_RE.sub("", t)  # a list number alone does not make a reference
+    ym = _YEAR_RE.search(body)
+    head = body[: ym.start()] if ym else body[:150]
+    if _NEW_REF_LINE_RE.match(body) or _AUTHOR_SHAPES_RE.search(head[:200]):
+        return None
+    if not ym:
+        return "no year, identifier or author name"
+    cited = [m for m in _CITED_YEAR_RE.finditer(body[:200])
+             if not _RUNNING_YEAR_RE.search(body[: m.start()].rstrip("( "))]
+    if cited and not (len(body) > 250 and _reads_as_prose(body)):
+        return None
+    if _reads_as_prose(body):
+        return "prose: a year, but no author name, identifier or citation-style year"
+    return None
+
+
 def _looks_like_reference(text: str) -> bool:
-    """Heuristic: does stray text look like a citation (identifier, year, or author lead)?"""
-    return bool(_first_doi(text) or _first_arxiv(text) or re.search(r"\b(?:19|20)\d{2}\b", text)
-                or _NEW_REF_LINE_RE.match(text) or re.search(r"(?i)\bhttps?:", text))
+    """Heuristic: does stray text look like a citation? (see not_a_reference)"""
+    return not_a_reference(text) is None
 
 
 def _locate_blocks(text: str, blocks: Sequence[str], first_line: int = 1) -> list[tuple[int, str]]:
@@ -1162,10 +1237,11 @@ def _bib_residual(text: str, start: int, end: int, res: ParseResult, li: _LineIn
             blk = _WS.sub(" ", blk).strip()
             if not blk:
                 continue
-            if not _looks_like_reference(blk):
+            why = not_a_reference(blk)
+            if why:
                 res.ignored_text.append({"line": lineno, "excerpt": _excerpt(blk), "reason": (
-                    "text outside any BibTeX entry that does not look like a reference "
-                    "(BibTeX ignores it)")})
+                    f"skipped: not a reference ({why}); text outside any BibTeX entry, which "
+                    "BibTeX ignores")})
             elif allow_refs:
                 e = _parse_freeform_block(blk)
                 if e:
@@ -1288,6 +1364,11 @@ def _parse_plain_into(text: str, fmt: str, res: ParseResult) -> None:
     res.format_detected = mode
     if mode == "freeform":
         for lineno, blk in _locate_blocks(text, _split_references(text)):
+            why = not_a_reference(blk)
+            if why and why != "empty":
+                res.ignored_text.append({"line": lineno, "excerpt": _excerpt(blk),
+                                         "reason": f"skipped: not a reference ({why})"})
+                continue
             e = _parse_freeform_block(blk)
             if e:
                 e.line = lineno
@@ -1302,9 +1383,10 @@ def _parse_plain_into(text: str, fmt: str, res: ParseResult) -> None:
         arxiv = _first_arxiv(s) if not doi else ""
         if (doi or arxiv) and (strict or _is_bare_identifier_line(s)):
             res.entries.append(Entry(raw=s, doi=doi, arxiv_id=arxiv, fmt="doi", line=lineno))
-        elif not _looks_like_reference(s):
+        elif not_a_reference(s):
             res.ignored_text.append({"line": lineno, "excerpt": _excerpt(s), "reason": (
-                "neither an identifier nor a recognisable reference")})
+                f"skipped: not a reference ({not_a_reference(s)}); neither an identifier nor a "
+                "recognisable reference")})
         elif strict:
             res.unsupported.append(_diag("doi", lineno, (
                 "no DOI or arXiv ID on this line: --format doi reads identifiers only, so it was "
@@ -1684,6 +1766,17 @@ def _ref_id(entry: Entry) -> str:
     return entry.key or entry.doi or entry.arxiv_id or (entry.title[:40] or entry.raw[:40])
 
 
+def _tf_eligible(entry: Entry) -> bool:
+    """Second safety net behind the parser: a free-form entry can be a Total Fabrication
+    only when it has a title-like segment (two or more words, distinct from the whole
+    text) plus an author or a year. Anything thinner is unverified at most."""
+    if entry.fmt != "freeform":
+        return True
+    title = _normalize(entry.title)
+    distinct = title and title != _normalize(entry.raw)
+    return bool(distinct and len(title.split()) >= 2 and (entry.authors or entry.year))
+
+
 def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> dict:
     ref_id = _ref_id(entry)
 
@@ -1836,6 +1929,12 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
             others = [src for src in TF_SECOND_INDEXES if answered(src)]
             unchecked = [f"{src} {'rate-limited (HTTP 429)' if '429' in st else 'failed'}"
                          for src, st in status.items() if st.startswith("error") or st == "offline"]
+            if answered("crossref") and others and not _tf_eligible(entry):
+                return _unverified(entry, ref_id,
+                                   reason=("no source returned a matching record, but this free-form "
+                                           "entry has too little reference structure (a title plus an "
+                                           "author or a year) to be called fabricated"),
+                                   status=status, matches=matches)
             if answered("crossref") and others:
                 closest = (f" Closest record: '{best['title']}' (title ratio {t_ratio:.2f})."
                            if best else "")
@@ -2057,8 +2156,9 @@ def build_report(results: list[dict], mailto: str, threshold: float, offline: bo
     if not results:
         notes.append("no entries were verified")
     if acc.get("ignored_text_segments"):
-        notes.append(f"{acc['ignored_text_segments']} text segment(s) did not look like references "
-                     "and were not verified (see input_accounting.ignored_text)")
+        notes.append(f"{acc['ignored_text_segments']} text segment(s) skipped: not a reference "
+                     "(headings, prose), so not verified and given no verdict "
+                     "(see input_accounting.ignored_text)")
     if acc.get("warnings"):
         notes.append(f"{len(acc['warnings'])} parser warning(s) (see input_accounting.warnings)")
 
@@ -2117,8 +2217,8 @@ def _stderr_banner(report: dict, limit: int = 12) -> str:
     ignored = acc.get("ignored_text") or []
     if ignored:
         where = ", ".join(f"line {d['line']}" for d in ignored[:5]) + (" ..." if len(ignored) > 5 else "")
-        lines.append(f"note: {len(ignored)} text segment(s) did not look like references and were "
-                     f"not verified ({where})")
+        lines.append(f"note: {len(ignored)} text segment(s) skipped: not a reference (headings, "
+                     f"prose); not verified ({where})")
     for w in (acc.get("warnings") or [])[:5]:
         lines.append(f"note: line {w.get('line')}{' [' + w['key'] + ']' if w.get('key') else ''}: "
                      f"{w.get('reason')}")
@@ -2197,7 +2297,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"error: could not parse bibliography: {exc}", file=sys.stderr)
         return 2
     if parsed.detected == 0:
-        hint = (f" ({len(parsed.ignored_text)} text segment(s) did not look like references.)"
+        hint = (f" ({len(parsed.ignored_text)} text segment(s) skipped: not a reference.)"
                 if parsed.ignored_text else "")
         print("error: no bibliography entries parsed from input." + hint, file=sys.stderr)
         return 2
