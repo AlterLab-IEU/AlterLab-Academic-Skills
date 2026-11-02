@@ -61,8 +61,8 @@ skills** — see [`ROADMAP.md`](ROADMAP.md).
   license in its frontmatter; the per-skill distribution is tabulated in
   [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 - **Citation and claim faithfulness.** AlterLab adds a deterministic citation-existence and
-  claim-faithfulness layer (Crossref / OpenAlex / Semantic Scholar / arXiv resolution, Retraction
-  Watch flagging) so that generated bibliographies are verified rather than asserted.
+  claim-faithfulness layer (Crossref / Semantic Scholar / arXiv resolution, Retraction Watch
+  flagging) so that generated bibliographies are verified rather than asserted.
 - **No fabrication.** Real APIs, real DOIs, no unsourced vendor benchmarks; any script that sends
   data to a third-party API says so.
 
@@ -92,7 +92,7 @@ errors corrected.
 | | Upstream (K-Dense) | AlterLab |
 |---|---|---|
 | Repository | `K-Dense-AI/scientific-agent-skills` | `AlterLab-IEU/AlterLab-Academic-Skills` |
-| License | MIT © 2025 K-Dense Inc. | Repository MIT © 2026 AlterLab Creative Technologies Laboratory; each skill declares its own license (202 MIT, 40 others incl. CC-BY-NC-4.0 and GPL — see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)) |
+| License | MIT © 2025 K-Dense Inc. | Repository MIT © 2026 AlterLab Creative Technologies Laboratory; each skill declares its own license (201 MIT, 40 others incl. CC-BY-NC-4.0 and GPL — see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)) |
 | Audience | scientific co-scientist (wet-lab / computational) | academic faculty & research lifecycle |
 | Evals | — | an eval file for every skill (structure and trigger coverage CI-gated); behavioral grading is manual and has been run on a small benchmark only — see [`docs/evals.md`](docs/evals.md) |
 | Skills | ~139 (at last comparison) | 242 across 18 domains (v3.0.1) |

@@ -64,7 +64,7 @@ SOFTWARE.
 
 **Scope of the derivative.** At fork time, **42 skill bodies were byte-identical** to their
 K-Dense counterparts; the remainder were already diverging and the collection has since been
-substantially restructured, audited, corrected, and extended into the 242-skill AlterLab suite
+substantially restructured, audited, corrected, and extended into the 241-skill AlterLab suite
 (18 research domains). The systematic deltas — added executable evals, license/citation audits,
 script-correctness fixes, progressive-disclosure refactors, the academic-faculty framing, and
 the bilingual (EN/TR) documentation — are narrated in [`PROVENANCE.md`](PROVENANCE.md). This is
@@ -136,11 +136,11 @@ data resource's terms before use in research or redistribution.
 ## Per-skill license distribution
 
 Each skill declares the license appropriate to its own content in its `SKILL.md`
-frontmatter. Current distribution across the 242 skills:
+frontmatter. Current distribution across the 241 skills:
 
 | License | Skills |
 |---|---:|
-| MIT | 202 |
+| MIT | 201 |
 | Apache-2.0 | 19 |
 | CC-BY-NC-4.0 | 4 |
 | CC0-1.0 | 4 |

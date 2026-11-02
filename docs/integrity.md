@@ -15,8 +15,9 @@ instead of a generic, same-model WebSearch that is prone to confirming its own h
 The gate has **two halves**, run in order:
 
 1. **Existence + metadata** — *does the cited work exist, and does its metadata match?*
-   Handled by `verify_citations.py` (Crossref + OpenAlex + Semantic Scholar + arXiv existence
-   check, title/author similarity, DOI/arXiv-ID resolution, Retraction Watch flag).
+   Handled by `verify_citations.py` (Crossref / Semantic Scholar / arXiv existence check,
+   title/author similarity, doi.org DOI and arXiv-ID resolution, Retraction Watch flag via
+   Crossref).
 2. **Claim faithfulness** — *does the cited work actually support the claim attached to it?*
    Handled by [`claim_faithfulness.py`](../skills/core/alterlab-citation-verifier/scripts/claim_faithfulness.py),
    documented here.
@@ -55,7 +56,7 @@ not just resolving identifiers.
 Given one or more `(claim, DOI)` pairs, it:
 
 1. **Fetches the cited work's abstract** — Crossref first (JATS-XML, stripped to plain text),
-   falling back to OpenAlex (reconstructing plain text from the `abstract_inverted_index`).
+   falling back to Semantic Scholar, then Europe PMC.
 2. **Scores claim support** as one of three verdicts — `support`, `contradict`, or
    `unsupported` — using one of two tiers.
 3. **Returns a structured result** with the verdict, a confidence, the tier used, a rationale,
@@ -195,9 +196,10 @@ oracle. A clean pass means "no integrity problem was *detected at the abstract l
 4. **English-only signals.** The stopword list, antonym pairs, and negation tokens are English.
    Non-English abstracts degrade to overlap-only scoring and will mostly abstain.
 
-5. **Coverage gaps.** Some DOIs have no abstract in either Crossref or OpenAlex (notably many
-   DataCite/arXiv-form DOIs and older or paywalled records). These return `abstract_found:
-   false` and **must** be escalated to full-text/WebSearch verification, not passed.
+5. **Coverage gaps.** Some DOIs have no abstract in Crossref, Semantic Scholar or Europe PMC
+   (notably many DataCite/arXiv-form DOIs and older or paywalled records). These return
+   `abstract_found: false` and **must** be escalated to full-text/WebSearch verification, not
+   passed.
 
 6. **The LLM tier shares the corpus's same-source-hallucination risk.** If the judge model and
    the drafting model share training data, a plausible-but-wrong claim can be judged `support`.

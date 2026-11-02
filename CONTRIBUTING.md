@@ -64,7 +64,7 @@ intentional decision, not an oversight:
   trigger token. A researcher who wants BioPython types "biopython", not
   "manipulating biological sequences" — so `alterlab-biopython` maximizes
   discoverability where it matters most.
-- Noun names keep the 39-connector database cluster and the 30-skill
+- Noun names keep the 38-connector database cluster and the 38-skill
   bioinformatics cluster scannable and one-to-one with the real ecosystem.
 
 Where a gerund genuinely aids discovery — the **capability/pipeline** skills that

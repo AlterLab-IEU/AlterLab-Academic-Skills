@@ -1,6 +1,6 @@
 # AlterLab Academic Skills — Catalog
 
-All 242 skills by domain (v4.0.0). Each skill is a `SKILL.md` instruction file, often with
+All 241 skills by domain (v4.0.0). Each skill is a `SKILL.md` instruction file, often with
 reference documents and helper scripts. A listing here means the skill exists and ships a
 structurally valid eval file; it does **not** mean the skill was evaluated behaviorally — see
 [`docs/evals.md`](evals.md) and [`docs/benchmark-results.md`](benchmark-results.md) for what has been measured.
@@ -16,7 +16,7 @@ The machine-readable index is [`skills.json`](../skills.json); the browsable sit
 | 2 | **📝 Paper Writer** | 12 | Academic paper authoring with LaTeX, bilingual support, 9 writing modes |
 | 3 | **🔍 Paper Reviewer** | 7 | Multi-perspective peer review with Devil's Advocate, 0–100 quality rubrics |
 | 4 | **🔄 Research Pipeline** | 3 | 10-stage orchestrator with integrity verification and material passports |
-| 5 | **🔎 Citation Verifier** | — | Deterministic citation-existence gate over Crossref / OpenAlex / Semantic Scholar / arXiv |
+| 5 | **🔎 Citation Verifier** | — | Deterministic citation-existence gate over Crossref / Semantic Scholar / arXiv |
 | 6 | **🎓 Teaching Design** | — | Course design, syllabi, rubrics, Bloom's taxonomy, backward design |
 | 7 | **📋 Thesis Supervisor** | — | Dissertation guidance, defense prep, committee management |
 | 8 | **🔗 Link Health** | — | Repo link-health audit meta-skill |
@@ -27,9 +27,9 @@ The machine-readable index is [`skills.json`](../skills.json); the browsable sit
 
 ---
 
-## 📚 All 242 Skills
+## 📚 All 241 Skills
 
-### 🗄️ Databases — Scientific Database Connectors (39 Skills)
+### 🗄️ Databases — Scientific Database Connectors (38 Skills)
 
 <details>
 <summary><b>Click to expand full database skills list</b></summary>
@@ -66,16 +66,15 @@ The machine-readable index is [`skills.json`](../skills.json); the browsable sit
 | 27 | **KEGG** | Biological pathways and networks |
 | 28 | **Metabolomics Workbench** | Metabolomics data repository |
 | 29 | **Monarch Initiative** | Disease-gene associations |
-| 30 | **OpenAlex** | Open scholarly metadata |
-| 31 | **Open Targets** | Drug target identification |
-| 32 | **PDB** | Protein 3D structure database |
-| 33 | **PubChem** | Chemical information database |
-| 34 | **PubMed** | Biomedical literature search |
-| 35 | **Reactome** | Biological pathway database |
-| 36 | **STRING** | Protein-protein interaction networks |
-| 37 | **UniProt** | Protein sequence and function |
-| 38 | **USPTO** | Patent search and analysis |
-| 39 | **ZINC** | Commercially-available compounds for docking |
+| 30 | **Open Targets** | Drug target identification |
+| 31 | **PDB** | Protein 3D structure database |
+| 32 | **PubChem** | Chemical information database |
+| 33 | **PubMed** | Biomedical literature search |
+| 34 | **Reactome** | Biological pathway database |
+| 35 | **STRING** | Protein-protein interaction networks |
+| 36 | **UniProt** | Protein sequence and function |
+| 37 | **USPTO** | Patent search and analysis |
+| 38 | **ZINC** | Commercially-available compounds for docking |
 
 </details>
 
@@ -308,7 +307,7 @@ The machine-readable index is [`skills.json`](../skills.json); the browsable sit
 | # | Skill | What It Does |
 |:---:|:---|:---|
 | 1 | **BGPT Search** | AI-powered research search |
-| 2 | **Citation Graph** | Keyless ResearchRabbit analog — citation & co-citation graphs over OpenAlex |
+| 2 | **Citation Graph** | Keyless ResearchRabbit analog — citation & co-citation graphs over OpenCitations + Semantic Scholar |
 | 3 | **Mixed Methods** | Mixed-methods research design and integration |
 | 4 | **Open Science** | Preregistration, FAIR data, open access publishing |
 | 5 | **Parallel Web** | Multi-source parallel web search |
@@ -437,7 +436,7 @@ Claude Code **dynamic workflows** are scripts that orchestrate many subagents an
 
 | # | Command | What It Does |
 |:---:|:---|:---|
-| 1 | `/alterlab-workflows:citation-audit` | Every reference resolved against Crossref / OpenAlex / Semantic Scholar / arXiv, every cited claim checked against its source; each flag counts only after **two completed re-checks** by separate agents (TF / PAC / IH / PH / SH report); up to 150 cited claims, with coverage reported |
+| 1 | `/alterlab-workflows:citation-audit` | Every reference resolved against Crossref / Semantic Scholar / arXiv, every cited claim checked against its source; each flag counts only after **two completed re-checks** by separate agents (TF / PAC / IH / PH / SH report); up to 150 cited claims, with coverage reported |
 | 2 | `/alterlab-workflows:review-panel` | 4–6 **blind** reviewers chosen for the paper's field and design; every major concern re-read against the manuscript before the editor decides |
 | 3 | `/alterlab-workflows:claim-stress-test` | Three skeptics per headline claim (counter-evidence, citation support, inference); majority rating and calibrated rewrites |
 | 4 | `/alterlab-workflows:systematic-review-screening` | PRISMA 2020 title/abstract screening — codebook, optional database search, de-duplication, **two blinded screeners per record**, adjudication, Cohen's κ |

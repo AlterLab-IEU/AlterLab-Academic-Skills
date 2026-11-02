@@ -2,7 +2,7 @@
 <img src=".github/header-banner.svg" width="100%" alt="AlterLab Academic Skills">
 <br>
 
-<a href="docs/CATALOG.md"><img src="https://img.shields.io/badge/Skills-242-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Skills: 242"></a>
+<a href="docs/CATALOG.md"><img src="https://img.shields.io/badge/Skills-241-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Skills: 241"></a>
 <a href="docs/CATALOG.md"><img src="https://img.shields.io/badge/Domains-18-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Domains: 18"></a>
 <a href="#licensing"><img src="https://img.shields.io/badge/License-MIT%20repo%20%2B%20per--skill-10B981?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="License: MIT repository, per-skill licenses"></a>
 <a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases"><img src="https://img.shields.io/github/v/release/AlterLab-IEU/AlterLab-Academic-Skills?style=for-the-badge&logo=github&color=8B5CF6&logoColor=white&label=Release" alt="Release"></a>
@@ -10,7 +10,7 @@
 
 **Read in:** [English](README.md) · [Türkçe](README.tr-TR.md)
 
-### 242 skills · 18 domains — Claude Agent Skills for faculty and researchers
+### 241 skills · 18 domains — Claude Agent Skills for faculty and researchers
 
 </div>
 
@@ -32,9 +32,9 @@ faculty and researchers (student skills live in
 
 | Level | Status |
 |---|---|
-| Skills with a structurally valid eval file | **242 / 242** — 1,605 cases, checked in CI on every PR (schema and trigger coverage only; no model is called) |
-| Eval cases that supply input files | 146 cases in 86 skills, plus the benchmark fixtures below |
-| Skills evaluated behaviorally against a live model | **242 / 242** — every eval case answered once with the skill and once without it, through the Claude Code CLI login with no API key (2026-10-15 to 2026-11-02): 1,539 cases graded, 50 not runnable here (they need a key, connector, host or program the runner lacks). Results, method and limits: [`docs/behavioral-results.md`](docs/behavioral-results.md). (The nightly CI job that was meant to grade them graded nothing for weeks: its API key was missing and failures were reported as success. It has been removed, and a run that grades nothing now exits non-zero.) |
+| Skills with a structurally valid eval file | **241 / 241** — 1,598 cases, checked in CI on every PR (schema and trigger coverage only; no model is called) |
+| Eval cases that supply input files | 145 cases in 85 skills, plus the benchmark fixtures below |
+| Skills evaluated behaviorally against a live model | **241 / 241** — every eval case answered once with the skill and once without it, through the Claude Code CLI login with no API key (2026-10-15 to 2026-11-02): 1,539 cases graded, 50 not runnable here (they need a key, connector, host or program the runner lacks). Results, method and limits: [`docs/behavioral-results.md`](docs/behavioral-results.md). (The nightly CI job that was meant to grade them graded nothing for weeks: its API key was missing and failures were reported as success. It has been removed, and a run that grades nothing now exits non-zero.) |
 | Skills shown to beat the bare model | On the same 1,539 graded cases, **88%** of answers with the skill passed against **53%** without it; the skill turned a bare FAIL into a PASS on 560 cases and the reverse on 26. The skilled answer faces more checks, grading reads only the final message, each case ran once, and a Claude model is the judge. Of the five benchmark tasks below, **1** beat the bare model (doçentlik pre-screening); on the other four the bare model was already at or near the ceiling. |
 | Helper scripts | unit-tested: input validation, reference values, and fault paths (see `tests/`) |
 | Dynamic workflows (`/alterlab-workflows:*`) | dry-run against a mocked runtime, including injected failures; not run live |
@@ -110,7 +110,7 @@ You do not need skill names. Describe the task, or say *"use AlterLab skills"*, 
 
 | Command | What it does |
 |---|---|
-| `/alterlab-workflows:citation-audit` | resolves references against Crossref / OpenAlex / Semantic Scholar / arXiv and checks up to 150 cited claims against their sources; flags need two completed re-checks |
+| `/alterlab-workflows:citation-audit` | resolves references against Crossref / Semantic Scholar / arXiv and checks up to 150 cited claims against their sources; flags need two completed re-checks |
 | `/alterlab-workflows:review-panel` | a panel of separate reviewers; each major concern is re-checked against the manuscript, and one whose check did not complete reaches the editor labelled unverified |
 | `/alterlab-workflows:claim-stress-test` | three critics per headline claim; calibrated rewrites |
 | `/alterlab-workflows:systematic-review-screening` | PRISMA 2020 title/abstract screening with two screeners per record and adjudication; records whose screening failed are kept and reported as unresolved |
@@ -126,7 +126,7 @@ not independent verification, and the reports say so.
 ## Integrity tools: what they establish
 
 - **`alterlab-citation-verifier`** checks that references exist and that their metadata
-  agrees with Crossref, OpenAlex, Semantic Scholar, arXiv, and doi.org, and flags retractions.
+  agrees with Crossref, Semantic Scholar, arXiv, and doi.org, and flags retractions.
   An entry it could not check is `unverified`, never a pass; input it could not parse makes the
   run `PARTIAL` (exit 3), never a pass.
 - **`claim_faithfulness.py`** compares a claim with the cited work's **abstract only**. It
@@ -140,7 +140,7 @@ not independent verification, and the reports say so.
 | Domain | Skills | Domain | Skills |
 |---|---:|---|---:|
 | Core pipeline | 10 | Lab integrations | 9 |
-| Databases | 39 | Domain-specific | 18 |
+| Databases | 38 | Domain-specific | 18 |
 | Bioinformatics | 38 | Document tools | 3 |
 | Cheminformatics | 12 | Research tools | 14 |
 | Clinical research | 7 | Finance & economics | 7 |
@@ -170,7 +170,7 @@ exits `0` only if every selected case produced a verdict and passed. See
 ## Licensing
 
 The repository is MIT-licensed, but each skill's content is under the license in its own
-`license:` frontmatter field, and those differ: 202 MIT, 19 Apache-2.0, 4 CC-BY-NC-4.0,
+`license:` frontmatter field, and those differ: 201 MIT, 19 Apache-2.0, 4 CC-BY-NC-4.0,
 4 GPL-3.0, 2 GPL-2.0, 1 LGPL-3.0, 1 CeCILL-2.1, 2 BSD-3-Clause, 2 CC-BY-4.0, 1 CC-BY-3.0,
 4 CC0-1.0. The four core pipeline skills (`alterlab-deep-research`, `alterlab-paper-writer`,
 `alterlab-paper-reviewer`, `alterlab-research-pipeline`) are **non-commercial** (CC-BY-NC-4.0,

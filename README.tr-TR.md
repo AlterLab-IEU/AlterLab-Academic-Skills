@@ -2,14 +2,14 @@
 <img src=".github/header-banner.svg" width="100%" alt="AlterLab Academic Skills">
 <br>
 
-<a href="docs/CATALOG.md"><img src="https://img.shields.io/badge/Beceri-242-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Beceri: 242"></a>
+<a href="docs/CATALOG.md"><img src="https://img.shields.io/badge/Beceri-241-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Beceri: 241"></a>
 <a href="docs/CATALOG.md"><img src="https://img.shields.io/badge/Alan-18-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Alan: 18"></a>
 <a href="#lisans"><img src="https://img.shields.io/badge/Lisans-MIT%20depo%20%2B%20beceri%20bazl%C4%B1-10B981?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="Lisans: depo MIT, beceri bazında lisanslar"></a>
 <a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases"><img src="https://img.shields.io/github/v/release/AlterLab-IEU/AlterLab-Academic-Skills?style=for-the-badge&logo=github&color=8B5CF6&logoColor=white&label=S%C3%BCr%C3%BCm" alt="Sürüm"></a>
 
 **Dil:** [English](README.md) · [Türkçe](README.tr-TR.md)
 
-### Toplam: 242 beceri · 18 alan — öğretim üyeleri ve araştırmacılar için Claude Agent Skills
+### Toplam: 241 beceri · 18 alan — öğretim üyeleri ve araştırmacılar için Claude Agent Skills
 
 </div>
 
@@ -32,9 +32,9 @@ desteğini beyan etmesini ister; çıktıyı doğru, eksiksiz ya da teslime haz�
 
 | Düzey | Durum |
 |---|---|
-| Yapısal olarak geçerli değerlendirme (eval) dosyası olan beceriler | **242 / 242** — 1.605 vaka; her PR'da CI'da denetlenir (yalnızca şema ve tetiklenme kapsamı; model çağrılmaz) |
-| Girdi dosyası sağlayan eval vakaları | 86 beceride 146 vaka, artı aşağıdaki kıyaslama (benchmark) fikstürleri |
-| Canlı modelle davranışsal olarak değerlendirilen beceriler | **242 / 242** — her eval vakası, Claude Code CLI oturumu üzerinden API anahtarı olmadan bir kez beceriyle, bir kez becerisiz yanıtlandı (2026-10-15 – 2026-11-02): 1.539 vaka notlandırıldı, 50 vaka burada çalıştırılamadı (çalıştırıcıda bulunmayan bir anahtar, bağlayıcı, sunucu ya da program gerektiriyor). Sonuçlar, yöntem ve sınırlar: [`docs/behavioral-results.md`](docs/behavioral-results.md). (Bunları notlandırması gereken gecelik CI işi haftalarca hiçbir şey notlandırmadı: API anahtarı eksikti ve başarısızlıklar başarı olarak raporlanıyordu. İş kaldırıldı; hiçbir şey notlandırmayan bir çalıştırma artık sıfırdan farklı kodla çıkar.) |
+| Yapısal olarak geçerli değerlendirme (eval) dosyası olan beceriler | **241 / 241** — 1.598 vaka; her PR'da CI'da denetlenir (yalnızca şema ve tetiklenme kapsamı; model çağrılmaz) |
+| Girdi dosyası sağlayan eval vakaları | 85 beceride 145 vaka, artı aşağıdaki kıyaslama (benchmark) fikstürleri |
+| Canlı modelle davranışsal olarak değerlendirilen beceriler | **241 / 241** — her eval vakası, Claude Code CLI oturumu üzerinden API anahtarı olmadan bir kez beceriyle, bir kez becerisiz yanıtlandı (2026-10-15 – 2026-11-02): 1.539 vaka notlandırıldı, 50 vaka burada çalıştırılamadı (çalıştırıcıda bulunmayan bir anahtar, bağlayıcı, sunucu ya da program gerektiriyor). Sonuçlar, yöntem ve sınırlar: [`docs/behavioral-results.md`](docs/behavioral-results.md). (Bunları notlandırması gereken gecelik CI işi haftalarca hiçbir şey notlandırmadı: API anahtarı eksikti ve başarısızlıklar başarı olarak raporlanıyordu. İş kaldırıldı; hiçbir şey notlandırmayan bir çalıştırma artık sıfırdan farklı kodla çıkar.) |
 | Çıplak modeli geçtiği gösterilen beceriler | Notlandırılan aynı 1.539 vakada geçme oranı beceriyle **%88**, becerisiz **%53** oldu; beceri, çıplak modelin kaldığı 560 vakayı geçirdi ve çıplak modelin geçtiği 26 vakada kaldı. Beceriyle verilen yanıt daha fazla denetimden geçer; notlandırma yalnızca son mesajı okur, her vaka bir kez çalıştı ve yargıç bir Claude modelidir. Aşağıdaki beş kıyaslama görevinden **1'i** çıplak modeli geçti (doçentlik ön taraması); diğer dördünde çıplak model zaten tavana yakındı. |
 | Yardımcı betikler | birim testli: girdi doğrulama, referans değerler ve hata yolları (`tests/`) |
 | Dinamik iş akışları (`/alterlab-workflows:*`) | hata enjeksiyonu dâhil sahte bir çalışma ortamında kuru çalıştırma; canlı çalıştırılmadı |
@@ -114,7 +114,7 @@ değildir; raporlar bunu açıkça yazar.
 
 ## Bütünlük araçları neyi gösterir
 
-- **`alterlab-citation-verifier`** kaynakların var olduğunu ve künyelerinin Crossref, OpenAlex,
+- **`alterlab-citation-verifier`** kaynakların var olduğunu ve künyelerinin Crossref,
   Semantic Scholar, arXiv ve doi.org kayıtlarıyla uyuştuğunu denetler, geri çekilmeleri işaretler.
   Denetleyemediği bir kayıt `unverified` olur, asla geçer sayılmaz; ayrıştıramadığı girdi
   çalıştırmayı `PARTIAL` yapar (çıkış kodu 3).
@@ -127,7 +127,7 @@ değildir; raporlar bunu açıkça yazar.
 
 ## Alanlar
 
-Çekirdek hat 10 · Veri tabanları 39 · Biyoinformatik 38 · Keminformatik 12 · Klinik araştırma 7 ·
+Çekirdek hat 10 · Veri tabanları 38 · Biyoinformatik 38 · Keminformatik 12 · Klinik araştırma 7 ·
 Veri bilimi 22 · Görselleştirme 9 · Yazım araçları 14 · Laboratuvar entegrasyonları 9 ·
 Alana özgü 18 · Belge araçları 3 · Araştırma araçları 14 · Finans ve ekonomi 7 ·
 Türk akademisi 13 · Akademik yaşam 6 · Metodoloji 3 · Sosyal bilim iş akışı 17 ·
@@ -153,7 +153,7 @@ ortamında çalışırlar ve sonuçları `eval-results/` altına JSON olarak yaz
 ## Lisans
 
 Depo MIT lisanslıdır; ancak her becerinin içeriği kendi `license:` alanındaki lisansa tabidir
-ve bunlar farklıdır: 202 MIT, 19 Apache-2.0, 4 CC-BY-NC-4.0, 4 GPL-3.0, 2 GPL-2.0, 1 LGPL-3.0,
+ve bunlar farklıdır: 201 MIT, 19 Apache-2.0, 4 CC-BY-NC-4.0, 4 GPL-3.0, 2 GPL-2.0, 1 LGPL-3.0,
 1 CeCILL-2.1, 2 BSD-3-Clause, 2 CC-BY-4.0, 1 CC-BY-3.0, 4 CC0-1.0. Dört çekirdek hat becerisi
 (`alterlab-deep-research`, `alterlab-paper-writer`, `alterlab-paper-reviewer`,
 `alterlab-research-pipeline`) kaynak projeleri nedeniyle **ticari olmayan** kullanım lisanslıdır

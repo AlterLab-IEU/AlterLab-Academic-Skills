@@ -121,7 +121,7 @@ skilled arm reads them in all of them.
 | `--behavioral` (live) | per case, whether the skilled answer met its assertions and LLM-judged rubric, and how the bare model did on the same rubric | research correctness beyond what the rubric checks; the judge is the same model family |
 | `--activation` (live) | whether the model picks the right skill from its description among same-domain distractors | that the picked skill then does the task well |
 
-Keep the three apart when reporting: "242 skills have evals" is a statement about the static
+Keep the three apart when reporting: "241 skills have evals" is a statement about the static
 check only.
 
 The latest live `--behavioral` run of the suite, skilled vs bare, is reported in
@@ -274,7 +274,7 @@ which drives the real subprocess path against a fake `claude` executable.
 
 ### Activation harness (`--activation`)
 
-The `description` is the trigger surface, so the metric that matters for a 242-skill suite is
+The `description` is the trigger surface, so the metric that matters for a 241-skill suite is
 *auto-selection rate*: given a realistic request, does the model pick the **right** skill from
 its description when the true skill sits among plausible same-domain distractors? That is both
 the activation rate (Anthropic's bar: **90%+**) and, via wrong picks, the **cross-fire rate**.
