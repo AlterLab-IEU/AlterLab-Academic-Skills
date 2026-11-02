@@ -495,7 +495,7 @@ Remember: Quality over quantity. Prioritize influential, highly-cited papers fro
         if not self.force_backend:
             if not (self.parallel_available or self.perplexity_available):
                 print("[Research] No PARALLEL_API_KEY / OPENROUTER_API_KEY set: using the keyless "
-                      "scholarly backend (Crossref, Europe PMC, arXiv, Semantic Scholar).",
+                      "scholarly backend (Crossref, Europe PMC, arXiv; Semantic Scholar best effort).",
                       file=sys.stderr)
             if not self.is_academic(query):
                 print("[Research] Note: this is not a paper search. The scholarly backend returns "

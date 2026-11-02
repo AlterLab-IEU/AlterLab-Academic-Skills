@@ -7,11 +7,17 @@ Searches four open scholarly indexes that need no API key and merges the hits by
   - Europe PMC        ebi.ac.uk/europepmc REST     life sciences + preprints; abstracts
   - arXiv             export.arxiv.org/api/query   physics, CS, maths, q-bio preprints
   - Semantic Scholar  api.semanticscholar.org      every discipline, strong on CS venues;
-                                                   keyless pool is shared and 429s under load
-                                                   (backs off 2 + 4 s, then "not checked")
+                                                   BEST EFFORT: its shared keyless search pool
+                                                   is often spent (HTTP 429 for minutes), so
+                                                   it gets one retry, is then skipped for the
+                                                   rest of the run, and is reported as "not
+                                                   checked". An optional S2_API_KEY (or
+                                                   SEMANTIC_SCHOLAR_API_KEY) raises its limit.
 
-A source that fails is listed under "did not answer"; the others still return. A
-rate-limited source was not checked, which is not the same as "no results".
+Crossref, Europe PMC and arXiv carry every query on their own, so a refused Semantic
+Scholar never empties a search. A source that fails is listed under "did not answer"; the
+others still return. A rate-limited source was not checked, which is not the same as "no
+results".
 (OpenAlex was removed in v1.2.1: its keyless searches now share a small per-IP daily
 budget, so dependable use needed an account.)
 
@@ -28,6 +34,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import time
@@ -41,9 +48,21 @@ from typing import Any, Callable, Dict, List, Optional
 USER_AGENT = "alterlab-research-lookup/1.2 (https://github.com/AlterLab-IEU)"
 TIMEOUT = 30
 SOURCES = ("crossref", "europepmc", "arxiv", "semanticscholar")
+S2_BASE = "https://api.semanticscholar.org/"
+# Optional: raises Semantic Scholar's shared keyless rate limit. Sent as a header, never logged.
+S2_API_KEY = (os.environ.get("S2_API_KEY") or os.environ.get("SEMANTIC_SCHOLAR_API_KEY") or "").strip()
 # Seconds to wait before each retry when a source answers HTTP 429. Semantic Scholar's keyless
-# pool is shared by every unauthenticated caller and sends no Retry-After.
-BACKOFF = {"semanticscholar": (2.0, 4.0), "crossref": (1.0, 2.0)}  # Crossref: one request in flight
+# search pool is shared by every unauthenticated caller, sends no Retry-After and is often
+# spent for minutes, so it gets one retry; Crossref's public pool allows one request in flight.
+BACKOFF = {"semanticscholar": (2.0,), "crossref": (1.0, 2.0)}
+# After Semantic Scholar search answers 429 past its retry, skip it for this long (s), so a
+# batch of queries is not slowed by a pool that keeps refusing; each skip is reported.
+S2_PAUSE = 300.0
+_S2_PAUSED_UNTIL = 0.0
+
+
+class RateLimited(Exception):
+    """A source was skipped because it answered HTTP 429 earlier in this run (not checked)."""
 
 # Words that steer routing or describe the wanted output, not the topic. Dropped before the
 # query reaches the indexes, whose relevance ranking treats every word as a search term.
@@ -69,7 +88,10 @@ def search_terms(query: str) -> str:
 
 
 def _http_get(url: str) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"})
+    headers = {"User-Agent": USER_AGENT, "Accept": "*/*"}
+    if S2_API_KEY and url.startswith(S2_BASE):
+        headers["x-api-key"] = S2_API_KEY
+    req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
         return resp.read()
 
@@ -177,7 +199,15 @@ def semanticscholar(terms: str, n: int, get: Callable[[str], bytes], rank: str =
         "query": terms.replace('"', ""), "limit": min(n, 100),
         "fields": "title,year,venue,externalIds,citationCount,authors,url"})
     url = f"https://api.semanticscholar.org/graph/v1/paper/search?{qs}"
-    res = json.loads(_get_with_backoff(get, url, BACKOFF["semanticscholar"]))
+    global _S2_PAUSED_UNTIL
+    if time.monotonic() < _S2_PAUSED_UNTIL:
+        raise RateLimited("skipped: it answered HTTP 429 earlier in this run")
+    try:
+        res = json.loads(_get_with_backoff(get, url, BACKOFF["semanticscholar"]))
+    except urllib.error.HTTPError as exc:
+        if exc.code == 429:
+            _S2_PAUSED_UNTIL = time.monotonic() + S2_PAUSE
+        raise
     out = []
     for p in res.get("data") or []:
         ext = p.get("externalIds") or {}
@@ -216,7 +246,7 @@ _RECENT = re.compile(r"\b(recent|latest|newest|new|current|emerging|this year|la
 
 def search(query: str, limit: int = 10, sources: Optional[List[str]] = None,
            terms: Optional[str] = None, rank: str = "auto",
-           get: Callable[[str], bytes] = _http_get) -> Dict[str, Any]:
+           get: Optional[Callable[[str], bytes]] = None) -> Dict[str, Any]:
     """Query each source, merge by DOI (else normalised title), then order the records.
 
     rank="relevance" keeps each index's own relevance order (best rank across indexes);
@@ -226,6 +256,7 @@ def search(query: str, limit: int = 10, sources: Optional[List[str]] = None,
     rank="auto" uses "relevance" when the request asks for recent / latest / dated work (new
     papers have few citations yet) and "cited" otherwise.
     """
+    get = get or _http_get  # looked up at call time, so the transport can be swapped in tests
     terms = terms or search_terms(query)
     if rank == "auto":
         rank = "relevance" if _RECENT.search(query) else "cited"
@@ -236,6 +267,9 @@ def search(query: str, limit: int = 10, sources: Optional[List[str]] = None,
     for name in sources or SOURCES:
         try:
             hits = SEARCHERS[name](terms, pool, get, rank)
+        except RateLimited as exc:
+            errors[name] = f"HTTP 429 ({exc}; not checked, which is not 'no results')"
+            continue
         except urllib.error.HTTPError as exc:
             why = (" (rate-limited after backoff: not checked, which is not 'no results'; "
                    "retry later)" if exc.code == 429 else "")
@@ -272,8 +306,10 @@ def search(query: str, limit: int = 10, sources: Optional[List[str]] = None,
 
 
 def to_markdown(res: Dict[str, Any]) -> str:
+    answered = [s for s in res.get("queried", SOURCES) if s not in res["errors"]]
+    unchecked = f"; not checked: {', '.join(res['errors'])}" if res["errors"] else ""
     lines = [f"Keyless scholarly backend — searched {res['searched']} for \"{res['terms']}\" "
-             f"in {', '.join(s for s in res.get('queried', SOURCES) if s not in res['errors']) or 'no source'}"
+             f"in {', '.join(answered) or 'no source'}{unchecked}"
              f" (order: {res.get('rank', 'relevance')}).",
              "These are index records, not a synthesis: open each paper before citing a finding "
              "from it. Citation counts differ by index; each is labelled with its source.", ""]
