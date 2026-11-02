@@ -44,8 +44,8 @@ results and limits: `docs/behavioral-results.md`.
 
 - 241 of 241 skills, 1,598 cases: 1,532 graded, 50 not runnable here (they need a key,
   connector, host or program the runner lacks), 16 infrastructure errors or refusals.
-- With the skill, 1,351 of 1,532 graded cases passed (88.2%); without it, 816 of the
-  same cases (53.3%). The skill turned a bare FAIL into a PASS on 555 cases and the reverse
+- With the skill, 1,349 of 1,532 graded cases passed (88.1%); without it, 813 of the
+  same cases (53.1%). The skill turned a bare FAIL into a PASS on 556 cases and the reverse
   on 27. The skilled answer faces more checks than the bare one, grading reads only the final
   message, and each case ran once.
 - On the 1,525 cases with both a first and a final run, skilled PASS went from 1,109 to 1,300

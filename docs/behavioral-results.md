@@ -57,7 +57,7 @@ case was run again. Two runs per case are used:
   inconclusive), `final_e` (a full re-run of five skills after the routing fix described in
   [Where the skill made answers worse](#where-the-skill-made-answers-worse)), `final_f` (one
   more try, on an idle runner, of three light look-ups that had timed out only under load), and
-  `final_g`, `final_h` and `final_i` (full re-runs of every skill changed by the removal of
+  `final_g`, `final_h`, `final_i` and `final_j` (full re-runs of every skill changed by the removal of
   OpenAlex, the login fixes and the later routing and timeout fixes).
   A refusal that runs before commit `8ffe74c` recorded as INFRA_ERROR (the CLI's newer
   acceptable-use wording) is counted as REFUSED, which is how the runner records it now. A run counts only if the commit it
@@ -119,8 +119,8 @@ The tables use these terms:
 <!-- BEGIN generated:summary -->
 - **241 of 241 skills** have a final run, covering **1,598 cases**.
 - **1,532 cases graded** (skilled arm PASS or FAIL); 50 not runnable here; 16 skilled-arm outcomes that are neither (infrastructure error, refusal, inconclusive).
-- **Skilled arm: 1,351 of 1,532 graded cases passed (88.2%).** Bare arm on the same 1,532 cases: 816 passed (53.3%).
-- **The skill helped on 555 cases and hurt on 27.**
+- **Skilled arm: 1,349 of 1,532 graded cases passed (88.1%).** Bare arm on the same 1,532 cases: 813 passed (53.1%).
+- **The skill helped on 556 cases and hurt on 27.**
 - Claude Code CLI version, by number of final cases answered: 2.1.300 (114), 2.1.308 (208), 2.1.309 (598), 2.1.316 (678).
 <!-- END generated:summary -->
 
@@ -138,8 +138,8 @@ By domain:
 | document-tools | 3 | 19 | 19 | 18 (95%) | 9 (47%) | 9 / 0 | 0 | 0 |
 | domain-specific | 18 | 120 | 116 | 106 (91%) | 63 (54%) | 43 / 0 | 4 | 0 |
 | faculty-life | 6 | 39 | 39 | 37 (95%) | 20 (51%) | 17 / 0 | 0 | 0 |
-| finance-economics | 7 | 59 | 57 | 45 (79%) | 35 (61%) | 10 / 2 | 2 | 0 |
-| lab-integrations | 9 | 77 | 74 | 64 (86%) | 29 (39%) | 37 / 2 | 3 | 0 |
+| finance-economics | 7 | 59 | 57 | 45 (79%) | 33 (58%) | 12 / 2 | 2 | 0 |
+| lab-integrations | 9 | 77 | 74 | 62 (84%) | 28 (38%) | 36 / 2 | 3 | 0 |
 | methodology | 3 | 19 | 19 | 12 (63%) | 7 (37%) | 7 / 2 | 0 | 0 |
 | research-tools | 14 | 107 | 91 | 73 (80%) | 56 (62%) | 21 / 4 | 15 | 1 |
 | social-science-workflow | 17 | 91 | 91 | 89 (98%) | 55 (60%) | 36 / 2 | 0 | 0 |
@@ -147,7 +147,7 @@ By domain:
 | visualization | 9 | 63 | 60 | 54 (90%) | 31 (52%) | 25 / 2 | 3 | 0 |
 | workflows | 1 | 7 | 7 | 5 (71%) | 3 (43%) | 3 / 1 | 0 | 0 |
 | writing-tools | 14 | 94 | 92 | 67 (73%) | 42 (46%) | 26 / 2 | 1 | 1 |
-| **All** | **241** | **1598** | **1532** | **1351 (88%)** | **816 (53%)** | **555 / 27** | **50** | **16** |
+| **All** | **241** | **1598** | **1532** | **1349 (88%)** | **813 (53%)** | **556 / 27** | **50** | **16** |
 <!-- END generated:domain-table -->
 
 *Cases* counts every case with a final run, and *Graded* those with a PASS or FAIL in the
@@ -164,7 +164,7 @@ prompts; none of the seven dynamic workflows was run.
   cases did.
 - Most of that gap is on cases where the skill should do the task. On near-miss cases, where the
   right answer is to hand the request to a sibling skill, both arms passed most of the time.
-- Hurt cases are few next to helped ones (27 against 555). Many of them failed only a check
+- Hurt cases are few next to helped ones (27 against 556). Many of them failed only a check
   that the bare arm is never given; they still count as failures. See
   [Where the skill made answers worse](#where-the-skill-made-answers-worse).
 - Methodology has the lowest skilled pass rate in this snapshot. It, document-tools and
@@ -221,8 +221,8 @@ passing. Of the 17, five failed only a required phrase and one only a behavior c
 rubric passed, five ended in a timeout or infrastructure error, and six failed the rubric. Four
 of those six were read by hand and look reasonable (a seed paper asked for when the prompt
 gives none, a correct hand-off, a correct import file, a correct TR Dizin result table); the
-other two, in `alterlab-alpha-vantage` (daily prices) and `alterlab-denario`, were not
-investigated. The rewritten `build_graph.py`
+other two were not investigated: `alterlab-denario`'s, and `alterlab-alpha-vantage`'s daily-prices
+case, which passed when that skill was re-run once more (`final_j`). The rewritten `build_graph.py`
 finishes in under 20 s on the seeds tried, including a paper with about 73,000 citations, so the
 `alterlab-citation-graph` timeout comes from what that answer chose to run, not from the script.
 With one run per case, part of this movement in both directions is run-to-run variation.
@@ -248,7 +248,7 @@ and the final run on the cases that have both.
 
 <!-- BEGIN generated:before-after -->
 - **1,525 cases** have both a first run and a final run.
-- Skilled arm PASS: **1,109 → 1,300**. Bare arm PASS: **788 → 798**.
+- Skilled arm PASS: **1,109 → 1,300**. Bare arm PASS: **788 → 797**.
 - Skilled-arm outcome changes: FAIL → PASS 234, PASS → FAIL 52, FAIL → NOT_RUN 37, INFRA_ERROR → PASS 17, PASS → NOT_RUN 9, INFRA_ERROR → FAIL 8, FAIL → INFRA_ERROR 4, PASS → INFRA_ERROR 3, NOT_RUN → PASS 3, INFRA_ERROR → NOT_RUN 1, INCONCLUSIVE → PASS 1.
 <!-- END generated:before-after -->
 
