@@ -6,7 +6,7 @@ license: MIT
 compatibility: Needs network access to PubMed, arXiv, bioRxiv, and Semantic Scholar (searches follow the Entrez/Biopython and REST snippets in the references); verify_citations.py needs requests; PDF output requires pandoc and xelatex (check with --check-deps)
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.1.1"
     last_updated: "2026-09-23"
 ---
 
@@ -38,6 +38,8 @@ Use this skill when:
 | Writing the literature-review chapter of a thesis or dissertation with a supervisor-style workflow | `alterlab-thesis-supervisor` |
 | Mapping the citation/co-citation network around seed papers | `alterlab-citation-graph` |
 | Auditing whether every entry in a bibliography actually exists (hallucinated/retracted references) | `alterlab-citation-verifier` |
+| Converting DOIs to BibTeX, cleaning or validating a `.bib` file, with no review to write | `alterlab-citation-mgmt` |
+| Writing a manuscript section (e.g. the Discussion) as polished prose from synthesis notes you already have | `alterlab-scientific-writing` |
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-deep-research`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 

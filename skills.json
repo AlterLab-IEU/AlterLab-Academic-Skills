@@ -1444,7 +1444,7 @@
       "domain": "core",
       "description": "Runs a 13-agent deep research pipeline for rigorous academic work on any topic across 7 modes (full research, quick brief, paper review, lit-review, fact-check, Socratic guided research dialogue, and systematic review with optional meta-analysis), covering research-question formulation, Socratic mentoring, methodology design, systematic literature search, source verification, cross-source synthesis, risk-of-bias assessment, meta-analysis, APA 7.0 report compilation, editorial and devil's-advocate review, ethics review, and post-research literature monitoring. Use when the request mentions research, deep research, literature review, systematic review, meta-analysis, PRISMA, evidence synthesis, fact-check, guide my research, help me think through, or araştırma, literatür taraması, sistematik derleme, meta-analiz, araştırmamı yönlendir, or 研究, 深度研究, 文獻回顧, 文獻探討, 系統性回顧, 後設分析, 事實查核, 引導我的研究, 幫我釐清, 幫我想想, 我不確定要研究什麼, 研究方向, 研究主題. Part of the AlterLab Academic Skills suite.",
       "license": "CC-BY-NC-4.0",
-      "version": "2.4.1",
+      "version": "2.4.2",
       "compatibility": "Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -1456,7 +1456,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 401,
+      "body_lines": 402,
       "references": [
         "apa7_style_guide.md",
         "equator_reporting_guidelines.md",
@@ -2804,7 +2804,7 @@
       "domain": "databases",
       "description": "Query JASPAR for transcription factor binding site (TFBS) profiles (PWMs/PFMs), searching by TF name, species, or class, scanning DNA sequences for binding sites, and comparing matrices. Use when doing motif analysis, regulatory genomics, transcription factor binding prediction, or interpreting regulatory/non-coding GWAS variants. Part of the AlterLab Academic Skills suite.",
       "license": "CC0-1.0",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "compatibility": "Keyless JASPAR REST API v1 (no authentication required); serves the JASPAR 2026 release (2,633 CORE profiles, verified 2026-09)",
       "allowed_tools": [
         "Read",
@@ -2814,7 +2814,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 382,
+      "body_lines": 383,
       "references": [
         "api_reference.md"
       ]
@@ -3062,7 +3062,7 @@
       "domain": "databases",
       "description": "Access USPTO patent and trademark data — keyless full-text patent search through USPTO Patent Public Search, patent legal events and recorded assignments from Google Patents pages, and trademark status, owners, goods/services and prosecution history from TSDR status pages — with optional Open Data Portal (ODP) and TSDR API keys for Patent File Wrapper examination history, continuity, office actions and PTAB data. Use when searching patents or trademarks, conducting prior art searches, retrieving patent examination or assignment records, or doing intellectual property (IP) analysis. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "compatibility": "No API key required. Keyless — USPTO Patent Public Search (ppubs.uspto.gov, anonymous session, full-text grants and applications) and TSDR status pages (tsdr.uspto.gov/statusview) via scripts/uspto_public.py, plus Google Patents pages through WebFetch for legal events and assignments. Optional USPTO_ODP_API_KEY (Patent File Wrapper, office actions, PTAB) and USPTO_TSDR_API_KEY (TSDR API). PEDS, Assignment Search and PatentsView are offline (2026).",
       "allowed_tools": [
         "Read",
@@ -3072,7 +3072,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 276,
+      "body_lines": 277,
       "references": [
         "additional_apis.md",
         "patentsearch_api.md",
@@ -5627,7 +5627,7 @@
       "domain": "writing-tools",
       "description": "Conducts comprehensive, systematic literature reviews across multiple academic databases (PubMed, arXiv, bioRxiv, Semantic Scholar), with PRISMA 2020 flow tracking, study screening (title/abstract and full-text), evidence-table extraction, and risk-of-bias assessment (RoB 2, ROBINS-I, AMSTAR 2), producing professionally formatted markdown documents and PDFs with verified citations in multiple styles (APA, Nature, Vancouver). Use when running a systematic or scoping literature review, research synthesis, or broad literature search, building a PRISMA flow diagram, screening studies, extracting an evidence table, or assessing risk of bias across biomedical, scientific, and technical domains. For quantitative pooling of effect sizes (forest/funnel plots) use alterlab-meta-analysis; for an open-ended multi-agent investigation, fact-check, or Socratic research-question work use alterlab-deep-research. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "compatibility": "Needs network access to PubMed, arXiv, bioRxiv, and Semantic Scholar (searches follow the Entrez/Biopython and REST snippets in the references); verify_citations.py needs requests; PDF output requires pandoc and xelatex (check with --check-deps)",
       "allowed_tools": [
         "Read",
@@ -5637,7 +5637,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 334,
+      "body_lines": 336,
       "references": [
         "citation_styles.md",
         "database_search_guidance.md",
@@ -5775,7 +5775,7 @@
       "domain": "writing-tools",
       "description": "Builds slide decks for research talks with no API key — editable PowerPoint generated from a deck plan (python-pptx) or LaTeX Beamer, slide visuals drawn as code and rendered locally, plus slide structure, design templates, timing guidance, and visual validation of every page. Optional AI-generated full-slide images (Nano Banana Pro via OpenRouter) when OPENROUTER_API_KEY is set. Use when making conference presentations, seminar talks, research presentations, thesis-defense slides, or any scientific talk deck. For a research poster use alterlab-latex-posters or alterlab-pptx-posters; to auto-generate a narrated video from a paper use alterlab-paper-2-web. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "compatibility": "No API key required. PowerPoint output via `uv run --python \\\">=3.11\\\" --with python-pptx --with pillow`; LaTeX Beamer needs pdflatex; LibreOffice (soffice) exports PPTX to PDF for review; validation helpers use pymupdf, pypdf and Pillow; code-drawn visuals render with cairosvg. Optional AI slide images: OPENROUTER_API_KEY (prompts and attached figures go to Google Gemini models via OpenRouter).",
       "allowed_tools": [
         "Read",
@@ -5785,7 +5785,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 135,
+      "body_lines": 136,
       "references": [
         "beamer_guide.md",
         "core_capabilities.md",

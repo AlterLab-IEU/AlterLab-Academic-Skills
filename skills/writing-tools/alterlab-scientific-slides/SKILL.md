@@ -6,7 +6,7 @@ license: MIT
 compatibility: "No API key required. PowerPoint output via `uv run --python \">=3.11\" --with python-pptx --with pillow`; LaTeX Beamer needs pdflatex; LibreOffice (soffice) exports PPTX to PDF for review; validation helpers use pymupdf, pypdf and Pillow; code-drawn visuals render with cairosvg. Optional AI slide images: OPENROUTER_API_KEY (prompts and attached figures go to Google Gemini models via OpenRouter)."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.1.1"
     last_updated: "2026-10-22"
     credentials: "optional: OPENROUTER_API_KEY (the AI slide-image backend, --backend ai: Nano Banana Pro full-slide images and Gemini review through OpenRouter)"
 ---
@@ -46,6 +46,7 @@ This skill should be used when:
 | Auto-generating a narrated presentation video, website, or poster from a finished paper | `alterlab-paper-2-web` |
 | A single standalone technical diagram or schematic for a slide | `alterlab-scientific-schematics` |
 | Reviewing or critiquing someone else's talk deck | `alterlab-peer-review` |
+| Writing a journal manuscript section (Results, Discussion) as full prose, even from a talk's findings | `alterlab-scientific-writing` |
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-latex-posters`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 

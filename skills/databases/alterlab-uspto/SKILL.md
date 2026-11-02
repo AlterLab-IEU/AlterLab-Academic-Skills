@@ -6,7 +6,7 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: No API key required. Keyless — USPTO Patent Public Search (ppubs.uspto.gov, anonymous session, full-text grants and applications) and TSDR status pages (tsdr.uspto.gov/statusview) via scripts/uspto_public.py, plus Google Patents pages through WebFetch for legal events and assignments. Optional USPTO_ODP_API_KEY (Patent File Wrapper, office actions, PTAB) and USPTO_TSDR_API_KEY (TSDR API). PEDS, Assignment Search and PatentsView are offline (2026).
 metadata:
     skill-author: AlterLab
-    version: "1.2.0"
+    version: "1.2.1"
     last_updated: "2026-10-22"
     credentials: "optional: USPTO_ODP_API_KEY (ODP Patent File Wrapper transactions, continuity, office actions, PTAB, bulk-data catalog), USPTO_TSDR_API_KEY (TSDR API instead of the public status page), USPTO_API_KEY (fallback name read for either)"
 ---
@@ -44,6 +44,7 @@ table below before reusing older code.
 | FDA drug/device approvals, labels, 510(k)/PMA | `alterlab-fda` |
 | Company filings and financials from SEC EDGAR | `alterlab-edgartools` |
 | Market sizing / competitive-landscape reports | `alterlab-market-research` |
+| A compound's structure, SMILES, molecular weight or PubChem CID, even when it is named in a patent | `alterlab-pubchem` |
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-openalex`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
