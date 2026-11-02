@@ -68,11 +68,12 @@
     {
       "id": "keyless-msft-fundamentals-sec",
       "prompt": "No Alpha Vantage key here. For a corporate-finance teaching case, give me Microsoft's revenue, net income and diluted EPS for its last three fiscal years, plus a P/E based on the latest close.",
-      "expected_output": "Triggers the skill and uses SEC EDGAR XBRL company facts keylessly (data.sec.gov companyfacts for CIK 0000789019 with a contact User-Agent; scripts/market_data.py fundamentals MSFT): FY2024 (ended 2024-06-30) revenue $245,122M, net income $88,136M, diluted EPS $11.80; FY2025 $281,724M, $101,832M, $13.64; FY2026 (ended 2026-06-30) $331,839M, $133,749M, $17.95, citing the 10-K accession. P/E = latest close (Yahoo chart, dated) / $17.95 FY2026 diluted EPS, or a TTM EPS from the 10-Qs, saying which.",
+      "expected_output": "Triggers the skill and uses SEC EDGAR XBRL company facts keylessly (efts.sec.gov company search for the CIK, then data.sec.gov companyfacts for CIK 0000789019; scripts/market_data.py fundamentals MSFT runs without an e-mail and sends an identity only when EDGAR_IDENTITY / ALTERLAB_CONTACT_EMAIL is set, so it does not stop to ask for one): FY2024 (ended 2024-06-30) revenue $245,122M, net income $88,136M, diluted EPS $11.80; FY2025 $281,724M, $101,832M, $13.64; FY2026 (ended 2026-06-30) $331,839M, $133,749M, $17.95, citing the 10-K accession. P/E = latest close (Yahoo chart, dated) / $17.95 FY2026 diluted EPS, or a TTM EPS from the 10-Qs, saying which.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": ["331,839", "331.8", "331839"]},
-        {"type": "behavior", "value": "Gets Microsoft's figures from SEC EDGAR without an API key and reports FY2024-FY2026 revenue ($245.1B, $281.7B, $331.8B), net income ($88.1B, $101.8B, $133.7B) and diluted EPS ($11.80, $13.64, $17.95), then computes P/E from a dated latest close and states which EPS it used."}
+        {"type": "behavior", "value": "Gets Microsoft's figures from SEC EDGAR without an API key and reports FY2024-FY2026 revenue ($245.1B, $281.7B, $331.8B), net income ($88.1B, $101.8B, $133.7B) and diluted EPS ($11.80, $13.64, $17.95), then computes P/E from a dated latest close and states which EPS it used."},
+        {"type": "behavior", "value": "Fetches the SEC figures without first asking the user for an e-mail address or other identity, and does not make one a precondition."}
       ]
     },
     {

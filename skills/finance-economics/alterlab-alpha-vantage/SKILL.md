@@ -3,12 +3,12 @@ name: alterlab-alpha-vantage
 description: Retrieves market and company data with no API key — daily OHLCV price history with splits and dividends (Yahoo Finance chart endpoint, unofficial), company fundamentals from SEC EDGAR XBRL (revenue, net income, EPS, shares), FX, crypto, commodity and macro series from FRED's public CSV — and computes technical indicators (SMA, EMA, RSI, MACD, Bollinger Bands) locally; an optional ALPHAVANTAGE_API_KEY adds the Alpha Vantage REST API (news sentiment, earnings transcripts, options, server-side indicators). Use when fetching stock prices (OHLCV), company fundamentals (income statement, EPS, P/E, market cap), forex rates, Bitcoin/crypto prices, oil/gas/gold prices, CPI or treasury yields for finance research, calculating technical indicators, building news-sentiment event studies, or when the Alpha Vantage API is named. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write WebFetch WebSearch Bash(curl:*) Bash(python:*) Bash(uv run:*)
-compatibility: No API key required. Prices come from Yahoo's unofficial chart endpoint, fundamentals from SEC EDGAR (a User-Agent with a contact email, no key), FX, crypto, commodity and macro series from FRED's public CSV, and indicators are computed locally (scripts/market_data.py, standard library only). An optional ALPHAVANTAGE_API_KEY adds Alpha Vantage's own endpoints.
+compatibility: No API key required. Prices come from Yahoo's unofficial chart endpoint, fundamentals from SEC EDGAR (efts.sec.gov company search + data.sec.gov XBRL facts; no key, account or e-mail), FX, crypto, commodity and macro series from FRED's public CSV, and indicators are computed locally (scripts/market_data.py, standard library only). An optional ALPHAVANTAGE_API_KEY adds Alpha Vantage's own endpoints.
 metadata:
     skill-author: AlterLab
-    version: "1.2.0"
+    version: "1.2.1"
     credentials: "optional: ALPHAVANTAGE_API_KEY (adds Alpha Vantage's /query API: news sentiment, earnings-call transcripts, insider transactions, options, server-side technical indicators and its pre-computed fundamentals; free tier 25 requests/day, premium for intraday, outputsize=full and options)"
-    last_updated: "2026-09-23"
+    last_updated: "2026-11-02"
 ---
 
 # Alpha Vantage — Financial Market Data (keyless first)
@@ -47,7 +47,7 @@ extra described further down.
 | Daily/weekly/monthly OHLCV, 20+ years | Yahoo chart `query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=<epoch>&interval=1d&events=div,split` | `TIME_SERIES_DAILY(_ADJUSTED)` |
 | Splits and dividends | same response, `events.splits` / `events.dividends` | `SPLITS`, `DIVIDENDS` |
 | SMA, EMA, RSI, MACD, BBANDS | computed locally from the prices (`market_data.py rsi` / `indicators`) | `SMA`, `EMA`, `RSI`, `MACD`*, `BBANDS` |
-| Revenue, net income, EPS, shares | SEC EDGAR `data.sec.gov/api/xbrl/companyfacts/CIK##########.json` | `INCOME_STATEMENT`, `EARNINGS`, `OVERVIEW` |
+| Revenue, net income, EPS, shares | SEC EDGAR: ticker → CIK from `efts.sec.gov/LATEST/search-index?keysTyped=MSFT`, then `data.sec.gov/api/xbrl/companyfacts/CIK##########.json` | `INCOME_STATEMENT`, `EARNINGS`, `OVERVIEW` |
 | P/E, market cap | latest close ÷ diluted EPS (say which: last fiscal year, or TTM from four 10-Qs); shares outstanding (dei) × close | `OVERVIEW` `PERatio`, `MarketCapitalization` |
 | FX | FRED `DEXUSEU` (USD per EUR), `DEXJPUS`, `DEXUSUK`; Yahoo `EURUSD=X` | `FX_DAILY`, `CURRENCY_EXCHANGE_RATE` |
 | Crypto | FRED `CBBTCUSD` (Coinbase BTC-USD); Yahoo `BTC-USD` | `DIGITAL_CURRENCY_DAILY` |
@@ -61,7 +61,7 @@ extra described further down.
 python scripts/market_data.py prices AAPL --start 2000-01-01 --csv aapl.csv      # + splits, dividends on stderr
 python scripts/market_data.py rsi AAPL --period 14 --start 2024-01-01             # Wilder RSI on adjclose
 python scripts/market_data.py indicators SPY --start 2025-01-01 --csv spy_ta.csv  # SMA/EMA20, RSI14, MACD, BB(20,2)
-python scripts/market_data.py fundamentals MSFT --years 3 --user-agent "Your Name you@university.edu"
+python scripts/market_data.py fundamentals MSFT --years 3                        # no key, no e-mail
 python scripts/market_data.py fred DCOILWTICO --frequency m --aggregation avg --start 2015-01-01
 ```
 
@@ -73,9 +73,14 @@ change or rate-limit without notice, and Yahoo's terms allow personal use, so sa
 answer, keep request rates low, and for a publication cross-check prices against a licensed
 source (CRSP/WRDS, the exchange). Yahoo's `close` is already split-adjusted and `adjclose` is
 split- and dividend-adjusted. Use `adjclose` for returns and indicators; raw historical prints =
-`close` × the product of all later split ratios. SEC EDGAR asks for a User-Agent with a contact
-email (`--user-agent` or `EDGAR_IDENTITY`) and at most 10 requests/second; its XBRL facts are the
-reported 10-K/10-Q values (cite form and accession number). FRED series are cited by series ID.
+`close` × the product of all later split ratios. SEC fundamentals need no e-mail: efts.sec.gov
+and data.sec.gov answer a plain tool User-Agent (checked 2026-11-02), so run `fundamentals`
+straight away and never stop to ask for an address. SEC's fair-access policy asks automated
+clients to identify themselves and stay under 10 requests/second, so the script sends the user's
+identity when `--user-agent`, `EDGAR_IDENTITY` or `ALTERLAB_CONTACT_EMAIL` is set. (www.sec.gov
+itself — `company_tickers.json`, filings under `/Archives` — refuses contact-free clients; raw
+filings are `alterlab-edgartools`' job.) XBRL facts are the reported 10-K/10-Q values (cite form
+and accession number). FRED series are cited by series ID.
 
 ## Optional: the Alpha Vantage API (`ALPHAVANTAGE_API_KEY`)
 

@@ -8,8 +8,10 @@ Keyless sources (no API key):
                 (unofficial and undocumented; personal/research use under Yahoo's terms;
                 cross-check figures that go into a paper). `close` is split-adjusted,
                 `adjclose` is split- and dividend-adjusted.
-  fundamentals  SEC EDGAR XBRL company facts, data.sec.gov (needs a User-Agent with a contact
-                email: --user-agent or EDGAR_IDENTITY / SEC_USER_AGENT; no key)
+  fundamentals  SEC EDGAR: ticker -> CIK from efts.sec.gov's company search, XBRL company facts
+                from data.sec.gov (no key, no account, no e-mail needed). SEC's fair-access policy
+                asks automated clients to identify themselves: a contact is sent when
+                --user-agent, EDGAR_IDENTITY / SEC_USER_AGENT or ALTERLAB_CONTACT_EMAIL is set.
   fx/macro/oil  FRED public CSV, fred.stlouisfed.org/graph/fredgraph.csv (DEXUSEU, DCOILWTICO,
                 CPIAUCSL, CBBTCUSD, DGS10, ...)
 Optional key:   ALPHAVANTAGE_API_KEY for Alpha Vantage's /query API (`av` subcommand).
@@ -18,7 +20,7 @@ Usage:
   python market_data.py prices AAPL --start 2000-01-01 --csv aapl.csv
   python market_data.py rsi AAPL --period 14 --start 2024-01-01
   python market_data.py indicators SPY --start 2025-01-01          # SMA/EMA/RSI/MACD/BBANDS
-  python market_data.py fundamentals MSFT --years 3 --user-agent "Jane Doe jane@uni.edu"
+  python market_data.py fundamentals MSFT --years 3
   python market_data.py fred DCOILWTICO --frequency m --aggregation avg --start 2015-01-01
   python market_data.py av NEWS_SENTIMENT tickers=TSLA limit=50     # needs ALPHAVANTAGE_API_KEY
 """
@@ -42,7 +44,9 @@ UA_DEFAULT = "alterlab-market-data/1.0 (research use)"  # Yahoo answers 429 to t
 UA_FRED = "alterlab-market-data/1.0 (+https://fred.stlouisfed.org)"
 YAHOO = "https://query1.finance.yahoo.com/v8/finance/chart/"
 FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv"
-SEC_TICKERS = "https://www.sec.gov/files/company_tickers.json"
+# www.sec.gov (company_tickers.json, /Archives) answers 403 "Undeclared Automated Tool" to a
+# contact-free User-Agent; these two hosts answer it (checked 2026-11-02).
+SEC_SEARCH = "https://efts.sec.gov/LATEST/search-index"
 SEC_FACTS = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json"
 AV_URL = "https://www.alphavantage.co/query"
 FRED_FREQ = {"d": "Daily", "w": "Weekly", "m": "Monthly", "q": "Quarterly", "a": "Annual"}
@@ -177,19 +181,25 @@ def fred(series_id: str, start=None, end=None, frequency=None, aggregation=None)
 
 # ---------------------------------------------------------------- SEC EDGAR (keyless)
 def _sec_ua(ua: str | None) -> str:
+    """The user's identity when one is set (SEC asks for it); otherwise the plain tool UA."""
     ua = ua or os.environ.get("EDGAR_IDENTITY") or os.environ.get("SEC_USER_AGENT")
-    if not ua or "@" not in ua:
-        raise DataError("SEC EDGAR asks every client for a User-Agent with a contact email (no key): "
-                        "pass --user-agent \"Your Name you@example.org\" or set EDGAR_IDENTITY")
-    return ua
+    contact = os.environ.get("ALTERLAB_CONTACT_EMAIL", "").strip()
+    if not ua and contact:
+        ua = f"{UA_DEFAULT} {contact}"
+    return ua or UA_DEFAULT
 
 
 def cik_for(ticker: str, ua: str | None = None) -> tuple[int, str]:
-    table = json.loads(_get(SEC_TICKERS, ua=_sec_ua(ua)))
-    for row in table.values():
-        if row["ticker"].upper() == ticker.upper():
-            return int(row["cik_str"]), row["title"]
-    raise DataError(f"ticker {ticker!r} not in SEC company_tickers.json")
+    """Ticker (or a numeric CIK) -> (CIK, company name) via EDGAR's company search."""
+    if ticker.isdigit():
+        return int(ticker), ""
+    hits = json.loads(_get(SEC_SEARCH, {"keysTyped": ticker}, ua=_sec_ua(ua)))["hits"]["hits"]
+    for h in hits:
+        tickers = [t.strip().upper() for t in h["_source"].get("tickers", "").split(",")]
+        if ticker.upper() in tickers:
+            name = h["_source"].get("entity", "")
+            return int(h["_id"]), name.rsplit(" (", 1)[0] if name.endswith(")") else name
+    raise DataError(f"ticker {ticker!r} not found by EDGAR company search; pass the numeric CIK instead")
 
 
 def company_facts(cik: int, ua: str | None = None) -> dict:
@@ -216,6 +226,7 @@ def annual_values(facts: dict, concept: str, unit: str = "USD", taxonomy: str = 
 def fundamentals(ticker: str, years: int = 3, ua: str | None = None) -> dict:
     cik, name = cik_for(ticker, ua)
     f = company_facts(cik, ua)
+    name = f.get("entityName") or name
     rev = {}
     for c in REVENUE_CONCEPTS:
         rev = annual_values(f, c)
@@ -274,7 +285,8 @@ def main(argv=None) -> int:
     p = sub.add_parser("fundamentals")
     p.add_argument("ticker")
     p.add_argument("--years", type=int, default=3)
-    p.add_argument("--user-agent")
+    p.add_argument("--user-agent", help="optional identity sent to SEC, e.g. \"Name you@uni.edu\" "
+                   "(default: EDGAR_IDENTITY / SEC_USER_AGENT / ALTERLAB_CONTACT_EMAIL, else none)")
     p = sub.add_parser("fred")
     p.add_argument("series")
     p.add_argument("--start"), p.add_argument("--end"), p.add_argument("--frequency"), p.add_argument("--aggregation")
@@ -311,6 +323,10 @@ def main(argv=None) -> int:
                             "bb_upper", "bb_lower"], a.csv)
         elif a.cmd == "fundamentals":
             print("[market_data] fundamentals from SEC EDGAR XBRL company facts (no key)", file=sys.stderr)
+            if _sec_ua(a.user_agent) == UA_DEFAULT:
+                print("[market_data] no contact sent; SEC's fair-access policy asks automated clients to "
+                      "identify themselves: set EDGAR_IDENTITY=\"Name email\" or ALTERLAB_CONTACT_EMAIL",
+                      file=sys.stderr)
             print(json.dumps(fundamentals(a.ticker, a.years, a.user_agent), indent=2))
         elif a.cmd == "fred":
             print("[market_data] FRED public CSV (no key)", file=sys.stderr)
