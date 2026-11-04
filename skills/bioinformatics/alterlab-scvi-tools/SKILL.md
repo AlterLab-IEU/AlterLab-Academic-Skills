@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. Written for scvi-tools 1.5 (current 1.5.1 as of 2026-09), which requires Python >= 3.12. A GPU is optional but makes training practical on large datasets."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.1.1"
+    last_updated: "2026-11-04"
 ---
 
 # scvi-tools
@@ -146,6 +146,8 @@ sig = de_results[de_results["proba_de"] > 0.95]
 ```
 
 See `references/differential-expression.md` for the full output schema and interpretation.
+
+When the DE runs from a script, quote the `model.differential_expression(...)` call in the reply with every argument you set (`groupby`, `group1`, `group2`, `mode`, `delta`, `batch_correction`, `fdr_target`), plus the `proba_de` cutoff and the paths of the files written. Those settings define the test; a methods section and anyone re-running it need them verbatim, not paraphrased.
 
 ### Model Persistence
 Save and load trained models:
