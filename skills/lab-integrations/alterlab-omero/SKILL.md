@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash(uv:*) Bash(python:*) Bash(curl:*)
 compatibility: "No API key required to write the BlitzGateway integration, analyse local microscopy images with tifffile, and browse/pull public OMERO data (IDR JSON API + webgateway + OME-Zarr). Optional: the user's own OMERO server host/port and login for omero-py (current 5.23.0; Python >=3.10, needs the ZeroC Ice 3.6 bindings) to reach their private images."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-10-22"
+    version: "1.1.1"
+    last_updated: "2026-11-04"
     credentials: "optional: OMERO_USER, OMERO_PASSWORD, OMERO_HOST, OMERO_PORT (the user's own OMERO server login — adds reading, writing and batch-processing images on their private tenant; the public IDR server needs none)"
 ---
 
@@ -58,9 +58,12 @@ This skill should be used when:
 | Tiling or preprocessing whole-slide images from local files | `alterlab-histolab` |
 | End-to-end computational pathology models (segmentation, graphs, training) | `alterlab-pathml` |
 | Reading or anonymizing clinical DICOM files | `alterlab-pydicom` |
-| Writing a protocol to drive a liquid-handling robot or its onboard plate reader (Opentrons; Hamilton/Tecan) | `alterlab-opentrons` or `alterlab-pylabrobot` |
+| Writing an Opentrons OT-2 or Flex protocol, including one that uses the Flex Absorbance Plate Reader Module | `alterlab-opentrons` |
+| Driving Hamilton or Tecan liquid handlers, plate readers or mixed vendors from one Python script | `alterlab-pylabrobot` |
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-imaging-data-commons`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+A robot or plate-reader protocol has no OMERO step at all, so the hand-off applies even when you could write the protocol yourself: the first line names `alterlab-opentrons` or `alterlab-pylabrobot`.
 
 ## Core Capabilities
 
