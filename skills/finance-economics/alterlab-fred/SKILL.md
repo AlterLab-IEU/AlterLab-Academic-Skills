@@ -6,9 +6,9 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Series data, transformations, aggregation, ALFRED vintages and search come keyless from fred.stlouisfed.org and alfred.stlouisfed.org (scripts/fred_keyless.py, standard library only). An optional free FRED_API_KEY adds the JSON API (scripts/fred_query.py, with requests). Network access to those hosts.
 metadata:
     skill-author: AlterLab
-    version: "1.2.0"
+    version: "1.2.1"
     credentials: "optional: FRED_API_KEY (adds the JSON API: filtered series search, full metadata, categories, releases, tags, sources, vintage-date lists, bulk release download and GeoFRED maps/shapes, up to 120 requests/minute)"
-    last_updated: "2026-09-23"
+    last_updated: "2026-11-04"
 ---
 
 # FRED Economic Data Access
@@ -78,6 +78,8 @@ their frequencies differ, so request one ID per URL.
 **Optional key.** For JSON-only endpoints, a free key comes from https://fredaccount.stlouisfed.org;
 set `export FRED_API_KEY=...` and use `scripts/fred_query.py`. It raises a clear error naming the
 variable and the keyless alternative when the key is missing.
+
+**Say how it was retrieved.** End every answer with a short "How this was retrieved" line: the keyless URL or `fred_keyless.py` command with its series IDs and dates, the source agency (e.g. BLS via FRED), and the retrieval date. When a keyless route stands in for a keyed endpoint (per-state `{ST}UR` CSVs instead of GeoFRED `series/data` + `shapes/file`), name that endpoint once as the optional-key alternative and what it would add. In a paper, cite the series ID, source agency and retrieval date of every series used.
 
 ## Quick Start
 
@@ -504,7 +506,5 @@ uv run --python ">=3.11" --with requests python scripts/fred_examples.py
 - **GeoFRED Maps**: https://geofred.stlouisfed.org/
 - **ALFRED (Vintage Data)**: https://alfred.stlouisfed.org/
 - **Terms of Use**: https://fred.stlouisfed.org/legal/
-
-Cite FRED (series ID, source agency, and retrieval date) for every series used in a paper.
 
 Part of the AlterLab Academic Skills suite.
