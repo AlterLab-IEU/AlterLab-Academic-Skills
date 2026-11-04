@@ -3,10 +3,10 @@ name: alterlab-scvi-tools
 description: Train deep generative models for single-cell omics with scvi-tools — probabilistic batch correction and integration (scVI), reference-mapping transfer learning (scArches), differential expression with uncertainty, and multimodal models (totalVI for CITE-seq, MultiVI for multiome). Use when correcting batch effects, integrating multimodal data, or doing advanced probabilistic single-cell modeling — for standard analysis pipelines use scanpy. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. Written for scvi-tools 1.5 (current 1.5.1 as of 2026-09), which requires Python >= 3.12. A GPU is optional but makes training practical on large datasets."
+compatibility: "Self-contained — runs under `uv run --python \">=3.12\" --with scvi-tools`; no API key or account required. Written for scvi-tools 1.5 (current 1.5.1 as of 2026-09), which requires Python >= 3.12. A GPU is optional but makes training practical on large datasets."
 metadata:
     skill-author: AlterLab
-    version: "1.1.1"
+    version: "1.1.2"
     last_updated: "2026-11-04"
 ---
 
@@ -193,12 +193,20 @@ See `references/theoretical-foundations.md` for detailed background on the mathe
 
 ## Installation
 
+scvi-tools 1.5 requires **Python >= 3.12** (PyPI `requires_python`, checked 2026-11-04 for
+1.5.2), so pin the interpreter. Run install-free with uv, which resolves the package per run (a
+bare `uv pip install` fails outside a virtual environment, and a plain `uv run python` may pick an
+older Python):
+
 ```bash
-uv pip install scvi-tools
-uv pip install "scvi-tools[cuda]"      # CUDA 12; use [cuda13] for CUDA 13
-uv pip install "scvi-tools[metal]"     # Apple silicon (MPS)
-uv pip install "scvi-tools[autotune]"  # hyperparameter search (Ray Tune)
+uv run --python ">=3.12" --with scvi-tools --with scanpy python analysis.py
+uv run --python ">=3.12" --with "scvi-tools[cuda]" python analysis.py      # CUDA 12; [cuda13] for CUDA 13
+uv run --python ">=3.12" --with "scvi-tools[metal]" python analysis.py     # Apple silicon (MPS)
+uv run --python ">=3.12" --with "scvi-tools[autotune]" python analysis.py  # Ray Tune search
 ```
+
+In a project with its own virtual environment, `uv pip install scvi-tools` into that
+environment instead.
 
 Version note (2026-09): scvi-tools 1.5 dropped the JAX backend entirely, so `scvi.model.JaxSCVI`
 and the other Jax-prefixed models no longer exist — everything runs on PyTorch/Lightning (with an
