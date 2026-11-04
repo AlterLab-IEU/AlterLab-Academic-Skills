@@ -5,7 +5,7 @@ and without it, and graded against each case's assertions and rubric. The method
 [`evals.md`](evals.md); the five-task benchmark, which is scored without an LLM judge, is
 reported separately in [`benchmark-results.md`](benchmark-results.md).
 
-> **Status, 2026-11-02.** Every one of the 241 skills has a final run made at its current
+> **Status, 2026-11-04.** Every one of the 241 skills has a final run made at its current
 > content. `alterlab-openalex` was removed in 4.0.0 (OpenAlex now needs an account for real
 > use), so its cases are no longer counted, and every skill that used OpenAlex was rewritten and
 > re-run (see [Known limits](#known-limits)).
@@ -36,12 +36,12 @@ working tree. Details: [Isolation](evals.md#isolation) in `evals.md`.
 | | |
 |---|---|
 | Model | the Claude model served by the Claude Code login, for both the answers and the judges |
-| Claude Code CLI | 2.1.300, 2.1.308, 2.1.309 and 2.1.316 (see [Known limits](#known-limits)) |
+| Claude Code CLI | 2.1.300, 2.1.308, 2.1.309, 2.1.316 and 2.1.318 (see [Known limits](#known-limits)) |
 | Runner | Linux, answer arms namespace-confined |
 | Runs | one run per arm per case (`--runs 1`) |
 | Timeout | 600 s per CLI call (400 s in some runs of 2026-10-15; 900 s for the one re-run of cases that had timed out or hit an infrastructure error) |
 | First runs | 2026-10-15 to 2026-10-23 |
-| Final runs | 2026-10-15 to 2026-11-02 |
+| Final runs | 2026-10-15 to 2026-11-04 |
 | Raw results | `eval-results/` (git-ignored; not in the repository) |
 
 ### Which runs are counted
@@ -57,8 +57,9 @@ case was run again. Two runs per case are used:
   inconclusive), `final_e` (a full re-run of five skills after the routing fix described in
   [Where the skill made answers worse](#where-the-skill-made-answers-worse)), `final_f` (one
   more try, on an idle runner, of three light look-ups that had timed out only under load), and
-  `final_g`, `final_h`, `final_i` and `final_j` (full re-runs of every skill changed by the removal of
-  OpenAlex, the login fixes and the later routing and timeout fixes).
+  `final_g` to `final_m` (full re-runs of every skill changed by the removal of
+  OpenAlex, the login fixes, the later routing and timeout fixes, and the second pass over the
+  hurt cases).
   A refusal that runs before commit `8ffe74c` recorded as INFRA_ERROR (the CLI's newer
   acceptable-use wording) is counted as REFUSED, which is how the runner records it now. A run counts only if the commit it
   recorded contains `d7d26cc`; collect-only runs, which call no judge, are skipped. Each case's
@@ -114,14 +115,14 @@ The tables use these terms:
 
 ## Results
 
-**Headline numbers (2026-11-02):**
+**Headline numbers (2026-11-04):**
 
 <!-- BEGIN generated:summary -->
 - **241 of 241 skills** have a final run, covering **1,598 cases**.
 - **1,532 cases graded** (skilled arm PASS or FAIL); 50 not runnable here; 16 skilled-arm outcomes that are neither (infrastructure error, refusal, inconclusive).
-- **Skilled arm: 1,349 of 1,532 graded cases passed (88.1%).** Bare arm on the same 1,532 cases: 813 passed (53.1%).
-- **The skill helped on 556 cases and hurt on 27.**
-- Claude Code CLI version, by number of final cases answered: 2.1.300 (114), 2.1.308 (208), 2.1.309 (598), 2.1.316 (678).
+- **Skilled arm: 1,380 of 1,532 graded cases passed (90.1%).** Bare arm on the same 1,532 cases: 804 passed (52.5%).
+- **The skill helped on 571 cases and hurt on 2.**
+- Claude Code CLI version, by number of final cases answered: 2.1.300 (101), 2.1.308 (184), 2.1.309 (571), 2.1.316 (574), 2.1.318 (168).
 <!-- END generated:summary -->
 
 By domain:
@@ -129,25 +130,25 @@ By domain:
 <!-- BEGIN generated:domain-table -->
 | Domain | Skills | Cases | Graded | Skilled PASS | Bare PASS (same cases) | Skill helped / hurt | Not runnable here | Infra / inconclusive |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| bioinformatics | 38 | 224 | 220 | 204 (93%) | 117 (53%) | 87 / 1 | 1 | 3 |
-| cheminformatics | 12 | 74 | 69 | 62 (90%) | 28 (41%) | 34 / 1 | 5 | 0 |
+| bioinformatics | 38 | 224 | 220 | 205 (93%) | 116 (53%) | 88 / 0 | 1 | 3 |
+| cheminformatics | 12 | 74 | 69 | 63 (91%) | 28 (41%) | 34 / 0 | 5 | 0 |
 | clinical-research | 7 | 48 | 46 | 43 (93%) | 24 (52%) | 19 / 0 | 0 | 2 |
 | core | 10 | 80 | 79 | 67 (85%) | 41 (52%) | 25 / 0 | 0 | 1 |
 | data-science | 22 | 142 | 135 | 121 (90%) | 69 (51%) | 52 / 0 | 0 | 7 |
-| databases | 38 | 242 | 231 | 208 (90%) | 146 (63%) | 68 / 7 | 10 | 1 |
+| databases | 38 | 242 | 231 | 213 (92%) | 146 (63%) | 67 / 0 | 10 | 1 |
 | document-tools | 3 | 19 | 19 | 18 (95%) | 9 (47%) | 9 / 0 | 0 | 0 |
 | domain-specific | 18 | 120 | 116 | 106 (91%) | 63 (54%) | 43 / 0 | 4 | 0 |
 | faculty-life | 6 | 39 | 39 | 37 (95%) | 20 (51%) | 17 / 0 | 0 | 0 |
-| finance-economics | 7 | 59 | 57 | 45 (79%) | 33 (58%) | 12 / 2 | 2 | 0 |
-| lab-integrations | 9 | 77 | 74 | 62 (84%) | 28 (38%) | 36 / 2 | 3 | 0 |
-| methodology | 3 | 19 | 19 | 12 (63%) | 7 (37%) | 7 / 2 | 0 | 0 |
-| research-tools | 14 | 107 | 91 | 73 (80%) | 56 (62%) | 21 / 4 | 15 | 1 |
-| social-science-workflow | 17 | 91 | 91 | 89 (98%) | 55 (60%) | 36 / 2 | 0 | 0 |
-| turkish-academia | 13 | 93 | 87 | 76 (87%) | 41 (47%) | 36 / 1 | 6 | 0 |
-| visualization | 9 | 63 | 60 | 54 (90%) | 31 (52%) | 25 / 2 | 3 | 0 |
-| workflows | 1 | 7 | 7 | 5 (71%) | 3 (43%) | 3 / 1 | 0 | 0 |
-| writing-tools | 14 | 94 | 92 | 67 (73%) | 42 (46%) | 26 / 2 | 1 | 1 |
-| **All** | **241** | **1598** | **1532** | **1349 (88%)** | **813 (53%)** | **556 / 27** | **50** | **16** |
+| finance-economics | 7 | 59 | 57 | 47 (82%) | 31 (54%) | 14 / 0 | 2 | 0 |
+| lab-integrations | 9 | 77 | 74 | 66 (89%) | 27 (36%) | 40 / 1 | 3 | 0 |
+| methodology | 3 | 19 | 19 | 17 (89%) | 7 (37%) | 10 / 0 | 0 | 0 |
+| research-tools | 14 | 107 | 91 | 80 (88%) | 53 (58%) | 26 / 0 | 15 | 1 |
+| social-science-workflow | 17 | 91 | 91 | 89 (98%) | 54 (59%) | 36 / 1 | 0 | 0 |
+| turkish-academia | 13 | 93 | 87 | 77 (89%) | 41 (47%) | 36 / 0 | 6 | 0 |
+| visualization | 9 | 63 | 60 | 56 (93%) | 30 (50%) | 26 / 0 | 3 | 0 |
+| workflows | 1 | 7 | 7 | 6 (86%) | 3 (43%) | 3 / 0 | 0 | 0 |
+| writing-tools | 14 | 94 | 92 | 69 (75%) | 42 (46%) | 26 / 0 | 1 | 1 |
+| **All** | **241** | **1598** | **1532** | **1380 (90%)** | **804 (52%)** | **571 / 2** | **50** | **16** |
 <!-- END generated:domain-table -->
 
 *Cases* counts every case with a final run, and *Graded* those with a PASS or FAIL in the
@@ -158,18 +159,19 @@ prompts; none of the seven dynamic workflows was run.
 
 ### Reading the table
 
-<!-- This reading describes the 2026-11-02 numbers. Re-check it whenever the generated blocks are regenerated. -->
+<!-- This reading describes the 2026-11-04 numbers. Re-check it whenever the generated blocks are regenerated. -->
 
-- With the skill, about seven in eight graded cases passed; without it, about half of the same
+- With the skill, about nine in ten graded cases passed; without it, about half of the same
   cases did.
 - Most of that gap is on cases where the skill should do the task. On near-miss cases, where the
   right answer is to hand the request to a sibling skill, both arms passed most of the time.
-- Hurt cases are few next to helped ones (27 against 556). Many of them failed only a check
-  that the bare arm is never given; they still count as failures. See
+- Hurt cases are few next to helped ones (2 against 571), after two passes of fixes over every
+  case the skill made worse. See
   [Where the skill made answers worse](#where-the-skill-made-answers-worse).
-- Methodology has the lowest skilled pass rate in this snapshot. It, document-tools and
-  workflows have 19 cases or fewer, so a single case moves their percentages by five points or
-  more.
+- Writing-tools has the lowest skilled pass rate in this snapshot (75%); its long-form cases
+  (literature reviews, slides, posters) carry many rubric points. Methodology, document-tools
+  and workflows have 19 cases or fewer, so a single case moves their percentages by five points
+  or more.
 - The table is per domain. A high domain rate does not mean that every skill in the domain
   passed all its cases.
 
@@ -227,16 +229,39 @@ finishes in under 20 s on the seeds tried, including a paper with about 73,000 c
 `alterlab-citation-graph` timeout comes from what that answer chose to run, not from the script.
 With one run per case, part of this movement in both directions is run-to-run variation.
 
-**Known, not yet fixed.** Six skill defects from the triage are open:
+**Second pass (2026-11-04).** The 27 cases that were still hurt after the rounds above were
+read again, skill by skill, and the cause fixed where it lay in the skill:
 
-- Three near-miss answers in `alterlab-preregistration-discipline`, `alterlab-ssci-design-gate`
-  and `alterlab-arxiv` named the right sibling and then did part of the work anyway. The cause
-  is a sentence of the shared hand-off rule ("If only part of the request is out of scope…"),
-  which is in every skill, so changing it needs its own re-run.
-- `alterlab-hypothesis-gen` handed an open brainstorming request to its sibling with no ideas of
-  its own; the bare model simply brainstormed.
-- `alterlab-datacommons` called an empty coordinate look-up a keyless limit, where a rounded
-  coordinate may resolve.
+- **Hand-offs** (arxiv, preregistration-discipline, ssci-design-gate, omero, research-workflows,
+  tubitak-bideb, hypothesis-gen): each skill now says what is in scope for it, after the shared
+  hand-off paragraph (which is unchanged), so a request that only mentions this skill's topic as
+  context gets a clean hand-off, and hypothesis-gen still gives a short list of directions
+  when it hands off. A first version for tubitak-bideb put 3501's evaluation criteria in its
+  routing row; the re-run showed answers reciting them instead of handing off, so the row went
+  back to naming the programmes and the scope sentence was tightened.
+- **Reporting** (datacommons, ena, fred, hedgefund-monitor, pdb, plotly, matplotlib, scvi-tools,
+  pdf-extract, protocolsio, pyzotero): answers now end with how the result was obtained (the
+  call or endpoint with its parameters, the files written, the retrieval date), which a reader
+  needs to reproduce it.
+- **Defects in scripts and instructions:** datacommons' coordinate resolve now asks Data Commons'
+  keyless v1 resolver as well as v2 before falling back to a geocoder; scientific-slides'
+  validator now finds text past a slide's edge in a PDF (it only counted pages); matchms now
+  explains greedy vs Hungarian peak matching; pdb gained a keyless structure-similarity command
+  that matches rcsb-api's counts; scientific-brainstorm puts the gaps in one reply; scvi-tools'
+  install commands pin Python >= 3.12 (an older interpreter silently installs 1.1.6).
+- **A wrong eval:** pubmed's citation-match case used an unregistered DOI (doi.org 404, PubMed 0
+  hits), so no answer could pass; it now uses a real one (PMID 33301246), assertions unchanged.
+- **Left alone:** `alterlab-pyzotero:near-miss-citation-mgmt` and
+  `alterlab-ssci-measurement-gate:reliability-is-not-validity`, where other runs with
+  equivalent answers passed and the failing verdict contradicts the answer.
+
+Every changed skill was re-run in full (`final_k`, `final_l`, `final_m`).
+
+<!-- BEGIN generated:second-pass -->
+- Of the 27 hurt cases, **25 now pass with the skill**; 2 are still hurt: `alterlab-omero:near-miss-opentrons`, `alterlab-ssci-measurement-gate:reliability-is-not-validity`.
+- The re-runs covered 168 cases in 24 skills: 35 moved to PASS and 4 moved away from it (`alterlab-pdb:sequence-similarity-search`, `alterlab-pubmed:batch-efetch-abstracts`, `alterlab-ssci-design-gate:observational-causal-overreach`, `alterlab-tubitak-bideb:conference-2224a-points-timing-turkish`). Without the skill, all of those also fail. With one run per case, part of that movement is run-to-run variation.
+- Suite-wide, the skill now helps on 571 cases and hurts on 2.
+<!-- END generated:second-pass -->
 
 ## Before and after the fixes
 
@@ -248,8 +273,8 @@ and the final run on the cases that have both.
 
 <!-- BEGIN generated:before-after -->
 - **1,525 cases** have both a first run and a final run.
-- Skilled arm PASS: **1,109 → 1,300**. Bare arm PASS: **788 → 797**.
-- Skilled-arm outcome changes: FAIL → PASS 234, PASS → FAIL 52, FAIL → NOT_RUN 37, INFRA_ERROR → PASS 17, PASS → NOT_RUN 9, INFRA_ERROR → FAIL 8, FAIL → INFRA_ERROR 4, PASS → INFRA_ERROR 3, NOT_RUN → PASS 3, INFRA_ERROR → NOT_RUN 1, INCONCLUSIVE → PASS 1.
+- Skilled arm PASS: **1,109 → 1,325**. Bare arm PASS: **788 → 789**.
+- Skilled-arm outcome changes: FAIL → PASS 249, PASS → FAIL 42, FAIL → NOT_RUN 37, INFRA_ERROR → PASS 17, PASS → NOT_RUN 9, INFRA_ERROR → FAIL 8, FAIL → INFRA_ERROR 4, PASS → INFRA_ERROR 3, NOT_RUN → PASS 3, INFRA_ERROR → NOT_RUN 1, INCONCLUSIVE → PASS 1.
 <!-- END generated:before-after -->
 
 **This is not a controlled comparison.** Read it as a record of what changed, not as a measure
@@ -311,7 +336,7 @@ A case can need more than one thing, so it can appear in more than one row.
   bare arm is judged on the rubric only. The pass rates compare the two arms on the same cases,
   but not under the same checks.
 - **Mixed CLI versions.** The final results mix Claude Code CLI 2.1.300 (runs of 2026-10-15),
-  2.1.308 (2026-10-22), 2.1.309 (2026-10-23) and 2.1.316 (2026-11-02).
+  2.1.308 (2026-10-22), 2.1.309 (2026-10-23), 2.1.316 (2026-11-02) and 2.1.318 (2026-11-04).
 - **Heavy cases count as infrastructure errors.** In the later rounds, a watchdog on this
   runner stopped any arm whose workspace grew past 1.5 GB (model weights, bulk downloads), and
   each CLI call had a 600 s timeout (400 s in some runs of 2026-10-15). The runner has no GPU

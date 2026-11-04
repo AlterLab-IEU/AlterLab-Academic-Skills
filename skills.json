@@ -5090,7 +5090,7 @@
       "domain": "turkish-academia",
       "description": "Matches researchers to TÜBİTAK BİDEB (Bilim İnsanı Destek Programları Başkanlığı) support programmes and prepares the application, from calls read on 2026-09-23: 2219 postdoc abroad, 2218 domestic postdoc, 2221 visiting or sabbatical scientist, 2232-A/2232-B international leading and young researchers moving to Türkiye, 2236-A CoCirculation3, 2224-A conference travel abroad, 2223-B organising an event in Türkiye. Pre-screens computable eligibility gates (PhD window, age, months in Türkiye, language score, Tablo 1 points, call periods) with a stdlib script, then builds the document checklist, a research-plan scaffold weighted to the published criteria, the reporting plan and TÜBİTAK's generative-AI disclosure. Use when the user asks which TÜBİTAK fellowship, bursary or travel support fits them, or wants to prepare a 2219, 2218, 2221, 2232, 2236, 2224-A or 2223-B application. For ARDEB project grants (1001, 1002-A, 3501) prefer alterlab-tubitak-proposal. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "compatibility": "No API key required. The chooser and the eligibility/timing pre-screen run offline via `uv run python` on the standard library only. Every amount, date and rule is dated to TÜBİTAK programme pages and call documents read on 2026-09-23 and changes with each call, so WebFetch the live tubitak.gov.tr programme page before quoting figures.",
       "allowed_tools": [
         "Read",

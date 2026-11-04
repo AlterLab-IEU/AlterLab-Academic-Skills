@@ -39,21 +39,23 @@ external audit; every reported defect was reproduced before it was fixed.
 ### Live behavioral evaluation
 
 Every skill's eval cases were answered once with the skill and once without it, through the
-Claude Code CLI login with no API key, from 2026-10-15 to 2026-11-02. Method, per-domain
+Claude Code CLI login with no API key, from 2026-10-15 to 2026-11-04. Method, per-domain
 results and limits: `docs/behavioral-results.md`.
 
 - 241 of 241 skills, 1,598 cases: 1,532 graded, 50 not runnable here (they need a key,
   connector, host or program the runner lacks), 16 infrastructure errors or refusals.
-- With the skill, 1,349 of 1,532 graded cases passed (88.1%); without it, 813 of the
-  same cases (53.1%). The skill turned a bare FAIL into a PASS on 556 cases and the reverse
-  on 27. The skilled answer faces more checks than the bare one, grading reads only the final
+- With the skill, 1,380 of 1,532 graded cases passed (90.1%); without it, 804 of the
+  same cases (52.5%). The skill turned a bare FAIL into a PASS on 571 cases and the reverse
+  on 2. The skilled answer faces more checks than the bare one, grading reads only the final
   message, and each case ran once.
-- On the 1,525 cases with both a first and a final run, skilled PASS went from 1,109 to 1,300
+- On the 1,525 cases with both a first and a final run, skilled PASS went from 1,109 to 1,325
   (fixes to skills, evals and the harness in between; not a controlled comparison).
-- Every case the skill made worse after the last full round (32) was read by hand. The six
-  caused by missing routing rows, five more routing gaps, two timeouts that were skill defects
-  and the alpha-vantage contact prompt are fixed and re-run; six skill defects remain open and
-  are listed in the results page.
+- Every case the skill made worse was read by hand, twice. The first pass fixed missing
+  routing rows (eleven), two timeouts that were skill defects and the alpha-vantage contact
+  prompt. The second pass took the 27 still left: hand-off scope in seven skills, how answers
+  report their method in eleven, script and instruction defects (datacommons, scientific-slides,
+  matchms, pdb, scvi-tools) and one unregistered DOI in a pubmed eval. 25 of the 27 now
+  pass with the skill, and the skill hurts on 2 cases suite-wide.
 - `alterlab-openalex`'s cases are not counted (the skill was removed), and every skill that
   used OpenAlex was rewritten and re-run.
 
