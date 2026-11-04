@@ -6,8 +6,8 @@ license: MIT
 compatibility: No API key required. MarkItDown >= 0.1 converts each document (run the script as uv run --with 'markitdown[all]' python ...), the offline heuristic backend drafts the cells, and Claude reads the saved Markdown (--markdown-dir) to finish them. Optional llm batch backend - the openai client (add --with openai) plus OPENROUTER_API_KEY or OPENAI_API_KEY with OPENAI_BASE_URL - sends paper text to that endpoint.
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-10-22"
+    version: "1.1.1"
+    last_updated: "2026-11-04"
     credentials: "optional: OPENROUTER_API_KEY or OPENAI_API_KEY (the --backend llm unattended batch mode, which sends paper text to that endpoint). Not needed for precise cells: by default Claude reads the converted Markdown itself"
 ---
 
@@ -66,6 +66,7 @@ The keyless path is the precise one: the script converts and drafts, and **you**
 2. **Read every converted paper** (`converted/<stem>.md`, with Read). For each column, confirm or replace the draft cell with the exact value the paper states — the number enrolled *and* the number analysed when they differ, the effect estimate with its metric and CI, the design as the authors name it.
 3. **Mark silence explicitly.** When a paper does not report a column (e.g. no limitations section), write "not reported" — never infer or invent it.
 4. **Write the final table** (Markdown, or CSV for Excel) with Write: one row per paper, `Source` first, one column per attribute, and a short evidence quote or section name per cell when the user wants an audit trail. Spot-check a few numbers against the PDF pages (Read opens PDFs) when a conversion looks garbled.
+5. **Say how the table was made.** Under the table in your reply, state the extraction method: each document converted to Markdown with MarkItDown, the `--column "label:question"` specs you ran (the question behind each column), that every cell was then checked against the converted paper, and the paths of the saved table and `converted/` folder. A review's methods must report how data were extracted (PRISMA 2020 item 9), and the user needs the column questions to rerun or extend the sheet.
 
 Checked on this skill's fixtures: the draft cell for Dlamini 2024 read "we enrolled 312 students on academic" (the sentence wraps), while the saved Markdown states "312 … 287 (92%) completed follow-up and were analysed" and "odds ratio 1.62, 95% CI 1.05 to 2.50" — the read step is what turns the draft into the right row.
 
