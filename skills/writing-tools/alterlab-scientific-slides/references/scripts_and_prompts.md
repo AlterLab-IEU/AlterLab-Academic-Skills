@@ -98,14 +98,17 @@ python scripts/slides_to_pdf.py slides/ -o presentation.pdf
 ## validate_presentation.py
 
 ```bash
-python scripts/validate_presentation.py presentation.pdf --duration 15
+uv run --python ">=3.11" --with pymupdf --with pypdf --with python-pptx \
+    python scripts/validate_presentation.py presentation.pdf --duration 15
 
 # Checks:
 # - Slide count vs. recommended range
 # - File size warnings
 # - Slide dimensions
-# - Font sizes (PowerPoint)
+# - Font sizes (PowerPoint; PDF via pymupdf, scaled to a 7.5-inch slide height)
+# - Text past a slide edge (PDF via pymupdf), including a line wholly off the slide
 # - Compilation (Beamer)
+# Exit 1 when text runs off a slide (or the file cannot be read); small fonts are warnings.
 ```
 
 ## pdf_to_images.py

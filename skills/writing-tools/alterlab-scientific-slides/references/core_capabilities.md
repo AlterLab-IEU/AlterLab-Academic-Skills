@@ -273,9 +273,10 @@ For comprehensive timing guidance, refer to `assets/timing_guidelines.md`.
 
 **Automated Validation:**
 ```bash
-python scripts/validate_presentation.py presentation.pdf --duration 15
-# Reports: slide count vs. recommended range, file size warnings,
-# slide dimensions, font size issues (PowerPoint), compilation success (Beamer)
+uv run --python ">=3.11" --with pymupdf --with pypdf --with python-pptx \
+    python scripts/validate_presentation.py presentation.pdf --duration 15
+# Reports: slide count vs. recommended range, file size warnings, slide dimensions,
+# font size issues (PowerPoint and PDF), text past a slide edge (PDF), compilation (Beamer)
 ```
 
 **Manual Validation Checklist:**

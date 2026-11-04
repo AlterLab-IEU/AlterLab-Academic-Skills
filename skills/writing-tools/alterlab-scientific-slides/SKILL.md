@@ -6,8 +6,8 @@ license: MIT
 compatibility: "No API key required. PowerPoint output via `uv run --python \">=3.11\" --with python-pptx --with pillow`; LaTeX Beamer needs pdflatex; LibreOffice (soffice) exports PPTX to PDF for review; validation helpers use pymupdf, pypdf and Pillow; code-drawn visuals render with cairosvg. Optional AI slide images: OPENROUTER_API_KEY (prompts and attached figures go to Google Gemini models via OpenRouter)."
 metadata:
     skill-author: AlterLab
-    version: "1.1.1"
-    last_updated: "2026-10-22"
+    version: "1.1.2"
+    last_updated: "2026-11-04"
     credentials: "optional: OPENROUTER_API_KEY (the AI slide-image backend, --backend ai: Nano Banana Pro full-slide images and Gemini review through OpenRouter)"
 ---
 
@@ -112,7 +112,7 @@ If a diagram or figure would aid comprehension, invoke the **alterlab-scientific
 1. **Plan** — define talk type, duration, audience, venue. Use `alterlab-research-lookup` to gather 8-15 papers for citations and outline the narrative arc (Hook → Context → Gap → Approach → Results [40-50% of time] → Implications → Closure).
 2. **Choose implementation** — PowerPoint via `build_deck.py` (default), LaTeX Beamer (math-heavy), or, with a key and on request, AI slide images.
 3. **Build visual-first** — every slide needs a strong visual; text is supporting (3-4 bullets, 4-6 words, 24-28pt body / 36-44pt titles). Modern palette, high contrast (7:1 preferred), 40-50% white space.
-4. **Validate visually** — export to PDF (`soffice --headless --convert-to pdf talk.pptx`, or the Beamer PDF), convert to images with `uv run --python ">=3.11" --with pymupdf python scripts/pdf_to_images.py talk.pdf review/slide`, Read each image, inspect for overflow/overlap/small fonts/contrast, iterate until clean. Run `validate_presentation.py --duration N` for slide-count-vs-duration, file-size, and (PPTX-only) font-size/bullet-count checks (body text under 18 pt, footer and citation text under 12 pt). Contrast is judged visually from the images, not by the script.
+4. **Validate visually** — export to PDF (`soffice --headless --convert-to pdf talk.pptx`, or the Beamer PDF), convert to images with `uv run --python ">=3.11" --with pymupdf python scripts/pdf_to_images.py talk.pdf review/slide`, Read each image, inspect for overflow/overlap/small fonts/contrast, iterate until clean. Run `uv run --python ">=3.11" --with pymupdf --with pypdf --with python-pptx python scripts/validate_presentation.py talk.pdf --duration N` (on the PDF, and on the .pptx when there is one) for slide count vs duration, file size, font sizes (body text under 18 pt, footer and citation text under 12 pt; PDF sizes scaled to a 7.5-inch slide height), bullet counts (PPTX), and, on a PDF, every text line past a slide edge — including a line placed wholly off the slide, which no rendered image shows. Log each finding it reports alongside what you see in the images. Contrast is judged visually from the images, not by the script.
 5. **Practice** — 3-5 times with a timer (~1 slide/min), set checkpoints, never skip conclusions.
 
 ## Routing — where to look
