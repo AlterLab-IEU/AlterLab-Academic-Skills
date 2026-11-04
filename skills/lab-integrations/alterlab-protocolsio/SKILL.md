@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit WebFetch Bash(curl:*) Bash(python:*)
 compatibility: "No API key required to find public protocols (Crossref prefix 10.17504), read a public protocol's full steps/materials from its web page or /view/<uri>.pdf, and draft protocols in protocols.io format. Optional: a CLIENT_ACCESS_TOKEN (protocols.io/developers) or OAUTH_ACCESS_TOKEN, or the official MCP server, to reach the REST API for private content, creating/editing, publishing a DOI, uploads, run records and workspaces."
 metadata:
     skill-author: AlterLab
-    version: "1.2.0"
-    last_updated: "2026-10-22"
+    version: "1.2.1"
+    last_updated: "2026-11-04"
     credentials: "optional: CLIENT_ACCESS_TOKEN (from protocols.io/developers — adds your own private content and all write/publish operations over the REST API), OAUTH_ACCESS_TOKEN (OAuth 2.0 authorization-code flow — the same for another user's content with their consent), PROTOCOLS_IO_TOKEN (the env var the bundled examples read, holding whichever of the two you use)"
 ---
 
@@ -31,7 +31,7 @@ The protocols.io API needs a Bearer token even for public content (`status_code`
    - `WebFetch` the protocol URL for the title, abstract and authors (the page's JSON-LD / citation meta).
    - The **full steps and materials** are in the public PDF at `https://www.protocols.io/view/<uri-or-slug>.pdf` (verified HTTP 200 keyless) — fetch it and read it (Claude's `Read` parses PDFs), or `pdftotext -layout`. This is the reliable keyless route to step text, since the HTML page renders steps in JavaScript.
 3. **Draft a new protocol offline** in protocols.io's structure — title, description, `materials_text`, and ordered steps chained by `guid`/`previous_guid` (first step `previous_guid` null) — ready to paste into the web editor or to POST later with a token. The request-shape rules are in `references/protocols_api.md`.
-4. **Cite the version actually used** (see Citing Protocols below) from the DOI and metadata, no token.
+4. **Cite the version actually used** (see Citing Protocols below) from the DOI and metadata, no token. When you report steps or materials, also give the exact URL the text came from (for the step text, the full `https://www.protocols.io/view/<slug>.pdf` link, not just "the public PDF") and the retrieval date, so the user can re-read the same version.
 
 Hand the write/publish steps to the user with their token; if `PROTOCOLS_IO_TOKEN` is unset, stop at the keyless result and say so — never fabricate protocol content or a DOI.
 
