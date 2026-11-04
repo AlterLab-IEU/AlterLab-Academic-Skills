@@ -20,8 +20,11 @@ Backends
     which needs DC_API_KEY (free, https://apikeys.datacommons.org/) for
     observation and node calls. Only `observe` and `within` use it.
   Name and Wikidata resolution use https://api.datacommons.org/v2/resolve, which
-  answers without a key. Coordinates fall back to the keyless US Census geocoder
-  (US points) and OpenStreetMap Nominatim -> Wikidata (anywhere).
+  answers without a key. Coordinates ask both v2 resolve (<-geoCoordinate->dcid),
+  which keyless answers for some points only, and the keyless v1 coordinate resolver
+  (POST https://api.datacommons.org/v1/recon/resolve/coordinate, every containing
+  place); if both are empty they fall back to the keyless US Census geocoder (US) and
+  OpenStreetMap Nominatim -> Wikidata (anywhere).
 
 Standard library only. Examples:
     python query_datacommons.py resolve California Texas --type State
@@ -46,12 +49,15 @@ import urllib.request
 
 WEB = "https://datacommons.org/api"
 V2 = "https://api.datacommons.org/v2"
+V1 = "https://api.datacommons.org/v1"
 UA = "AlterLab-Academic-Skills/1.0 (alterlab-datacommons)"
 FACET_FIELDS = ("provenanceId", "provenanceUrl", "importName", "measurementMethod",
                 "observationPeriod", "unit", "scalingFactor")
 
 
-def _request(url: str, params=None, body=None, headers=None, tries: int = 3):
+def _request(url: str, params=None, body=None, headers=None, tries: int = 3,
+             fatal: bool = True):
+    """GET (or POST when body is given) JSON; with fatal=False an error returns None."""
     if params:
         url = f"{url}?{urllib.parse.urlencode(params, doseq=True)}"
     data = None
@@ -69,11 +75,15 @@ def _request(url: str, params=None, body=None, headers=None, tries: int = 3):
                 time.sleep(2 ** attempt)
                 continue
             detail = exc.read()[:300].decode("utf-8", "replace")
+            if not fatal:
+                return None
             raise SystemExit(f"HTTP {exc.code} from {url.split('?')[0]}: {detail}")
         except urllib.error.URLError as exc:
             if attempt < tries - 1:
                 time.sleep(2 ** attempt)
                 continue
+            if not fatal:
+                return None
             raise SystemExit(f"Connection error for {url.split('?')[0]}: {exc.reason}")
     return None
 
@@ -115,15 +125,41 @@ def resolve_wikidata(qids) -> dict:
     return {e["node"]: [c["dcid"] for c in e.get("candidates", [])] for e in out.get("entities", [])}
 
 
+def _with_names(places: list) -> list:
+    try:
+        names = place_names(p["dcid"] for p in places)
+    except SystemExit:  # names are a convenience; keep the DCIDs if the lookup fails
+        names = {}
+    return [{**p, "name": names.get(p["dcid"])} for p in places]
+
+
 def resolve_coords(lat: float, lon: float) -> dict:
-    """Data Commons coordinate resolve, then keyless geocoder fallbacks."""
+    """Data Commons coordinate resolve (v2 and v1), then keyless geocoder fallbacks.
+
+    Keyless, v2 `<-geoCoordinate->dcid` answers for some points only, and then without
+    the city (2026-11-04: 37.77#-122.4194 -> county/state/country; 37.7749#-122.4194 ->
+    none). Rounding is no fix: it moves the point. The v1 coordinate resolver answers
+    keyless at full precision with every containing place (city, county, tract, ZIP).
+    """
     node = f"{lat}#{lon}"
-    out = _request(f"{V2}/resolve", body={"nodes": [node], "property": "<-geoCoordinate->dcid"},
-                   headers=_key_headers())
-    cands = [c["dcid"] for e in out.get("entities", []) for c in e.get("candidates", [])]
-    if cands:
-        return {"node": node, "dcids": cands, "via": "datacommons v2 resolve (geoCoordinate)"}
-    result = {"node": node, "dcids": [], "via": []}
+    result = {"node": node, "dcids": [], "via": [], "no_answer": []}
+    v2 = _request(f"{V2}/resolve", body={"nodes": [node], "property": "<-geoCoordinate->dcid"},
+                  headers=_key_headers(), fatal=False) or {}
+    v1 = _request(f"{V1}/recon/resolve/coordinate",
+                  body={"coordinates": [{"latitude": lat, "longitude": lon}]},
+                  headers=_key_headers(), fatal=False) or {}
+    places = {}
+    for label, found in (
+            ("datacommons v2 resolve (<-geoCoordinate->dcid)",
+             [c for e in v2.get("entities", []) for c in e.get("candidates", [])]),
+            ("datacommons v1 coordinate resolver (POST /v1/recon/resolve/coordinate)",
+             [p for pc in v1.get("placeCoordinates", []) for p in pc.get("places", [])])):
+        result["via" if found else "no_answer"].append(label)
+        for c in found:
+            places.setdefault(c["dcid"], {"dcid": c["dcid"], "type": c.get("dominantType")})
+    if places:
+        result["dcids"] = _with_names(list(places.values()))
+        return result
     census = _request("https://geocoding.geo.census.gov/geocoder/geographies/coordinates",
                       params={"x": lon, "y": lat, "benchmark": "Public_AR_Current",
                               "vintage": "Current_Current", "format": "json",

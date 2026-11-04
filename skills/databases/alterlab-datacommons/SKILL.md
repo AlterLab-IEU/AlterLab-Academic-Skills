@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: No API key required. Statistics come keyless from the JSON API behind the datacommons.org website (undocumented; provenance kept per record) and names/Wikidata IDs resolve through the keyless v2 resolve endpoint (scripts/query_datacommons.py, standard library only). An optional DC_API_KEY unlocks the documented api.datacommons.org v2 observation/node endpoints and datacommons-client >= 2.1 (current 2.1.6).
 metadata:
     skill-author: AlterLab
-    version: "1.2.1"
-    last_updated: "2026-11-02"
+    version: "1.2.2"
+    last_updated: "2026-11-04"
     credentials: "optional: DC_API_KEY (unlocks the documented api.datacommons.org v2 observation/node endpoints and the datacommons-client methods that use them; the keyless website API serves the same statistics)"
 ---
 
@@ -47,7 +47,7 @@ No key, no install (standard library only). Verified live 2026-10-22:
 S=scripts/query_datacommons.py
 python $S resolve California Texas --type State        # {"California": ["geoId/06"], ...}
 python $S resolve --wikidata Q30 Q99                   # Q30 -> country/USA, Q99 -> geoId/06
-python $S resolve --coords 37.7749,-122.4194           # -> geoId/06, geoId/06075, geoId/0667000
+python $S resolve --coords 37.7749,-122.4194           # -> geoId/0667000 city, geoId/06075, geoId/06, ...
 python $S observe Count_Person country/TUR --date 2020 # 83384680 (World Bank WDI)
 python $S observe Count_Person geoId/06 geoId/48 --date all --csv > pop.csv   # full series
 python $S within Median_Income_Household geoId/06 County --date 2020 --names  # all 58 counties
@@ -67,12 +67,15 @@ into pandas (`pd.read_csv("pop.csv")`, then `pivot_table(index="date", columns="
 | Names, parents, descendants | `…/api/place/name?dcids=…`, `…/api/place/parent?dcid=…`, `…/api/place/descendent?dcids=…&descendentType=County` |
 | Find / check variables | `…/api/stats/stat-var-search?query=…&places=…`; POST `…/api/observation/existence` `{"entities":[…],"variables":[…]}` |
 | Name / Wikidata → DCID | POST `https://api.datacommons.org/v2/resolve` `{"nodes":[…],"property":"<-description{typeOf:State}->dcid"}` (or `<-wikidataId->dcid`) |
+| Coordinates → DCIDs | v2 resolve `{"nodes":["37.7749#-122.4194"],"property":"<-geoCoordinate->dcid"}`, plus POST `https://api.datacommons.org/v1/recon/resolve/coordinate` `{"coordinates":[{"latitude":37.7749,"longitude":-122.4194}]}` |
 
 Know the limits of this route and say so in the answer:
 - **Undocumented website API.** It serves the site's own charts (source: `github.com/datacommonsorg/website`, `server/routes/`), is not part of the documented REST API, and can change without notice. Cite the record's `provenanceUrl` and the retrieval date; robots.txt does not disallow it, but keep request rates modest.
 - **One facet per series.** The website picks the preferred source per place/variable; the keyed `observation.fetch` can return every facet (`filter_facet_domains`).
 - **Dates must match the period.** Monthly series (e.g. `UnemploymentRate_Person`, BLS) need `YYYY-MM`; `--date 2020` returns nothing for them — use `latest` or `all`.
-- **Coordinates.** v2 resolve returned no candidates for coordinates keylessly (2026-10-22), so the script falls back to the keyless US Census geocoder (GEOID → `geoId/<GEOID>`) for US points and to OpenStreetMap Nominatim → Wikidata → resolve elsewhere (≤ 1 request/s).
+- **Coordinates.** Keyless, v2 `<-geoCoordinate->dcid` answers for some points only, without the city (2026-11-04: `37.77#-122.4194` → county, state, country; `37.7749#-122.4194` → nothing). Rounding is no fix: it moves the point. The script also asks the keyless v1 coordinate resolver, which returns every containing place at full precision (city, county, state, tract, ZIP), and only if both are empty falls back to the US Census geocoder (GEOID → `geoId/<GEOID>`) or OpenStreetMap Nominatim → Wikidata (≤ 1 request/s). Its `via` field names the route behind each answer.
+
+**Say how it was retrieved.** End every answer with a short "How this was retrieved" line a reader can re-run: the command or endpoint with its key parameters (variable; entity DCIDs and the route that resolved each; `date`, with `all` for a full series as in the client's `date="all"`), for a hierarchy query the relation it stands for (`geoId/06<-containedInPlace+{typeOf:County}`), the facet's `provenanceUrl`, and the retrieval date.
 
 `--backend api` forces the documented v2 API; without `DC_API_KEY` it exits with an error naming the key and the keyless default instead of answering from another source. With the key set and no `--backend`, `observe`/`within` use the v2 API.
 
