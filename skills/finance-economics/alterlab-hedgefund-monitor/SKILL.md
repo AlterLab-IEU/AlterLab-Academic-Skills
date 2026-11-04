@@ -6,8 +6,8 @@ allowed-tools: Read Write WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
 compatibility: No API key or registration required. Queries the open OFR Hedge Fund Monitor REST API; needs network access.
 metadata:
     skill-author: AlterLab
-    version: "1.1.1"
-    last_updated: "2026-09-23"
+    version: "1.1.2"
+    last_updated: "2026-11-04"
 ---
 
 # OFR Hedge Fund Monitor API
@@ -71,6 +71,12 @@ exist only at the strategy level.
 ## Authentication
 
 None required. The API is fully open and free.
+
+**Say how it was retrieved.** End every answer with a short "How this was retrieved" line: the
+endpoint URL with its parameters (e.g. `/series/multifull?mnemonics=…&start_date=2015-01-01`),
+the dataset and its cadence (e.g. SEC Form PF, quarterly), that no API key or registration is
+needed, and the retrieval date. In a paper, cite the OFR Hedge Fund Monitor, the dataset, the
+mnemonic and the retrieval date of every series used.
 
 ## Datasets
 
@@ -160,7 +166,5 @@ mnemonics = [
 - **[references/datasets.md](references/datasets.md)** — Dataset descriptions (fpf, tff, scoos, ficc) and dataset-specific notes
 - **[references/parameters.md](references/parameters.md)** — Complete parameter reference with periodicity codes, how values
 - **[references/examples.md](references/examples.md)** — Python examples: discovery, bulk download, spread analysis, DataFrame workflows
-
-Cite the OFR Hedge Fund Monitor, the dataset (e.g. SEC Form PF), the mnemonic, and the retrieval date for every series used.
 
 Part of the AlterLab Academic Skills suite.
