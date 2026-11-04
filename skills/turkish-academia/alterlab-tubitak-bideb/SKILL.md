@@ -6,7 +6,7 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*) WebFetch
 compatibility: "No API key required. The chooser and the eligibility/timing pre-screen run offline via `uv run python` on the standard library only. Every amount, date and rule is dated to TÜBİTAK programme pages and call documents read on 2026-09-23 and changes with each call, so WebFetch the live tubitak.gov.tr programme page before quoting figures."
 metadata:
   skill-author: AlterLab
-  version: "1.0.1"
+  version: "1.0.2"
   last_updated: "2026-11-04"
   depends_on: "alterlab-tubitak-proposal (ARDEB project grants incl. 3501, routed there)"
 ---
@@ -55,7 +55,7 @@ after an award; or understanding how BİDEB support combines with an ARDEB proje
 
 | The request is really about… | Route to |
 |------------------------------|----------|
-| An ARDEB **project grant** — 1001, 1002-A Hızlı Destek, **3501 Kariyer Geliştirme** (scored on five criteria: Özgün Değer, Yöntem, Proje Yönetimi, Kariyer Geliştirme Potansiyeli, Yaygın Etki — 3501 değerlendirme formu, read 2026-11-04) — its form, caps or panel criteria | `alterlab-tubitak-proposal` |
+| An ARDEB **project grant** — 1001, 1002-A Hızlı Destek, **3501 Kariyer Geliştirme** — its form, caps or panel criteria | `alterlab-tubitak-proposal` |
 | Writing or polishing an academic **CV**, research statement or cover letter (beyond the ARBİS-generated CV BİDEB asks for) | `alterlab-academic-career` |
 | Computing the annual **akademik teşvik** (incentive) score, even when a TÜBİTAK award is one of the activities | `alterlab-akademik-tesvik` |
 | Whether a publication list clears **doçentlik** thresholds | `alterlab-docentlik-eligibility` |
@@ -67,7 +67,7 @@ after an award; or understanding how BİDEB support combines with an ARDEB proje
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-tubitak-proposal`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
-This skill holds no ARDEB caps, word ranges or form text, so an ARDEB hand-off quotes none of them and does not compare ARDEB sections with BİDEB form headings; beyond the 3501 facts in the tables here, leave the programme's details to `alterlab-tubitak-proposal`.
+In scope here is only choosing, checking eligibility for, or preparing an application to a BİDEB programme. A BİDEB award mentioned as background (a past 2218, 2219 or 2224-A behind a CV, an incentive score or a doçentlik file) is context, not a BİDEB question. A hand-off names the sibling and what to bring to it, and adds no programme facts, eligibility opinions, criteria or descriptions from this skill. For ARDEB grants (3501, 1001, 1002-A) that includes their criteria, caps and eligibility: `alterlab-tubitak-proposal` holds them.
 
 ---
 
