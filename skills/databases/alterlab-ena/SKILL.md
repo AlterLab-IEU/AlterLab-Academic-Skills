@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless ENA API and FTP for data retrieval (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.2"
-    last_updated: "2026-10-23"
+    version: "1.0.3"
+    last_updated: "2026-11-04"
 ---
 
 # ENA Database
@@ -154,9 +154,10 @@ url = ("https://www.ebi.ac.uk/ena/portal/api/filereport"
 
 **Search for all samples in a study:**
 ```python
-# Use Portal API to list samples
+# Use Portal API to list samples; limit=0 returns every record
+# (scripts/query_ena.py --limit defaults to 100)
 study_id = "PRJNA123456"
-url = f"https://www.ebi.ac.uk/ena/portal/api/search?result=sample&query=study_accession={study_id}&format=tsv"
+url = f"https://www.ebi.ac.uk/ena/portal/api/search?result=sample&query=study_accession={study_id}&format=tsv&limit=0"
 ```
 
 **Find assemblies for a specific organism:**
@@ -196,6 +197,7 @@ Integrate with EBI's NCBI BLAST service (REST/SOAP API) for sequence similarity 
 **Data Citation:**
 - Always cite using Study/Project accessions when publishing
 - Include accession numbers for specific samples, runs, or assemblies used
+- End every answer with a short "How this was retrieved" line: the Portal API endpoint (`/search` or `/filereport`) with its `result`, `query` or `accession`, `fields` and `limit`, the number of records returned (checked against `/count`), and the retrieval date
 
 **API Response Handling:**
 - Check HTTP status codes before processing responses
