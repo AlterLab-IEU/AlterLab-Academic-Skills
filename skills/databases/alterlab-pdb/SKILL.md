@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
 compatibility: Keyless RCSB PDB Search API v2, Data API (REST v1 + GraphQL), and file downloads (no authentication required); Python examples use rcsb-api >= 1.7 (current 1.7.3 as of 2026-09)
 metadata:
     skill-author: AlterLab
-    version: "1.0.2"
-    last_updated: "2026-10-23"
+    version: "1.0.3"
+    last_updated: "2026-11-04"
 ---
 
 # PDB Database
@@ -22,9 +22,18 @@ RCSB PDB is the worldwide repository for 3D structural data of biological macrom
 
 ```bash
 python scripts/query_pdb.py search hemoglobin --rows 25     # full-text search (entry IDs)
+python scripts/query_pdb.py similar 4HHB --assembly 1       # 3D shape search (or --chain A)
 python scripts/query_pdb.py entry 4HHB                      # entry metadata
 python scripts/query_pdb.py download 4HHB --format cif      # download coordinates
 ```
+
+`similar` sends the same query as rcsb-api's `StructSimilarityQuery` and prints it with the
+hits (2026-11-04: 4HHB assembly 1 → 1,408 entries either way).
+
+**Say how it was retrieved.** End every answer with a short "How this was retrieved" line: the
+query a reader can re-run (the `rcsbapi` call such as `StructSimilarityQuery(entry_id="4HHB",
+assembly_id="1")`, or the Search API JSON / `query_pdb.py` command) with its key parameters,
+the `total_count`, and the retrieval date. Give the query itself, not a temporary script path.
 
 ## When to Use This Skill
 
@@ -98,7 +107,9 @@ from rcsbapi.search import StructSimilarityQuery
 
 # structure_search_type is "entry_id" (default), "file_url", or "file_upload";
 # pass assembly_id or chain_id to pick what is compared ("entry"/"chain"/"assembly"
-# are not valid search types and return HTTP 400)
+# are not valid search types and return HTTP 400). Embeddings-based since rcsb-api 1.6:
+# hits above ptmscore_cutoff (predicted TM-score, default 0.8); similarity_type "local"
+# (default) or "global"; the old BioZernike `operator` is deprecated.
 query = StructSimilarityQuery(
     entry_id="4HHB",   # Hemoglobin
     assembly_id="1",   # or chain_id="A"
