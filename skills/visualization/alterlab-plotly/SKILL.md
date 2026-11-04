@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: Requires the plotly Python library, version >= 6 (current 7.1 as of 2026-09) — no install step, run scripts as uv run --python ">=3.11" --with plotly python script.py; static image export (PNG/PDF/SVG) additionally needs kaleido >= 1 plus a Chrome/Chromium install (run plotly_get_chrome); Dash apps need dash
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.1.1"
+    last_updated: "2026-11-04"
 ---
 
 # Plotly
@@ -179,6 +179,10 @@ fig.write_image('chart.svg')            # SVG
 Without Chrome, `write_image` raises "Kaleido requires Google Chrome to be installed". Set export defaults with `plotly.io.defaults` (e.g. `pio.defaults.default_scale = 2`); the old `pio.kaleido.scope` settings no longer exist.
 
 For complete export options, see [references/export-interactivity.md](references/export-interactivity.md).
+
+### 5. Reporting the Result
+
+When the chart is built in a script, the reply must still show how: quote the few lines that make it — the `px`/`go` call with its key arguments (e.g. `trendline`, `hover_data`/`hovertemplate`) and the export call with its arguments (`fig.write_html(path, include_plotlyjs=...)`, `fig.to_html(...)` or `fig.write_image(...)`) — and give the path of every file written. Describing the chart in prose is not enough for someone who has to rebuild or adjust it.
 
 ## Common Workflows
 
