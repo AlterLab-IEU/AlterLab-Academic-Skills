@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv:*)
 compatibility: Keyless arXiv Atom API (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.1.1"
-    last_updated: "2026-11-02"
+    version: "1.1.2"
+    last_updated: "2026-11-04"
 ---
 
 # arXiv Database
@@ -40,6 +40,8 @@ Use this skill when:
 | Multi-database systematic review with PRISMA screening | `alterlab-literature-review` |
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-pubmed`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+Only a request for arXiv records themselves (a search, an ID's metadata, a PDF) is in scope here; a question about a paper's citations is out of scope as a whole, so hand it off without running an arXiv lookup or printing the paper's arXiv record.
 
 ## Core Search Capabilities
 
