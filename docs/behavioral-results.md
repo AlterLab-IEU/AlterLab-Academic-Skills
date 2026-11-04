@@ -351,7 +351,7 @@ A case can need more than one thing, so it can appear in more than one row.
 - **claude.ai not tested.** Uploading the skills to claude.ai was not tested; every result here
   comes from the Claude Code CLI.
 - **Licensing.** A GPL/LGPL licensing decision is pending for some bundled material (see
-  [Licensing](../README.md#licensing) in the README).
+  [Licensing](../README.md#-licensing) in the README).
 - **ÜAK website unreachable.** The ÜAK website (uak.gov.tr) was unreachable from the runner.
   Cases that would read the current doçentlik criteria there carry no `net:` tag, so they ran
   and were graded without live access to the site.
