@@ -6,8 +6,8 @@ allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "Requires (declare in-session, no runtime install on Anthropic API): semopy>=2.3, factor_analyzer>=0.5 (0.5.1 is the last release and needs scikit-learn<1.8 and pandas<3 — isolate it, or run EFA in R psych), pingouin>=0.5, optionally girth (IRT) (pip). SRMR and omega are not returned by semopy — compute omega with the bundled script; IRT beyond 2PL is often better in R mirt. Runs locally via `uv run python`; no API key."
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.2"
+    last_updated: "2026-11-04"
     depends_on: "alterlab-ssci-measurement-gate (gates whether to trust the scale), alterlab-statistical-analysis; audited by alterlab-ssci-inference-gate"
 ---
 

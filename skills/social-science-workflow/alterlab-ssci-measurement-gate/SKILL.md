@@ -6,8 +6,8 @@ allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. A discipline-enforcing measurement-quality skill; reliability/CFA execution is handed to sibling skills that run locally via `uv run python`.
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.2"
+    last_updated: "2026-11-04"
     depends_on: "alterlab-survey-design (item design), alterlab-sem-psychometrics (CFA/invariance), alterlab-statistical-analysis"
 ---
 
@@ -51,8 +51,10 @@ assumption (tau-equivalence: equal item loadings) that real scales rarely meet, 
 
 ## Reliability: report alpha AND omega
 
-Cronbach's alpha assumes **tau-equivalence** (all items load equally on one factor) and is a
-**lower bound** on reliability under that model. **McDonald's omega** relaxes tau-equivalence by
+Cronbach's alpha equals reliability only under **essential tau-equivalence** (all items load
+equally on one factor) with uncorrelated errors; when loadings differ it is a **lower bound**, and
+correlated errors can push it above the true value (Sijtsma, 2009, *Psychometrika*). **McDonald's
+omega** relaxes tau-equivalence by
 weighting items by their factor loadings and should be reported alongside alpha (McNeish, 2018,
 *Psychological Methods*, "Thanks coefficient alpha, we'll take it from here"). In practice the
 alpha-vs-omega gap for well-constructed unidimensional scales is often small (in one cognitive
