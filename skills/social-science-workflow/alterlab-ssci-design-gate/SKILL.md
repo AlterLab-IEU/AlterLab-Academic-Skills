@@ -6,7 +6,8 @@ allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. A discipline-enforcing design-routing skill; the optional decision-tree helper runs locally via `uv run python` (standard library only).
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-11-04"
     depends_on: "alterlab-qualitative-methods, alterlab-mixed-methods, alterlab-statistical-analysis, alterlab-test-selection-guard; hands the pinned assumption to alterlab-ssci-inference-gate"
 ---
 
@@ -54,6 +55,8 @@ the *assumption*; it does not execute, choose the test, or write.
 | Designing the instrument/questionnaire itself | `alterlab-survey-design` | Measurement instrument, not design family. |
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-statistical-analysis`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+In scope for this gate means choosing, defending or questioning a design or the causal claim it licenses; a design the user states as already fixed is context, so a hand-off adds no design type, identifying assumption or claim type.
 
 ## The Design Decision Tree
 
