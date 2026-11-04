@@ -1,7 +1,7 @@
 {
   "summary": {
     "version": "4.0.0",
-    "generated_at": "2026-11-02",
+    "generated_at": "2026-11-04",
     "total": 241,
     "per_domain": {
       "bioinformatics": 38,
@@ -872,8 +872,8 @@
       "domain": "bioinformatics",
       "description": "Train deep generative models for single-cell omics with scvi-tools — probabilistic batch correction and integration (scVI), reference-mapping transfer learning (scArches), differential expression with uncertainty, and multimodal models (totalVI for CITE-seq, MultiVI for multiome). Use when correcting batch effects, integrating multimodal data, or doing advanced probabilistic single-cell modeling — for standard analysis pipelines use scanpy. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. Written for scvi-tools 1.5 (current 1.5.1 as of 2026-09), which requires Python >= 3.12. A GPU is optional but makes training practical on large datasets.",
+      "version": "1.1.2",
+      "compatibility": "Self-contained — runs under `uv run --python \\\">=3.12\\\" --with scvi-tools`; no API key or account required. Written for scvi-tools 1.5 (current 1.5.1 as of 2026-09), which requires Python >= 3.12. A GPU is optional but makes training practical on large datasets.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -883,7 +883,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 206,
+      "body_lines": 216,
       "references": [
         "differential-expression.md",
         "models-atac-seq.md",
@@ -1016,7 +1016,7 @@
       "domain": "cheminformatics",
       "description": "Computes mass-spectral similarity and identifies compounds for metabolomics with matchms — comparing mass spectra, scoring similarity (cosine, modified cosine), and searching spectral libraries to annotate unknowns. Use when matching MS/MS spectra, identifying metabolites, or library searching; for full LC-MS/MS proteomics pipelines use alterlab-pyopenms. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
       "allowed_tools": [
         "Read",
@@ -1027,7 +1027,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 254,
+      "body_lines": 265,
       "references": [
         "filtering.md",
         "importing_exporting.md",
@@ -2275,7 +2275,7 @@
       "domain": "databases",
       "description": "Search and retrieve preprints from arXiv via the Atom API by keywords, authors, arXiv IDs, date ranges, or subject categories. Use when finding or fetching papers in physics, mathematics, computer science, quantitative biology, quantitative finance, statistics, electrical engineering, or economics, or resolving an arXiv ID to its metadata and PDF. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "compatibility": "Keyless arXiv Atom API (no authentication required)",
       "allowed_tools": [
         "Read",
@@ -2286,7 +2286,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 385,
+      "body_lines": 387,
       "references": [
         "api_reference.md"
       ]
@@ -2489,7 +2489,7 @@
       "domain": "databases",
       "description": "Query Google Data Commons for public statistical data aggregated from global sources, resolving geographic entities and pulling time-series statistics. Use when working with demographic data, economic indicators, health statistics, or environmental data — population counts, GDP figures, unemployment rates, disease prevalence — or when resolving places to DCIDs and exploring relationships between statistical entities. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "compatibility": "No API key required. Statistics come keyless from the JSON API behind the datacommons.org website (undocumented; provenance kept per record) and names/Wikidata IDs resolve through the keyless v2 resolve endpoint (scripts/query_datacommons.py, standard library only). An optional DC_API_KEY unlocks the documented api.datacommons.org v2 observation/node endpoints and datacommons-client >= 2.1 (current 2.1.6).",
       "allowed_tools": [
         "Read",
@@ -2499,7 +2499,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 359,
+      "body_lines": 362,
       "references": [
         "getting_started.md",
         "node.md",
@@ -2558,7 +2558,7 @@
       "domain": "databases",
       "description": "Access the European Nucleotide Archive (ENA) via its API and FTP to retrieve DNA/RNA sequences, raw sequencing reads (FASTQ), and genome assemblies by accession, with support for multiple formats. Use when downloading reads or sequences for a study, run, or sample accession, or when sourcing nucleotide data for genomics and bioinformatics pipelines. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "compatibility": "Keyless ENA API and FTP for data retrieval (no authentication required)",
       "allowed_tools": [
         "Read",
@@ -2568,7 +2568,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 224,
+      "body_lines": 226,
       "references": [
         "api_reference.md"
       ]
@@ -2907,7 +2907,7 @@
       "domain": "databases",
       "description": "Access the RCSB Protein Data Bank (PDB) for EXPERIMENTALLY determined 3D structures (X-ray, cryo-EM, NMR) of proteins and nucleic acids — searching by text, sequence, or structure similarity and downloading coordinates in PDB/mmCIF format with metadata. Use when retrieving a structure by PDB ID, running sequence or structure similarity searches, or obtaining experimental coordinates for structural biology and drug discovery; for AI-PREDICTED structures of proteins lacking experimental data prefer alterlab-alphafold-db, and for protein sequences, annotations, or accession ID mapping prefer alterlab-uniprot instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "compatibility": "Keyless RCSB PDB Search API v2, Data API (REST v1 + GraphQL), and file downloads (no authentication required); Python examples use rcsb-api >= 1.7 (current 1.7.3 as of 2026-09)",
       "allowed_tools": [
         "Read",
@@ -2918,7 +2918,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 361,
+      "body_lines": 372,
       "references": [
         "api_reference.md"
       ]
@@ -2953,7 +2953,7 @@
       "domain": "databases",
       "description": "Provide direct REST API access to PubMed via the NCBI E-utilities API, supporting advanced Boolean/MeSH queries, batch processing, and citation management. Use when searching biomedical literature by MeSH terms, retrieving abstracts or PMIDs in bulk, or scripting custom PubMed queries over raw HTTP/REST — for Python workflows prefer biopython (Bio.Entrez) instead, use this for direct REST work or custom API implementations. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "compatibility": "No API key required. Keyless NCBI E-utilities REST API (3 requests/s per IP); an optional NCBI_API_KEY raises this to 10 requests/s",
       "allowed_tools": [
         "Read",
@@ -3857,7 +3857,7 @@
       "domain": "finance-economics",
       "description": "Retrieves FRED (Federal Reserve Economic Data) time series with no API key — 800,000+ series from 100+ sources (GDP, unemployment, inflation, interest rates, exchange rates, housing, state data) via FRED's public CSV download, with server-side transformations, frequency aggregation, ALFRED real-time vintages and site search; an optional free FRED_API_KEY adds the JSON API (filtered search, categories, releases, tags, GeoFRED maps). Use for macroeconomic analysis, financial research, policy studies, economic forecasting, fetching U.S. or international economic indicators by FRED series ID, and academic research requiring historical economic time series. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "compatibility": "No API key required. Series data, transformations, aggregation, ALFRED vintages and search come keyless from fred.stlouisfed.org and alfred.stlouisfed.org (scripts/fred_keyless.py, standard library only). An optional free FRED_API_KEY adds the JSON API (scripts/fred_query.py, with requests). Network access to those hosts.",
       "allowed_tools": [
         "Read",
@@ -3884,7 +3884,7 @@
       "domain": "finance-economics",
       "description": "Queries the OFR (Office of Financial Research) Hedge Fund Monitor API for time series on hedge fund size, leverage, counterparties, liquidity, complexity, and risk management, including SEC Form PF aggregated statistics, CFTC Traders in Financial Futures, FICC Sponsored Repo volumes, and FRB SCOOS dealer financing terms (no API key or registration required). Use when working with hedge fund data, systemic risk monitoring, financial stability research, hedge fund leverage or leverage ratios, counterparty concentration, Form PF statistics, repo market data, or OFR financial research data. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "compatibility": "No API key or registration required. Queries the open OFR Hedge Fund Monitor REST API; needs network access.",
       "allowed_tools": [
         "Read",
@@ -3896,7 +3896,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 156,
+      "body_lines": 160,
       "references": [
         "api-overview.md",
         "datasets.md",
@@ -4086,7 +4086,7 @@
       "domain": "lab-integrations",
       "description": "Works with microscopy image data via the OMERO Python API (BlitzGateway) — writes and validates the integration code, analyses local OME-TIFF/microscopy pixels, ROIs and channels with tifffile offline, and browses or pulls from public OMERO servers (the IDR JSON API, webgateway and OME-Zarr) with no credentials. Connecting to the user's own OMERO server to read, write or batch-process their images is an optional step with their host, port and login. Use when writing OMERO/BlitzGateway code, analysing microscopy pixels or ROIs, pulling images or datasets, managing annotations, or running high-content screening and microscopy workflows. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "compatibility": "No API key required to write the BlitzGateway integration, analyse local microscopy images with tifffile, and browse/pull public OMERO data (IDR JSON API + webgateway + OME-Zarr). Optional: the user's own OMERO server host/port and login for omero-py (current 5.23.0; Python >=3.10, needs the ZeroC Ice 3.6 bindings) to reach their private images.",
       "allowed_tools": [
         "Read",
@@ -4098,7 +4098,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 282,
+      "body_lines": 285,
       "references": [
         "advanced.md",
         "connection.md",
@@ -4138,7 +4138,7 @@
       "domain": "lab-integrations",
       "description": "Discovers, reads, drafts and cites protocols.io protocols with no account — finds public protocols and their DOIs through Crossref (prefix 10.17504), reads a public protocol's full steps and materials from its public web page/PDF via WebFetch, and drafts new protocols in protocols.io's step/materials/GUID format offline. Searching your private content, creating, editing or publishing protocols with a DOI, run records, comments, uploads and workspaces run through the REST API (v3/v4) or official MCP server with your own token. Use when discovering, reading, drafting, publishing, or citing protocols.io protocols, recording protocol runs, or wiring protocols.io into lab documentation. Not for general ELN notebooks (use alterlab-benchling or alterlab-labarchive) or for driving liquid-handling robots. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "compatibility": "No API key required to find public protocols (Crossref prefix 10.17504), read a public protocol's full steps/materials from its web page or /view/<uri>.pdf, and draft protocols in protocols.io format. Optional: a CLIENT_ACCESS_TOKEN (protocols.io/developers) or OAUTH_ACCESS_TOKEN, or the official MCP server, to reach the REST API for private content, creating/editing, publishing a DOI, uploads, run records and workspaces.",
       "allowed_tools": [
         "Read",
@@ -4191,7 +4191,7 @@
       "domain": "methodology",
       "description": "Enforces pre-registration discipline with the Iron Law NO DATA ANALYSIS WITHOUT A PRE-REGISTERED ANALYSIS PLAN FIRST, a spirit-vs-letter line, an Excuse-vs-Reality rationalization table, and a Red-Flags-STOP list (HARKing, optional stopping, post-hoc covariates, outlier-dropping, test-shopping). Runs a PLAN/COLLECT/CONFIRM/EXPLORE workflow that freezes hypotheses, tests, exclusions, and stopping rules before data, then forces unplanned findings to be labeled exploratory (their p-values lose confirmatory status, per COS confirmatory/exploratory model). Orchestrates, not replaces, alterlab-open-science (OSF/AsPredicted registration), alterlab-statistical-analysis (test selection, assumptions), and alterlab-scientific-thinking (bias grading). Use when analyzing data without a frozen plan, switching the primary outcome or adding covariates after seeing results, weighing early stopping, dropping outliers post-hoc, pre-registering a study, or rationalizing deviation. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "compatibility": "No API key required. Judgment/discipline skill; the optional helper runs locally via `uv run python` (stdlib only). Defers all registration mechanics and statistics to the sibling skills it orchestrates.",
       "allowed_tools": [
         "Read",
@@ -4202,7 +4202,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 209,
+      "body_lines": 211,
       "references": [
         "researcher_degrees_of_freedom.md",
         "workflow_gates.md"
@@ -4367,7 +4367,7 @@
       "domain": "research-tools",
       "description": "Free Elicit-columns analog — ingest N PDFs (or any MarkItDown-supported document) and build a per-paper evidence table with user-defined columns, one row per paper and one column per attribute/question you want pulled from every source. Use when extracting structured data across many papers into a comparison table or data-extraction sheet (sample size, methods, main finding, effect, population/intervention/outcome, limitations), screening a corpus into a spreadsheet, or pulling the same fields from a stack of PDFs into CSV/Markdown. Keyless by default — MarkItDown conversion, an offline heuristic draft of every cell, then Claude reads each converted paper to confirm or fill the cells exactly; an LLM API batch backend is optional. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "compatibility": "No API key required. MarkItDown >= 0.1 converts each document (run the script as uv run --with 'markitdown[all]' python ...), the offline heuristic backend drafts the cells, and Claude reads the saved Markdown (--markdown-dir) to finish them. Optional llm batch backend - the openai client (add --with openai) plus OPENROUTER_API_KEY or OPENAI_API_KEY with OPENAI_BASE_URL - sends paper text to that endpoint.",
       "allowed_tools": [
         "Read",
@@ -4377,7 +4377,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 151,
+      "body_lines": 152,
       "references": []
     },
     {
@@ -4411,7 +4411,7 @@
       "domain": "research-tools",
       "description": "Work with your Zotero reference library from code — search and read items, collections and tags, export BibTeX / CSL-JSON / RIS, find duplicates and missing DOIs, and create, update or delete items, collections, tags and attachments with the pyzotero client. Keyless by default — the running Zotero 7+ desktop app's local API (pyzotero local=True) or an exported library file (Better BibTeX .bib, CSL JSON, RIS) read offline with the bundled script; a zotero.org Web API key is optional, for remote or group libraries and web writes. Use when working with Zotero libraries programmatically, managing bibliographic references, exporting citations, searching library contents, uploading PDF attachments, or building research automation workflows that integrate with Zotero. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "compatibility": "No API key required. Reads the running Zotero 7+ desktop app through its local API (pyzotero >= 1.15, Python >= 3.10, local=True), or exported .bib / CSL JSON / RIS files offline with a stdlib script; new items go out as an importable file. Optional - ZOTERO_API_KEY + ZOTERO_LIBRARY_ID for the zotero.org Web API (remote/group libraries, web writes); local writes use Zotero 10+ and a locally granted key. Runs via `uv run python`.",
       "allowed_tools": [
         "Read",
@@ -4512,7 +4512,7 @@
       "domain": "research-tools",
       "description": "Creative research ideation and exploration for open-ended brainstorming, surfacing interdisciplinary connections, challenging assumptions, and identifying research gaps. Use when starting early-stage research planning with no specific observations yet — for open-ended brainstorming sessions, exploring cross-disciplinary connections, or finding gaps. For formulating testable hypotheses from observations or data use alterlab-hypothesis-gen; for grading evidence or spotting design flaws use alterlab-scientific-thinking. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "compatibility": "No API key required. Guidance-focused, conversational skill; optionally uses WebFetch/WebSearch to pull cross-disciplinary analogies or check whether a research gap is already covered.",
       "allowed_tools": [
         "Read",
@@ -4521,7 +4521,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 197,
+      "body_lines": 202,
       "references": [
         "brainstorming_methods.md"
       ]
@@ -4716,7 +4716,7 @@
       "domain": "social-science-workflow",
       "description": "Fits and evaluates measurement models — confirmatory factor analysis, full structural equation models, exploratory factor analysis, item response theory, and multi-group measurement invariance — using the verified Python stack: semopy (model syntax =~ / ~ / ~~, Model.fit, inspect(std_est=True), calc_stats for CFI/TLI/RMSEA), factor_analyzer (EFA, KMO, Bartlett, ConfirmatoryFactorAnalyzer), and pingouin/girth, computing McDonald's omega from standardized loadings and judging fit against Hu & Bentler cutoffs. Use when the request mentions confirmatory factor analysis, structural equation modeling, a latent variable or construct model, factor loadings, IRT, or measurement invariance across groups. For deciding whether a scale is trustworthy at all prefer alterlab-ssci-measurement-gate; for plain regression prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "compatibility": "Requires (declare in-session, no runtime install on Anthropic API): semopy>=2.3, factor_analyzer>=0.5 (0.5.1 is the last release and needs scikit-learn<1.8 and pandas<3 — isolate it, or run EFA in R psych), pingouin>=0.5, optionally girth (IRT) (pip). SRMR and omega are not returned by semopy — compute omega with the bundled script; IRT beyond 2PL is often better in R mirt. Runs locally via `uv run python`; no API key.",
       "allowed_tools": [
         "Read",
@@ -4754,7 +4754,7 @@
       "domain": "social-science-workflow",
       "description": "Routes a social-science study to its research design — true experiment, quasi-experiment (difference-in-differences, instrumental variables, regression discontinuity, interrupted time series, fixed effects), observational/correlational, qualitative, or mixed — by walking the random-selection and random-assignment decisions, then PINS the identifying assumption the causal claim will rest on (parallel trends, exclusion restriction, continuity at the cutoff, selection-on-observables, or qualitative saturation logic) before any analysis begins. Use when choosing a study design, asking what design to use, framing a causal question from observational data, or deciding experiment vs quasi-experiment vs observational. For executing the analysis prefer alterlab-statistical-analysis; for qualitative design depth prefer alterlab-qualitative-methods; for choosing the statistical test downstream prefer alterlab-test-selection-guard. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "No API key required. A discipline-enforcing design-routing skill; the optional decision-tree helper runs locally via `uv run python` (standard library only).",
       "allowed_tools": [
         "Read",
@@ -4763,7 +4763,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 114,
+      "body_lines": 116,
       "references": [
         "design_decision_tree.md"
       ]
@@ -4792,7 +4792,7 @@
       "domain": "social-science-workflow",
       "description": "Gates measurement quality before a scale or instrument is trusted — checks that each construct is defined and operationalized, that reliability is evidenced with McDonald omega (not Cronbach alpha alone, which assumes tau-equivalence and is only a lower bound), that reliability is not confused with validity (content, criterion, convergent/discriminant construct validity), and that measurement invariance is tested before comparing groups. Use when asking whether a scale or survey instrument is valid, reporting a Cronbach alpha, building or adopting a multi-item measure, or comparing a latent construct across groups. For designing the questionnaire items prefer alterlab-survey-design; for running the confirmatory factor analysis prefer alterlab-sem-psychometrics; to execute basic statistics prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "compatibility": "No API key required. A discipline-enforcing measurement-quality skill; reliability/CFA execution is handed to sibling skills that run locally via `uv run python`.",
       "allowed_tools": [
         "Read",
@@ -4801,7 +4801,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 101,
+      "body_lines": 103,
       "references": [
         "reliability_and_validity.md"
       ]
@@ -5090,7 +5090,7 @@
       "domain": "turkish-academia",
       "description": "Matches researchers to TÜBİTAK BİDEB (Bilim İnsanı Destek Programları Başkanlığı) support programmes and prepares the application, from calls read on 2026-09-23: 2219 postdoc abroad, 2218 domestic postdoc, 2221 visiting or sabbatical scientist, 2232-A/2232-B international leading and young researchers moving to Türkiye, 2236-A CoCirculation3, 2224-A conference travel abroad, 2223-B organising an event in Türkiye. Pre-screens computable eligibility gates (PhD window, age, months in Türkiye, language score, Tablo 1 points, call periods) with a stdlib script, then builds the document checklist, a research-plan scaffold weighted to the published criteria, the reporting plan and TÜBİTAK's generative-AI disclosure. Use when the user asks which TÜBİTAK fellowship, bursary or travel support fits them, or wants to prepare a 2219, 2218, 2221, 2232, 2236, 2224-A or 2223-B application. For ARDEB project grants (1001, 1002-A, 3501) prefer alterlab-tubitak-proposal. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "No API key required. The chooser and the eligibility/timing pre-screen run offline via `uv run python` on the standard library only. Every amount, date and rule is dated to TÜBİTAK programme pages and call documents read on 2026-09-23 and changes with each call, so WebFetch the live tubitak.gov.tr programme page before quoting figures.",
       "allowed_tools": [
         "Read",
@@ -5102,7 +5102,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 313,
+      "body_lines": 315,
       "references": [
         "form_structures.md",
         "program_profiles.md"
@@ -5279,7 +5279,7 @@
       "domain": "visualization",
       "description": "Builds plots with the matplotlib Python library (pyplot and the object-oriented Figure/Axes API) for full low-level customization, exporting to PNG/PDF/SVG. Use when fine-grained control over individual plot elements is needed — custom line/scatter/bar/histogram/heatmap/contour/box/violin/3D plots, rcParams and style-sheet tuning, or GridSpec subplot layouts inside a scientific Python workflow. Does NOT cover opinionated journal-ready multi-panel figure workflows (Nature/Science/Cell formatting, colorblind-safe palettes, significance annotations); for those prefer alterlab-scientific-viz instead. Part of the AlterLab Academic Skills suite.",
       "license": "BSD-3-Clause",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "compatibility": "Requires the matplotlib Python library, version >= 3.9 (current 3.11.2 as of 2026-09; matplotlib 3.11 needs Python >= 3.11) — uv pip install 'matplotlib>=3.9'; examples also use numpy, and the histogram-fit example uses scipy. No API key or external service needed.",
       "allowed_tools": [
         "Read",
@@ -5289,7 +5289,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 380,
+      "body_lines": 382,
       "references": [
         "api_reference.md",
         "common_issues.md",
@@ -5347,7 +5347,7 @@
       "domain": "visualization",
       "description": "Builds INTERACTIVE charts with the Plotly Python library (plotly.express / graph_objects) — hover tooltips, zoom/pan, animations, rangesliders, 3D rotation, and standalone HTML/web-embeddable output. Use when a chart must be interactive or web-embedded, for dashboards (incl. Dash), exploratory data analysis, or rotatable 3D plots. For static publication figures defer to alterlab-matplotlib (or alterlab-scientific-viz for journal formatting); for static statistical charts (heatmaps, distributions) defer to alterlab-seaborn; for diagrams/schematics defer to alterlab-scientific-schematics or alterlab-mermaid. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "compatibility": "Requires the plotly Python library, version >= 6 (current 7.1 as of 2026-09) — no install step, run scripts as uv run --python \">=3.11\" --with plotly python script.py; static image export (PNG/PDF/SVG) additionally needs kaleido >= 1 plus a Chrome/Chromium install (run plotly_get_chrome); Dash apps need dash",
       "allowed_tools": [
         "Read",
@@ -5358,7 +5358,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 291,
+      "body_lines": 295,
       "references": [
         "chart-types.md",
         "export-interactivity.md",
@@ -5450,7 +5450,7 @@
       "domain": "workflows",
       "description": "Runs AlterLab's packaged multi-agent academic workflows — citation audit, peer-review panel of separate reviewers, claim stress-test, PRISMA dual-screening for systematic reviews, point-by-point rebuttal, grant mock panel, and literature map. In Claude Code they run as dynamic workflows (/alterlab-workflows:<name>) with separate agent contexts, adversarial re-checks, tallies computed in code, and an explicit complete/partial/blocked status; on claude.ai, the API, or anywhere without the Workflow runtime this skill runs the same stages as a staged playbook. Use when a research task needs many separate readers or a second, adversarial opinion at scale — auditing every citation in a manuscript, dual-screening hundreds of records, simulating a review panel or study section, drafting a response to reviewers, or mapping a field before a proposal. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.2",
+      "version": "1.1.3",
       "compatibility": "No API key required. Claude Code with dynamic workflows (paid plans or API access; v2.1.203+) runs the /alterlab-workflows:* commands; installing this plugin also installs alterlab-core, whose skills the workflows call. Other surfaces use the staged playbooks in references/. Database-backed stages use keyless public scholarly APIs (Crossref, Semantic Scholar, Europe PMC, PubMed, arXiv) and need network access.",
       "allowed_tools": [
         "Read",
@@ -5463,7 +5463,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 158,
+      "body_lines": 160,
       "references": [
         "citation-audit.md",
         "claim-stress-test.md",
@@ -5553,7 +5553,7 @@
       "domain": "writing-tools",
       "description": "Formulates structured, testable hypotheses from experimental observations using a scientific-method framework — derives predictions, proposes mechanisms, and designs experiments to test them, then renders a LaTeX report. Use when turning observations or data into falsifiable, mechanistic hypotheses, competing-explanation sets, testable predictions, or experimental designs. For a standalone systematic literature review or evidence synthesis (not a means to hypotheses) use alterlab-literature-review; for open-ended brainstorming before any specific observation use alterlab-scientific-brainstorm; to evaluate an existing manuscript use alterlab-peer-review. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "compatibility": "Hypothesis reasoning runs with the Read/Write/Edit/Bash tools alone; the literature-grounding step uses WebSearch/WebFetch (skip it if offline). Rendering the LaTeX report requires a local XeLaTeX/LuaLaTeX install (e.g. TeX Live) — optional, the analysis stands without it.",
       "allowed_tools": [
         "Read",
@@ -5565,7 +5565,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 222,
+      "body_lines": 224,
       "references": [
         "experimental_design_patterns.md",
         "hypothesis_quality_criteria.md",
@@ -5754,7 +5754,7 @@
       "domain": "writing-tools",
       "description": "Builds slide decks for research talks with no API key — editable PowerPoint generated from a deck plan (python-pptx) or LaTeX Beamer, slide visuals drawn as code and rendered locally, plus slide structure, design templates, timing guidance, and visual validation of every page. Optional AI-generated full-slide images (Nano Banana Pro via OpenRouter) when OPENROUTER_API_KEY is set. Use when making conference presentations, seminar talks, research presentations, thesis-defense slides, or any scientific talk deck. For a research poster use alterlab-latex-posters or alterlab-pptx-posters; to auto-generate a narrated video from a paper use alterlab-paper-2-web. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "compatibility": "No API key required. PowerPoint output via `uv run --python \\\">=3.11\\\" --with python-pptx --with pillow`; LaTeX Beamer needs pdflatex; LibreOffice (soffice) exports PPTX to PDF for review; validation helpers use pymupdf, pypdf and Pillow; code-drawn visuals render with cairosvg. Optional AI slide images: OPENROUTER_API_KEY (prompts and attached figures go to Google Gemini models via OpenRouter).",
       "allowed_tools": [
         "Read",

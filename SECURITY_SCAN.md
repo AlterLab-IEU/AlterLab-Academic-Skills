@@ -39,7 +39,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `clinicaltrials.gov` | Clinical trials | 2 |
 | `clinpgx.org` | Pharmacogenomics | 3 |
 | `crossref.org` | Scholarly metadata | 9 |
-| `datacommons.org` | Open data | 12 |
+| `datacommons.org` | Open data | 14 |
 | `depmap.org` | Cancer dependency | 1 |
 | `dergipark.org.tr` | Turkish journals (DergiPark) | 7 |
 | `doaj.org` | Open-access journals | 2 |
