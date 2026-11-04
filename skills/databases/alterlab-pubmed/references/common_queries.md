@@ -310,8 +310,8 @@ nature[ta] AND genetics[tiab] AND 2024[dp]
 # By PMID
 12345678[pmid]
 
-# By DOI
-10.1056/NEJMoa123456[doi]
+# By DOI (-> PMID 33301246)
+10.1056/NEJMoa2034577[doi]
 
 # By first author and year
 smith ja[1au] AND 2023[dp] AND cancer[tiab]

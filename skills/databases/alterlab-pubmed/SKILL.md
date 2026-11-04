@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: No API key required. Keyless NCBI E-utilities REST API (3 requests/s per IP); an optional NCBI_API_KEY raises this to 10 requests/s
 metadata:
     skill-author: AlterLab
-    version: "1.0.3"
-    last_updated: "2026-11-02"
+    version: "1.0.4"
+    last_updated: "2026-11-04"
     credentials: "optional: NCBI_API_KEY (raises E-utilities from 3 to 10 requests/s)"
 ---
 
@@ -206,8 +206,8 @@ Find articles using partial citation information or specific identifiers.
 # By PMID
 12345678[pmid]
 
-# By DOI
-10.1056/NEJMoa123456[doi]
+# By DOI (-> PMID 33301246)
+10.1056/NEJMoa2034577[doi]
 
 # By PMC ID
 PMC123456[pmc]

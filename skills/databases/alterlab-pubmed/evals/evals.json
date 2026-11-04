@@ -30,8 +30,8 @@
     },
     {
       "id": "citation-match-by-identifier",
-      "prompt": "I have a DOI 10.1056/NEJMoa123456. Find the matching PubMed PMID for it and pull the citation in MEDLINE format.",
-      "expected_output": "Invokes alterlab-pubmed to resolve the identifier (e.g. a [doi] field search or ECitMatch) to the corresponding PMID, then EFetch the record in MEDLINE/.nbib format for citation management.",
+      "prompt": "I have a DOI 10.1056/NEJMoa2034577. Find the matching PubMed PMID for it and pull the citation in MEDLINE format.",
+      "expected_output": "Invokes alterlab-pubmed to resolve the identifier (e.g. a [doi] field search or ECitMatch) to the corresponding PMID (33301246: Polack FP et al., Safety and Efficacy of the BNT162b2 mRNA Covid-19 Vaccine, N Engl J Med 2020;383(27):2603-2615), then EFetch the record in MEDLINE/.nbib format for citation management.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Resolves the DOI to a PMID and retrieves the citation record (e.g. MEDLINE format) via E-utilities." }
