@@ -2,7 +2,7 @@
 name: alterlab-sna
 description: "Applies social-network-analysis method discipline to relational data — degree/betweenness/closeness/eigenvector centrality and PageRank, community detection (Louvain, greedy-modularity, and — from networkx 3.7 — Leiden native in networkx; igraph/leidenalg for large graphs), and inferential network models (ERGM) — choosing the measure that matches the substantive question and the right dependence assumptions, then routing computation to the existing networkx (and igraph/R) tooling. Use when the request mentions social network analysis, centrality, key players/brokerage, community or cluster detection in a network, ERGM, or modeling ties between nodes. For general graph algorithms and plotting prefer alterlab-networkx; for graph neural networks prefer alterlab-torch-geometric. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "Computation routes to networkx>=3.4 (centrality, native Louvain/greedy-modularity; native Leiden needs networkx>=3.7, current 3.7). Very large graphs -> igraph>=0.11 (PyPI `igraph`, formerly `python-igraph`; current 1.0) or leidenalg. ERGM has no mature Python package -> R statnet/ergm via an R bridge (declare it). No API key; runs locally via `uv run python`."
 metadata:
     skill-author: AlterLab
@@ -40,6 +40,10 @@ THE TIE IS THE UNIT. PICK THE CENTRALITY THAT MATCHES THE QUESTION; TIES ARE NOT
 | Graph neural networks / node embeddings for prediction | `alterlab-torch-geometric` | Deep learning on graphs, not SNA description/inference. |
 | Whether a relational design is appropriate | `alterlab-ssci-design-gate` | Design routing, upstream. |
 | Plain tabular statistics | `alterlab-statistical-analysis` | No network structure. |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-networkx`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+**Running the code.** In Claude Code, run analysis code in a throwaway environment instead of installing packages: `uv run --python ">=3.11" --with "networkx>=3.4" --with pandas python network.py`. This needs no install approval and leaves the user's environment untouched. If `uv` or the network is unavailable, say so and hand over the script; never report results you did not compute.
 
 ## Centrality — pick by the substantive claim (verified networkx 3.x)
 

@@ -5,7 +5,7 @@
 ## Installation
 
 ```bash
-uv pip install GEOparse
+uv run --python ">=3.11" --with GEOparse python your_script.py   # no separate install step
 ```
 
 ## Basic Usage

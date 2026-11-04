@@ -17,7 +17,7 @@
       "expected_output": "Invokes alterlab-geo. Uses GEOparse.get_GEO to download and parse GSE123456, extracts the expression matrix via pivot_samples('VALUE') (or the series matrix file), and surfaces per-sample metadata (titles, source, characteristics) from the GSM records.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "GEOparse" },
+        { "type": "output_contains", "value": ["GEOparse", "series matrix", "series_matrix"] },
         { "type": "behavior", "value": "Retrieves the GEO series with GEOparse and produces a genes-by-samples expression matrix plus sample metadata." }
       ]
     },

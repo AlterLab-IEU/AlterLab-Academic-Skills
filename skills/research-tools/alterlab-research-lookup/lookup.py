@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Research Lookup Tool for Claude Code
-Performs research queries using Perplexity Sonar Pro Search via OpenRouter.
+Single-query wrapper around scripts/research_lookup.py: the keyless scholarly backend by
+default, Parallel / Perplexity when their keys are set.
 """
 
 import os
@@ -147,14 +148,8 @@ def _detect_venue_tier(url: str) -> Optional[str]:
 
 def main():
     """Main entry point for Claude Code tool."""
-    # Need at least one backend key. Parallel is the primary backend; Perplexity
-    # is used for academic queries and as fallback.
-    if not (os.getenv("PARALLEL_API_KEY") or os.getenv("OPENROUTER_API_KEY")):
-        print("❌ Error: no backend API key set")
-        print("Set at least one of these (export or .env):")
-        print("  export PARALLEL_API_KEY='your_parallel_api_key'      # primary (Parallel Chat API)")
-        print("  export OPENROUTER_API_KEY='your_openrouter_api_key'  # academic/fallback (Perplexity)")
-        return 1
+    # No key needed: without PARALLEL_API_KEY / OPENROUTER_API_KEY the router uses the
+    # keyless scholarly backend (and says so on stderr).
 
     # Get query from command line arguments
     if len(sys.argv) < 2:

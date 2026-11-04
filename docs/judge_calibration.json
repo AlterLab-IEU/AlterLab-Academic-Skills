@@ -1,0 +1,53 @@
+{
+  "_about": "Hand-labelled (rubric, response) pairs for checking an eval judge before trusting it. Each pair has the verdict a careful human grader would give. Run: uv run python scripts/run_evals.py --calibrate-judge. A judge that disagrees with any pair should not be used to grade a sweep.",
+  "pairs": [
+    {
+      "id": "correct-without-jargon",
+      "rubric": "Invokes alterlab-preregistration-discipline and enforces the Iron Law: NO DATA ANALYSIS WITHOUT A PRE-REGISTERED ANALYSIS PLAN FIRST. Refuses to treat data-driven test-hunting as confirmatory and insists any findings be labeled exploratory.",
+      "response": "I'd advise against running tests until something is significant and reporting that as the main finding. Without an analysis plan fixed before you saw the data, any result you find this way is exploratory: its p-value no longer means what it claims, because with enough tests some will come out below .05 by chance. If you want a confirmatory result, write the plan now — hypothesis, primary outcome, test, exclusions — register it, and test it on new data. Anything you find in the current data should be reported clearly as exploratory.",
+      "expected": "PASS"
+    },
+    {
+      "id": "wrong-but-uses-jargon",
+      "rubric": "Invokes alterlab-preregistration-discipline and identifies optional stopping: stopping data collection because an interim peek is significant inflates the Type I error rate. Refuses unless a sequential design was pre-specified.",
+      "response": "Applying the Iron Law and the COLLECT-phase gate from the PLAN/COLLECT/CONFIRM/EXPLORE workflow: since your interim result is already significant at p = .02, you can stop collecting now and report it as your confirmatory finding. Stopping early saves participants and the Excuse-vs-Reality table confirms this is fine.",
+      "expected": "FAIL"
+    },
+    {
+      "id": "asks-for-missing-input",
+      "rubric": "Reformats the user's existing Turkish abstract (öz) and English abstract to TR Dizin conventions: bilingual öz/abstract of about 200-250 words each, 3-5 keywords in both languages, Turkish capitalization rules.",
+      "response": "Happy to format it, but the abstract didn't come through — there's no text in your message and no file attached. Please paste your Turkish öz and English abstract (and keywords if you have them) and tell me the target journal. I'll then bring both to the TR Dizin layout: a bilingual öz/abstract of roughly 200-250 words each, 3-5 keywords in each language, and Turkish title-case capitalization.",
+      "expected": "PASS"
+    },
+    {
+      "id": "confident-fabrication",
+      "rubric": "Checks whether the journal is currently indexed in TR Dizin using the live TR Dizin index, and reports the status with the date of the check; never states a status from memory.",
+      "response": "Yes, Bilig is indexed in TR Dizin and has been continuously since 2009, so your article counts for doçentlik. No need to check further.",
+      "expected": "FAIL"
+    },
+    {
+      "id": "missing-required-routing",
+      "rubric": "Does NOT apply Turkish journal conventions; tells the user that alterlab-venue-templates handles publisher-specific English-venue templates such as IEEE.",
+      "response": "Here is the IEEE Access LaTeX skeleton: use \\documentclass{ieeeaccess} from the official template package, cite with \\usepackage{cite} and IEEEtran.bst, and keep figures as vector PDF.",
+      "expected": "FAIL"
+    },
+    {
+      "id": "required-routing-given",
+      "rubric": "Does NOT apply Turkish journal conventions; tells the user that alterlab-venue-templates handles publisher-specific English-venue templates such as IEEE.",
+      "response": "This is outside Turkish-journal formatting — the alterlab-venue-templates skill covers publisher templates like IEEE Access, so use that for the full template. In short: IEEE Access uses its own ieeeaccess.cls (from the official package) with IEEEtran.bst for references.",
+      "expected": "PASS"
+    },
+    {
+      "id": "required-number-wrong",
+      "rubric": "Computes the paired-samples t statistic for the differences 4, 2, 7, 3, 1, 6, 3, 6, 2, 7, 1, 4 (n = 12) and reports t to two decimals: t(11) = 6.01.",
+      "response": "Using a paired-samples t-test on the 12 differences, the mean difference is 3.83 with SD 2.21, giving t(11) = 4.37, p < .01. The intervention reduced anxiety.",
+      "expected": "FAIL"
+    },
+    {
+      "id": "required-number-right-no-jargon",
+      "rubric": "Computes the paired-samples t statistic for the differences 4, 2, 7, 3, 1, 6, 3, 6, 2, 7, 1, 4 (n = 12) and reports t to two decimals: t(11) = 6.01.",
+      "response": "Mean difference = 46/12 = 3.833; SD of the differences = 2.209; SE = 2.209/sqrt(12) = 0.638; so t(11) = 3.833/0.638 = 6.01 (p < .001).",
+      "expected": "PASS"
+    }
+  ]
+}

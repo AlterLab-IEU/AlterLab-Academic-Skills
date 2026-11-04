@@ -12,12 +12,10 @@ on:
       - "pyproject.toml"
       - "uv.lock"
       - ".github/workflows/pytest.yml"
-  # Run the behavioral job (below) on demand: gh workflow run pytest.yml
+  # Run the behavioral / activation jobs (below) on demand: gh workflow run pytest.yml
+  # They are manual only — there is no scheduled run. The usual way to grade skills is
+  # locally in Claude Code: uv run python scripts/run_evals.py --behavioral --skill <name>
   workflow_dispatch:
-  # Nightly: grade a rotating 1/7 shard of the corpus behaviorally, so the whole
-  # suite is covered by an LLM judge over each week without grading 210 every night.
-  schedule:
-    - cron: "0 6 * * *"
 
 jobs:
   pytest:
@@ -74,6 +72,17 @@ jobs:
         with:
           enable-cache: true
 
+      - name: Require the ANTHROPIC_API_KEY secret
+        # Without it every claude call exits 1 and the run grades nothing. Fail here, loudly,
+        # instead of spending the job on inconclusive results.
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::The ANTHROPIC_API_KEY repo secret is not set, so this job cannot grade anything. Add it under Settings > Secrets and variables > Actions, or run the evals locally in Claude Code: uv run python scripts/run_evals.py --behavioral --skill <name>"
+            exit 1
+          fi
+
       - name: Install Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code
 
@@ -81,33 +90,6 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: uv run python scripts/run_evals.py --behavioral
-
-  behavioral-nightly:
-    name: behavioral evals (nightly rotating shard)
-    # Scheduled only — grades a deterministic 1/7 shard chosen from the day of the
-    # year, so the full corpus is behaviorally judged across each week. This is what
-    # lets the eval claim a real behavioral pass-rate over time rather than only
-    # "coverage exists". Same API-budget/secret requirements as the full job.
-    if: github.event_name == 'schedule'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v10.2.0
-        with:
-          enable-cache: true
-
-      - name: Install Claude Code CLI
-        run: npm install -g @anthropic-ai/claude-code
-
-      - name: Run behavioral evals for today's shard
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          SHARD=$(( $(date -u +%j) % 7 ))
-          echo "Grading behavioral shard ${SHARD}/7 (day $(date -u +%j))"
-          uv run python scripts/run_evals.py --behavioral --shard "${SHARD}/7"
 
   activation:
     name: activation harness (auto-selection rate)
@@ -123,6 +105,17 @@ jobs:
         uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
+
+      - name: Require the ANTHROPIC_API_KEY secret
+        # Without it every claude call exits 1 and the run grades nothing. Fail here, loudly,
+        # instead of spending the job on inconclusive results.
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::The ANTHROPIC_API_KEY repo secret is not set, so this job cannot grade anything. Add it under Settings > Secrets and variables > Actions, or run the evals locally in Claude Code: uv run python scripts/run_evals.py --behavioral --skill <name>"
+            exit 1
+          fi
 
       - name: Install Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code

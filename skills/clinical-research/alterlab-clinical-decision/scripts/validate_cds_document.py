@@ -21,8 +21,9 @@ from pathlib import Path
 class CDSValidator:
     """Validator for clinical decision support documents."""
     
-    def __init__(self, filepath):
-        self.filepath = filepath
+    def __init__(self, filepath, doc_type='auto'):
+        self.filepath = Path(filepath)
+        self.doc_type = doc_type
         with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
             self.content = f.read()
         
@@ -68,9 +69,16 @@ class CDSValidator:
         
         content_lower = self.content.lower()
         
-        # Check which document type
-        is_cohort = 'cohort' in content_lower
-        is_recommendation = 'recommendation' in content_lower
+        # Check which document type. 'auto' guesses from the text, so a cohort analysis whose
+        # clinical-implications box mentions "recommendations" also gets the recommendation
+        # checks; pass --type cohort or --type recommendation to state it explicitly.
+        if self.doc_type == 'cohort':
+            is_cohort, is_recommendation = True, False
+        elif self.doc_type == 'recommendation':
+            is_cohort, is_recommendation = False, True
+        else:
+            is_cohort = 'cohort' in content_lower
+            is_recommendation = 'recommendation' in content_lower
         
         if is_cohort:
             missing = [sec for sec in cohort_sections if sec not in content_lower]
@@ -214,7 +222,7 @@ class CDSValidator:
             # Check if gene appears but not in italics (\textit{} or \emph{})
             if gene in self.content:
                 if f'\\textit{{{gene}}}' not in self.content and f'\\emph{{{gene}}}' not in self.content:
-                    if '.tex' in self.filepath.suffix:
+                    if self.filepath.suffix == '.tex':
                         issues.append(f"{gene} should be italicized in LaTeX (\\textit{{{gene}}})")
         
         # Check for protein vs gene naming
@@ -303,11 +311,15 @@ def main():
                        help='Save validation report to file')
     parser.add_argument('--strict', action='store_true',
                        help='Treat warnings as errors')
+    parser.add_argument('--type', dest='doc_type', choices=['auto', 'cohort', 'recommendation'],
+                       default='auto',
+                       help='Document type whose required sections are checked (default: auto, '
+                            'guessed from the words "cohort" and "recommendation")')
     
     args = parser.parse_args()
     
     # Validate
-    validator = CDSValidator(args.input_file)
+    validator = CDSValidator(args.input_file, doc_type=args.doc_type)
     _passed = validator.validate_all()    
     # Save report if requested
     if args.output:
@@ -330,4 +342,5 @@ if __name__ == '__main__':
 # python validate_cds_document.py cohort_analysis.tex
 # python validate_cds_document.py treatment_recommendations.tex -o validation_report.txt
 # python validate_cds_document.py document.tex --strict  # Warnings cause failure
+# python validate_cds_document.py cohort_analysis.tex --type cohort  # skip recommendation-report sections
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# install.sh — copy AlterLab Academic Skills into the right local skills directory.
+# install.sh — install AlterLab Academic Skills into the right local skills directory.
 #
 # Agent Skills can live in two standard locations depending on the agent
 # (see anthropics/claude-code#1101):
@@ -8,10 +8,22 @@
 #   ~/.claude/skills/   — Claude Code's skills directory
 #   ~/.agents/skills/   — the cross-tool agentskills.io standard directory
 #
-# This script resolves the correct destination, then copies the skill
+# This script resolves the correct destination, then installs the skill
 # directories you ask for (whole domains and/or individual skills). It is
 # idempotent: re-running it refreshes existing skills in place and never
 # duplicates. Use --project to install into ./.claude/skills instead of $HOME.
+#
+# The copying itself is done by scripts/build_bundles.py (`install`), the same
+# helper that builds the release archives, so an installed skill is
+# dependency-complete in the same way:
+#   * each skill's shared handoff files travel inside it (<skill>/shared/);
+#   * a skill whose instructions call files in a sibling skill pulls that
+#     sibling in too (e.g. alterlab-research-pipeline -> alterlab-citation-verifier);
+#   * ${CLAUDE_PLUGIN_ROOT} in skill/agent/command markdown is written out as the
+#     absolute destination directory (Claude Code fills it in only for plugins);
+#   * LICENSE, NOTICE and THIRD_PARTY_NOTICES.md are copied into every skill.
+# Requires python3 (3.9+, standard library only). After moving the destination
+# directory, re-run the installer so the written-out paths follow.
 #
 # Usage:
 #   scripts/install.sh [options] [SELECTOR ...]
@@ -27,7 +39,8 @@
 #   --project                 install into ./.claude/skills (project-local)
 #   --dest <dir>              install into an explicit directory (overrides all)
 #   --list                    list available domains/skills and exit
-#   --dry-run                 print what would be copied, copy nothing
+#   --dry-run                 print what would be installed, write nothing
+#   --no-deps                 do not add the sibling skills a selection depends on
 #   -h, --help                show this help
 #
 set -euo pipefail
@@ -39,13 +52,14 @@ TARGET="auto"        # auto | claude | agents
 PROJECT=0
 EXPLICIT_DEST=""
 DRY_RUN=0
+NO_DEPS=0
 DO_LIST=0
 SELECTORS=()
 
 die()  { printf 'error: %s\n' "$*" >&2; exit 1; }
 note() { printf '%s\n' "$*" >&2; }
 
-usage() { sed -n '2,40p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+usage() { sed -n '2,44p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 
 # ---- arg parsing ----
 while [ $# -gt 0 ]; do
@@ -57,6 +71,7 @@ while [ $# -gt 0 ]; do
     --dest=*) EXPLICIT_DEST="${1#*=}"; shift ;;
     --list) DO_LIST=1; shift ;;
     --dry-run) DRY_RUN=1; shift ;;
+    --no-deps) NO_DEPS=1; shift ;;
     -h|--help) usage 0 ;;
     --*) die "unknown option: $1" ;;
     *) SELECTORS+=("$1"); shift ;;
@@ -72,7 +87,7 @@ if [ "$DO_LIST" -eq 1 ]; then
   for dom in "$SKILLS_SRC"/*/; do
     [ -d "$dom" ] || continue
     d="$(basename "$dom")"
-    n=$(find "$dom" -name SKILL.md -type f | wc -l | tr -d ' ')
+    n=$(find "$dom" -mindepth 2 -maxdepth 2 -name SKILL.md -type f | wc -l | tr -d ' ')
     printf '%s (%s skills)\n' "$d" "$n"
     for sk in "$dom"*/; do
       [ -f "$sk/SKILL.md" ] && printf '  %s/%s\n' "$d" "$(basename "$sk")"
@@ -111,6 +126,7 @@ resolve_dest() {
 }
 
 DEST="$(resolve_dest)"
+[ -n "$DEST" ] || die "empty destination"
 
 # ---- expand selectors into a list of source skill directories ----
 declare -a SRC_DIRS=()
@@ -146,9 +162,9 @@ expand_selector() {
 }
 
 if [ "${#SELECTORS[@]}" -eq 0 ]; then
-  # install everything
+  # install everything (skill folders are exactly two levels below skills/)
   while IFS= read -r sm; do add_skill_dir "$(dirname "$sm")"; done < <(
-    find "$SKILLS_SRC" -name SKILL.md -type f | sort
+    find "$SKILLS_SRC" -mindepth 3 -maxdepth 3 -name SKILL.md -type f | sort
   )
 else
   for sel in "${SELECTORS[@]}"; do expand_selector "$sel"; done
@@ -156,29 +172,16 @@ fi
 
 [ "${#SRC_DIRS[@]}" -gt 0 ] || die "nothing to install"
 
-# ---- copy (idempotent) ----
+# ---- install (idempotent) through the shared packaging helper ----
+command -v python3 >/dev/null 2>&1 || die "python3 is required (standard library only)"
 note "destination: $DEST"
-note "skills to install: ${#SRC_DIRS[@]}"
-[ "$DRY_RUN" -eq 1 ] || mkdir -p "$DEST"
+note "skills selected: ${#SRC_DIRS[@]}"
 
-installed=0
-for src in "${SRC_DIRS[@]}"; do
-  name="$(basename "$src")"
-  target="$DEST/$name"
-  if [ "$DRY_RUN" -eq 1 ]; then
-    printf 'would install %s -> %s\n' "$name" "$target"
-    continue
-  fi
-  # Idempotent refresh: remove any prior copy, then copy fresh. A skill dir is
-  # small; this avoids stale files left from a previous version of the skill.
-  rm -rf "$target"
-  cp -R "$src" "$target"
-  installed=$((installed + 1))
-done
+ARGS=(install --dest "$DEST")
+if [ "$DRY_RUN" -eq 1 ]; then ARGS+=(--dry-run); fi
+if [ "$NO_DEPS" -eq 1 ]; then ARGS+=(--no-deps); fi
+python3 "$REPO_ROOT/scripts/build_bundles.py" "${ARGS[@]}" "${SRC_DIRS[@]}"
 
-if [ "$DRY_RUN" -eq 1 ]; then
-  printf '\ndry-run: %s skill(s) would be installed into %s\n' "${#SRC_DIRS[@]}" "$DEST"
-else
-  printf '\ninstalled %s skill(s) into %s\n' "$installed" "$DEST"
+if [ "$DRY_RUN" -eq 0 ]; then
   printf 'restart your agent to load them.\n'
 fi

@@ -57,6 +57,8 @@ izin, durum}` table, and — when asked — emit a Türkçe APA-7 citation.
 | Manage a **Zotero/BibTeX reference library** | `alterlab-citation-mgmt` |
 | **Türkçe APA-7 / TR Dizin house style** rules in general (not a thesis cite) | `alterlab-tr-academic-style` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-dergipark`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 This skill answers *"does this Turkish thesis exist / has this been done, and how
 do I cite it?"* — it does not write the thesis, judge journals, or score careers.
 

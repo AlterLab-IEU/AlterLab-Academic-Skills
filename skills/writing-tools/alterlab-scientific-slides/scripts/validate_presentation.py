@@ -7,6 +7,8 @@ Validates scientific presentations for common issues:
 - LaTeX compilation
 - File size checks
 - Basic format validation
+- Font sizes (PowerPoint; PDF via PyMuPDF, scaled to slide height)
+- PDF text past a slide edge, including a line placed wholly off the slide
 """
 
 import sys
@@ -33,6 +35,47 @@ try:
     HAS_PPTX = True
 except ImportError:
     HAS_PPTX = False
+
+# PyMuPDF reads text positions and font sizes from a PDF deck (PowerPoint export or Beamer).
+try:
+    import pymupdf
+except ImportError:
+    try:
+        import fitz as pymupdf  # PyMuPDF < 1.24.3
+    except ImportError:
+        pymupdf = None
+
+# Both standard PowerPoint sizes (16:9 and 4:3) are 7.5 in = 540 pt high. PDF font sizes are
+# scaled to that height, so the 18 pt rule means the same on a Beamer page (96 mm high, where
+# 11 pt body text is ~22 pt) as on a PowerPoint slide.
+REFERENCE_SLIDE_HEIGHT_PT = 540.0
+
+
+def pdf_text_findings(pages):
+    """Check PDF text spans against the slide edges and the font-size minimums.
+
+    pages: [(width, height, [((x0, y0, x1, y1), size_pt, text), ...]), ...] in page
+    coordinates (origin top-left). Returns (off_slide, small): off_slide is a list of
+    (slide, edges, wholly_off, text); small maps slide -> smallest scaled size below the
+    minimum (18 pt body, 12 pt in the bottom 15% footer band).
+    """
+    off_slide, small = [], {}
+    for idx, (width, height, spans) in enumerate(pages, start=1):
+        scale = REFERENCE_SLIDE_HEIGHT_PT / height if height else 1.0
+        for (x0, y0, x1, y1), size, text in spans:
+            text = " ".join(text.split())
+            if not text:
+                continue
+            edges = [name for name, out in (("left", x0 < -1), ("top", y0 < -1),
+                                            ("right", x1 > width + 1), ("bottom", y1 > height + 1))
+                     if out]
+            if edges:
+                wholly_off = x0 >= width or y0 >= height or x1 <= 0 or y1 <= 0
+                off_slide.append((idx, edges, wholly_off, text))
+            scaled = size * scale
+            if scaled < (12 if y0 >= height * 0.85 else 18):
+                small[idx] = min(scaled, small.get(idx, scaled))
+    return off_slide, small
 
 
 class PresentationValidator:
@@ -101,6 +144,7 @@ class PresentationValidator:
     
     def _validate_pdf(self):
         """Validate PDF presentation."""
+        self._check_pdf_text()
         if not HAS_PYPDF2:
             self.warnings.append(
                 "pypdf not installed. Install with: uv pip install pypdf"
@@ -147,7 +191,42 @@ class PresentationValidator:
                 
         except Exception as e:
             self.issues.append(f"Error reading PDF: {str(e)}")
-    
+
+    def _check_pdf_text(self):
+        """Flag text past a slide edge (even a line wholly off the slide) and small fonts."""
+        if pymupdf is None:
+            self.warnings.append(
+                "pymupdf not installed: PDF text-position and font-size checks skipped "
+                "(run with: uv run --with pymupdf ...)"
+            )
+            return
+        pages = []
+        try:
+            with pymupdf.open(self.filepath) as doc:
+                for page in doc:
+                    # The default clip is the page, which silently drops a line placed wholly
+                    # off the slide; an unbounded clip keeps it so it can be reported.
+                    blocks = page.get_text("dict", clip=pymupdf.INFINITE_RECT())["blocks"]
+                    spans = [(s["bbox"], s["size"], s["text"]) for b in blocks
+                             for line in b.get("lines", []) for s in line["spans"]]
+                    pages.append((page.rect.width, page.rect.height, spans))
+        except Exception as e:
+            self.warnings.append(f"PDF text checks skipped: {e}")
+            return
+        off_slide, small = pdf_text_findings(pages)
+        for idx, edges, wholly_off, text in off_slide[:12]:
+            what = ("wholly off the slide, past the {} edge (not shown at all)" if wholly_off
+                    else "runs past the {} edge (cut off)").format("/".join(edges))
+            self.issues.append(f"Slide {idx}: text {what}: \"{text[:70]}\"")
+        if len(off_slide) > 12:
+            self.issues.append(f"... and {len(off_slide) - 12} more text spans past a slide edge")
+        if small:
+            self.warnings.append(
+                "Small text (under 18 pt, or 12 pt in the footer band; sizes scaled to a 7.5-inch "
+                "slide height) on slides: "
+                + ", ".join(f"{i} (smallest {pt:.0f} pt)" for i, pt in sorted(small.items()))
+            )
+
     def _validate_pptx(self):
         """Validate PowerPoint presentation."""
         if not HAS_PPTX:
@@ -185,7 +264,11 @@ class PresentationValidator:
     def _check_pptx_content(self, prs):
         """Check PowerPoint content for common issues."""
         small_text_slides = []
+        small_footer_slides = []
         many_bullets_slides = []
+        # Footer band (bottom 15% of the slide): citations, footers and slide numbers may be
+        # smaller than body text, but not below 12 pt.
+        footer_top = int(prs.slide_height * 0.85) if prs.slide_height else None
         
         for idx, slide in enumerate(prs.slides, start=1):
             for shape in slide.shapes:
@@ -193,12 +276,15 @@ class PresentationValidator:
                     continue
                 
                 text_frame = shape.text_frame
+                in_footer = (footer_top is not None and shape.top is not None
+                             and shape.top >= footer_top)
+                minimum = 12 if in_footer else 18
                 
                 # Check for small fonts
                 for paragraph in text_frame.paragraphs:
                     for run in paragraph.runs:
-                        if run.font.size and run.font.size.pt < 18:
-                            small_text_slides.append(idx)
+                        if run.font.size and run.font.size.pt < minimum and run.text.strip():
+                            (small_footer_slides if in_footer else small_text_slides).append(idx)
                             break
                 
                 # Check for too many bullets
@@ -211,6 +297,13 @@ class PresentationValidator:
             unique_slides = sorted(set(small_text_slides))
             self.warnings.append(
                 f"Small text (<18pt) found on slides: {unique_slides[:5]}"
+                + (" ..." if len(unique_slides) > 5 else "")
+            )
+        
+        if small_footer_slides:
+            unique_slides = sorted(set(small_footer_slides))
+            self.warnings.append(
+                f"Footer/citation text under 12pt on slides: {unique_slides[:5]}"
                 + (" ..." if len(unique_slides) > 5 else "")
             )
         
@@ -360,7 +453,8 @@ Validation checks:
   - Slide count vs. duration
   - File size
   - Slide dimensions
-  - Font sizes (PowerPoint)
+  - Font sizes (PowerPoint; PDF with pymupdf installed)
+  - Text past a slide edge (PDF with pymupdf installed)
   - LaTeX compilation (Beamer)
         """
     )

@@ -23,11 +23,13 @@
     },
     {
       "id": "journal-format-export",
+      "files": ["fixtures/dose_response"],
       "prompt": "Reformat this existing plot to meet Cell's figure guidelines and export it at the correct size and resolution for submission.",
       "expected_output": "Invokes alterlab-scientific-viz: applies the Cell-specific style preset (font sizes, column width, line weights), then exports via figure_export.py at the required resolution and format for journal submission.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Reformats a figure to a specific journal's guidelines and exports at submission-ready resolution." }
+        { "type": "behavior", "value": "Reformats a figure to a specific journal's guidelines and exports at submission-ready resolution." },
+        { "type": "behavior", "value": "Reworks the supplied plot_dose_response.py / dose_response.csv (three compounds, log-scaled concentration) rather than a made-up figure: replaces the default 6.4 x 4.8 in (163 mm), 100-dpi PNG with a Cell column width (85 mm single or 178 mm double) and exports vector PDF/EPS or a TIFF at Cell's required resolution." }
       ]
     },
     {

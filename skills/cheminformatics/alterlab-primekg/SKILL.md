@@ -6,7 +6,7 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Runs under `uv run python` with pandas installed and the PrimeKG `kg.csv` available locally (set `PRIMEKG_DATA_PATH`); no API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.1.1"
     last_updated: "2026-09-23"
 ---
 
@@ -44,11 +44,16 @@ This skill should be used when:
 | Cross-species disease–gene–phenotype associations (HPO, OMIM, Orphanet) | `alterlab-monarch` |
 | A drug's full record: pharmacology, interactions, targets, labels | `alterlab-drugbank` |
 | Training knowledge-graph embedding models (TransE/RotatE) for link prediction | `alterlab-torchdrug` |
+| Parsing a SMILES string, computing descriptors (MW, LogP, TPSA) or fingerprints for one molecule | `alterlab-rdkit` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-opentargets`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Workflow
 
-Run under `uv run python` from the skill directory (so `scripts/` is importable),
-or add the `scripts/` dir to `sys.path`. Set `PRIMEKG_DATA_PATH` to your `kg.csv`.
+Run install-free from the skill directory (so `scripts/` is importable), pinning the
+interpreter since uv's default here is 3.9: `uv run --python ">=3.11" --with pandas
+python your_analysis.py` — or add the `scripts/` dir to `sys.path`. Set
+`PRIMEKG_DATA_PATH` to your `kg.csv`.
 
 ### 1. Search for Entities
 

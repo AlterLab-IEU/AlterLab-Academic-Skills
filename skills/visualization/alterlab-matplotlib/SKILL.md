@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*)
 compatibility: Requires the matplotlib Python library, version >= 3.9 (current 3.11.2 as of 2026-09; matplotlib 3.11 needs Python >= 3.11) — uv pip install 'matplotlib>=3.9'; examples also use numpy, and the histogram-fit example uses scipy. No API key or external service needed.
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.1.1"
+    last_updated: "2026-11-04"
 ---
 
 # Matplotlib
@@ -37,6 +37,8 @@ This skill should be used when:
 | Journal-ready figure: column widths, Okabe-Ito palette, panel labels, significance stars | `alterlab-scientific-viz` |
 | Proofing a finished figure for overlapping or clipped labels and 300-dpi export | `alterlab-figure-qa` |
 | Flowchart, pathway, or architecture diagram rather than a plot of data | `alterlab-scientific-schematics` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-seaborn`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Concepts
 
@@ -238,6 +240,8 @@ plt.savefig('figure.png', dpi=300, bbox_inches='tight', transparent=True)
 - `bbox_inches='tight'`: Removes excess whitespace
 - `facecolor='white'`: Ensures white background (useful for transparent themes)
 - `transparent=True`: Transparent background
+
+**Reporting the result:** when the figure or style lives in a script or module, the reply still shows the key code — the `plt.style.use(...)` / `rcParams` settings, the `fig, ax = plt.subplots(...)` call, the plotting call and the `savefig(...)` arguments — and the path of every file written. A prose summary of the figure does not let the user reuse or check the settings.
 
 ### 6. Working with 3D Plots
 

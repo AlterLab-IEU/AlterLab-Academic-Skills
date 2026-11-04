@@ -7,7 +7,7 @@
       "expected_output": "Invokes alterlab-results-transparency. Applies the Iron Law (NO RESULTS CLAIM WITHOUT REPORTING EVERY ANALYSIS RUN) and refuses to help write up only the two significant models. Runs the Gate Function: LIST flags that 6 models were run but only 2 are being reported (selective reporting), and the escalation gate flags 6 tests on one hypothesis as multiple comparisons requiring Bonferroni/FDR correction or an exploratory label. Routes the statistics themselves to alterlab-statistical-analysis and the frozen-plan check to alterlab-preregistration-discipline. Does not produce a clean sentence for a cherry-picked subset.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "every analysis" },
+        { "type": "output_contains", "value": ["every analysis", "all analyses", "all six", "all 6", "every model", "all models", "all of the models"] },
         { "type": "behavior", "value": "Refuses to write up only the significant subset; names the omitted analyses as selective reporting and flags the multiple-comparisons problem, rather than helping cherry-pick." }
       ]
     },

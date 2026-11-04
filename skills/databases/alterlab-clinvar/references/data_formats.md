@@ -341,7 +341,7 @@ LATEST=$(curl -s ${BASE_URL}/ | \
          sort -u | tail -1)
 
 # Download
-wget ${BASE_URL}/${LATEST}
+curl -O ${BASE_URL}/${LATEST}
 ```
 
 ### Download All Formats
@@ -353,15 +353,15 @@ wget ${BASE_URL}/${LATEST}
 FTP_BASE="https://ftp.ncbi.nlm.nih.gov/pub/clinvar"
 
 # XML (VCV; RCV lives in xml/RCV_release/)
-wget ${FTP_BASE}/xml/ClinVarVCVRelease_00-latest.xml.gz
+curl -O ${FTP_BASE}/xml/ClinVarVCVRelease_00-latest.xml.gz
 
 # VCF (both assemblies)
-wget ${FTP_BASE}/vcf_GRCh37/clinvar.vcf.gz
-wget ${FTP_BASE}/vcf_GRCh38/clinvar.vcf.gz
+curl -O ${FTP_BASE}/vcf_GRCh37/clinvar.vcf.gz
+curl -O ${FTP_BASE}/vcf_GRCh38/clinvar.vcf.gz
 
 # Tab-delimited
-wget ${FTP_BASE}/tab_delimited/variant_summary.txt.gz
-wget ${FTP_BASE}/tab_delimited/var_citations.txt.gz
+curl -O ${FTP_BASE}/tab_delimited/variant_summary.txt.gz
+curl -O ${FTP_BASE}/tab_delimited/var_citations.txt.gz
 ```
 
 ## Additional Resources

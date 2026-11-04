@@ -12,16 +12,21 @@ alterlab-markitdown skill) so every input format is normalized to clean,
 token-efficient Markdown before any column is extracted.
 
 Two extraction backends:
-  * heuristic (default, no API, fully offline): for each column, locate the most
+  * heuristic (default, no API key, fully offline): for each column, locate the most
     relevant Markdown section/sentences by LITERAL keyword overlap with the column
     spec and emit a short evidence snippet. Deterministic and free — good for a
     first pass, screening, and for reproducible tests. Matching is lexical, not
     semantic: phrase columns as 'Label:question' using the words the papers
     actually use (a bare label like "Sample size" won't match "240 participants").
-  * llm (optional): hand the converted Markdown + the column questions to a model
-    via an OpenAI-compatible endpoint (e.g. OpenRouter) for a precise structured
-    answer per column. The model ID follows the ALTERLAB_MODEL convention
+    The keyless way to precise cells is --markdown-dir: it saves each converted
+    paper so Claude can read it and confirm or fill every cell in the conversation.
+  * llm (optional, needs OPENROUTER_API_KEY or OPENAI_API_KEY): hand the converted
+    Markdown + the column questions to a model via an OpenAI-compatible endpoint
+    (e.g. OpenRouter) for a precise structured answer per column, unattended. The
+    model ID follows the ALTERLAB_MODEL convention
     (skills/core/shared/model_env.md): $ALTERLAB_MODEL or the dated default.
+    Asked for without a key, it exits 2 before converting anything; it never falls
+    back to the heuristic backend silently.
 
 The script is import-light: MarkItDown and the OpenAI client are imported lazily
 so the file compiles and `--help` works without them installed.
@@ -40,7 +45,11 @@ Examples
       --column "effect:what was the main reported effect" \
       --format csv -o table.csv
 
-  # LLM-backed precise extraction (needs OPENROUTER_API_KEY):
+  # Keyless precise path: draft table + each paper's Markdown for Claude to read:
+  uv run python extract_to_table.py papers/*.pdf --columns "Population" "Outcome" \
+      --markdown-dir converted/ -o draft.md
+
+  # Optional LLM-backed batch extraction (needs OPENROUTER_API_KEY):
   uv run python extract_to_table.py lit/*.pdf \
       --columns "Population" "Intervention" "Outcome" --backend llm
 """
@@ -61,6 +70,18 @@ from typing import Optional
 # See skills/core/shared/model_env.md before changing the default. ALTERLAB_MODEL holds an
 # Anthropic model ID; openrouter_slug() derives the gateway slug at call time.
 DEFAULT_MODEL = "claude-opus-5-5"
+
+
+LLM_KEY_MISSING = (
+    "--backend llm needs OPENROUTER_API_KEY (or OPENAI_API_KEY with OPENAI_BASE_URL); "
+    "neither is set, so nothing was extracted. Keyless alternative: rerun with the default "
+    "heuristic backend and --markdown-dir DIR, then read each converted paper and fill the "
+    "cells in the conversation."
+)
+
+
+def llm_key_available() -> bool:
+    return bool(os.environ.get("OPENROUTER_API_KEY") or os.environ.get("OPENAI_API_KEY"))
 
 
 def alterlab_model() -> str:
@@ -209,9 +230,7 @@ def extract_llm(markdown: str, columns: list[Column], *, model: str, source: str
         api_key = os.environ.get("OPENAI_API_KEY")
         base_url = os.environ.get("OPENAI_BASE_URL")  # None -> the SDK's default endpoint
     if not api_key:
-        raise SystemExit(
-            "The llm backend needs OPENROUTER_API_KEY (or OPENAI_API_KEY) in the environment."
-        )
+        raise SystemExit(LLM_KEY_MISSING)
 
     client = OpenAI(api_key=api_key, base_url=base_url)
 
@@ -254,10 +273,17 @@ def _parse_llm_answers(text: str, columns: list[Column]) -> dict[str, str]:
 
 
 def build_rows(
-    paths: list[Path], columns: list[Column], *, backend: str, model: str, verbose: bool
+    paths: list[Path], columns: list[Column], *, backend: str, model: str, verbose: bool,
+    markdown_dir: Optional[Path] = None,
 ) -> list[dict[str, str]]:
-    """Convert each document and extract every column. One row dict per document."""
+    """Convert each document and extract every column. One row dict per document.
+
+    With ``markdown_dir`` each converted document is also written there as
+    ``<stem>.md`` so Claude can read it and confirm or fill the cells (keyless path).
+    """
     rows: list[dict[str, str]] = []
+    if markdown_dir:
+        markdown_dir.mkdir(parents=True, exist_ok=True)
     for path in paths:
         if verbose:
             print(f"Converting & extracting: {path}", file=sys.stderr)
@@ -271,6 +297,8 @@ def build_rows(
             row.update({c.label: "ERROR" for c in columns})
             rows.append(row)
             continue
+        if markdown_dir:
+            (markdown_dir / f"{path.stem}.md").write_text(markdown, encoding="utf-8")
 
         row: dict[str, str] = {"Source": path.name}
         if backend == "llm":
@@ -345,7 +373,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--backend", choices=["heuristic", "llm"], default="heuristic",
-        help="heuristic (offline, free, default) or llm (precise, needs API key).",
+        help="heuristic (offline, keyless, default) or llm (optional unattended batch mode; "
+             "needs OPENROUTER_API_KEY or OPENAI_API_KEY).",
+    )
+    parser.add_argument(
+        "--markdown-dir", type=Path, default=None,
+        help="Also save each converted document as DIR/<stem>.md (keyless precise path: read "
+             "these and confirm or fill the cells).",
     )
     parser.add_argument(
         "--format", choices=["md", "csv"], default="md",
@@ -368,9 +402,20 @@ def main(argv: Optional[list[str]] = None) -> int:
     missing = [p for p in args.pdfs if not p.exists()]
     if missing:
         raise SystemExit("Input(s) not found: " + ", ".join(str(p) for p in missing))
+    if args.backend == "llm" and not llm_key_available():
+        # Explicitly requested keyed backend: refuse up front, never fall back silently.
+        print(LLM_KEY_MISSING, file=sys.stderr)
+        return 2
+    if args.backend == "heuristic":
+        print("note: heuristic backend (keyless): each cell is the best keyword-matching "
+              "sentence, not a verified answer"
+              + ("; converted papers are in " + str(args.markdown_dir) if args.markdown_dir else
+                 "; add --markdown-dir DIR to save the converted papers for reading")
+              + ".", file=sys.stderr)
 
     rows = build_rows(
-        args.pdfs, columns, backend=args.backend, model=model, verbose=args.verbose
+        args.pdfs, columns, backend=args.backend, model=model, verbose=args.verbose,
+        markdown_dir=args.markdown_dir,
     )
 
     text = render_csv(rows, columns) if args.format == "csv" else render_markdown(rows, columns)

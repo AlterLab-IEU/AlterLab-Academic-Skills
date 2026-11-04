@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 """
-USPTO patent search via the Open Data Portal (ODP) Patent File Wrapper API.
+USPTO patent search: keyless Patent Public Search by default, ODP with a key.
+
+Backends (--backend):
+    auto (default) - ODP when USPTO_ODP_API_KEY (or USPTO_API_KEY) is set, otherwise the
+                     keyless USPTO Patent Public Search (uspto_public.py), noted on stderr
+    ppubs          - keyless Patent Public Search: full-text grants/applications, assignee,
+                     CPC, dates; --q takes Patent Public Search syntax ("lidar.ti.")
+    odp            - ODP Patent File Wrapper below; exits 2 without a key instead of
+                     answering from another backend; --q takes ODP/Solr syntax
 
 Status (verified 2026-09): the PatentsView PatentSearch API
 (search.patentsview.org) paused when PatentsView migrated to the ODP on
@@ -120,9 +128,30 @@ def _summarize(result: Dict) -> Dict:
     return {"count": result.get("count", 0), "results": rows}
 
 
+def _ppubs_main(args, parser) -> int:
+    try:
+        from uspto_public import build_query, document, search
+    except ImportError:  # imported as scripts.patent_search
+        from scripts.uspto_public import build_query, document, search
+    if args.patent:
+        print(json.dumps(document(args.patent), indent=2, ensure_ascii=False))
+        return 0
+    clauses = [args.q] if args.q else []
+    built = build_query(title=args.title, applicant=args.applicant, inventor=args.inventor,
+                        date_from=args.granted_from, date_to=args.granted_to)
+    if built:
+        clauses.append(built)
+    if not clauses:
+        parser.error("give --q/--title/--inventor/--applicant, a grant-date range, or --patent")
+    print(json.dumps(search(" AND ".join(clauses), ("USPAT",), args.limit), indent=2,
+                     ensure_ascii=False))
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Search US patents/applications via the USPTO ODP Patent File Wrapper API")
+        description="Search US patents: keyless Patent Public Search, or the ODP Patent File "
+                    "Wrapper API with USPTO_ODP_API_KEY")
     parser.add_argument("--q", help='Raw query, e.g. \'applicationMetaData.inventionTitle:"lidar"\'')
     parser.add_argument("--title", help="Phrase in the invention title")
     parser.add_argument("--inventor", help="First-named inventor")
@@ -132,7 +161,21 @@ def main() -> int:
     parser.add_argument("--granted-to", help="Grant date upper bound (YYYY-MM-DD)")
     parser.add_argument("--limit", type=int, default=25)
     parser.add_argument("--raw", action="store_true", help="Print the full API response")
+    parser.add_argument("--backend", choices=["auto", "ppubs", "odp"], default="auto",
+                        help="auto (default): odp if USPTO_ODP_API_KEY is set, else keyless ppubs")
     args = parser.parse_args()
+
+    has_key = bool(os.getenv("USPTO_ODP_API_KEY") or os.getenv("USPTO_API_KEY"))
+    if args.backend == "odp" and not has_key:
+        print("--backend odp needs USPTO_ODP_API_KEY (data.uspto.gov -> APIs -> Getting Started). "
+              "Without a key, use --backend ppubs (keyless USPTO Patent Public Search).",
+              file=sys.stderr)
+        return 2
+    if args.backend == "ppubs" or (args.backend == "auto" and not has_key):
+        if args.backend == "auto":
+            print("USPTO_ODP_API_KEY not set: using keyless USPTO Patent Public Search "
+                  "(ppubs.uspto.gov).", file=sys.stderr)
+        return _ppubs_main(args, parser)
 
     try:
         client = PatentSearchClient()

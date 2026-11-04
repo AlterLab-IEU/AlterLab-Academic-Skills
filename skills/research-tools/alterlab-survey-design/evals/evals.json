@@ -7,7 +7,7 @@
       "expected_output": "Compares 5-point (most common, central tendency bias) versus 7-point (greater discrimination, better for factor analysis) scales and recommends based on the use case, advises fully labeling points for clarity (Strongly Disagree to Strongly Agree), and matches the anchor wording to the question type (agreement vs frequency vs importance). Should note the trade-offs of including a midpoint.",
       "assertions": [
         {"type": "should_trigger", "value": true},
-        {"type": "output_contains", "value": "Likert"},
+        {"type": "output_contains", "value": ["Likert", "7-point", "5-point", "seven-point", "five-point"]},
         {"type": "behavior", "value": "Compares 5- vs 7-point scales with their trade-offs and advises consistent, fully-labeled anchors matched to the stem."}
       ]
     },

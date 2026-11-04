@@ -97,7 +97,9 @@ cat:cs.LG AND submittedDate:[202501010000 TO 202501312359]
 
 There is no affiliation field to search. `au:anthropic` returns nothing; `au:openai`
 only matches papers that list the organization as a collective author. Query a group
-through its members' names, or use OpenAlex's institution filter.
+through its members' names. No keyless API offers a complete institution filter:
+Crossref's `query.affiliation` matches only deposited affiliation strings (partial
+coverage), and members' public ORCID records list their works.
 
 ### Wildcards
 

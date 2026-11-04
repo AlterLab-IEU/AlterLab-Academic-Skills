@@ -13,6 +13,7 @@ Stdlib HTTP only (urllib); sole third-party dependency is `fastmcp`.
 from __future__ import annotations
 
 import json
+import os
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -23,7 +24,9 @@ from fastmcp import FastMCP
 mcp = FastMCP("genes-ontologies")
 
 _TIMEOUT = 30
-_UA = "AlterLab-genes-ontologies-connector/1.0 (mailto:alterlab.ieu@gmail.com)"
+# Contact address for polite-pool User-Agents: opt-in via ALTERLAB_CONTACT_EMAIL; none by default.
+_CONTACT = os.environ.get("ALTERLAB_CONTACT_EMAIL", "").strip()
+_UA = "AlterLab-genes-ontologies-connector/1.0" + (f" (mailto:{_CONTACT})" if _CONTACT else "")
 
 
 def _get_json(url: str) -> dict[str, Any]:

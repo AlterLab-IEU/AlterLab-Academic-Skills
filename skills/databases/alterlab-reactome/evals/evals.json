@@ -30,11 +30,14 @@
     },
     {
       "id": "expression-analysis",
+      "files": ["fixtures/ifn_timecourse_log2fc.tsv"],
       "prompt": "I have a TSV of gene expression values across three samples. Submit it to Reactome's expression analysis to find which pathways are most affected.",
       "expected_output": "Invokes alterlab-reactome: POSTs the '#'-headed TSV expression matrix to the AnalysisService /identifiers/ endpoint and returns pathways ranked by the expression analysis with statistical metrics and a token.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Submits quantitative expression data (TSV) to Reactome's expression analysis rather than a plain overrepresentation list." }
+        { "type": "behavior", "value": "Submits quantitative expression data (TSV) to Reactome's expression analysis rather than a plain overrepresentation list." },
+        { "type": "output_contains", "value": ["Interferon alpha/beta", "R-HSA-909733"] },
+        { "type": "behavior", "value": "Submits the attached three-column TSV and reports interferon pathways at the top (Interferon alpha/beta signaling R-HSA-909733 and Interferon Signaling, FDR far below 0.05), with per-sample expression values for the hits and the identifiers Reactome could not map (MKI67, MYH7)." }
       ]
     },
     {

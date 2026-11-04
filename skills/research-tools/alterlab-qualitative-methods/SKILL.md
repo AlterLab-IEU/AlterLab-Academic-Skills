@@ -2,7 +2,7 @@
 name: alterlab-qualitative-methods
 description: "Comprehensive qualitative research methods assistant supporting thematic analysis (Braun & Clarke), grounded theory (Strauss & Corbin; Charmaz), interpretative phenomenological analysis (IPA), content analysis, narrative inquiry, ethnography, case study methodology (Yin), coding techniques (open/axial/selective), NVivo-style workflows with Python alternatives, trustworthiness criteria (Lincoln & Guba), reflexivity, and member checking. Use when designing or analyzing qualitative research — thematic analysis, grounded theory, coding data, phenomenology, IPA, ethnography, case study, narrative inquiry, content analysis, qualitative coding, NVivo, trustworthiness, member checking, reflexivity, interview analysis, or focus group analysis. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read WebFetch WebSearch Bash(python:*)
+allowed-tools: Read WebFetch WebSearch Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.
 metadata:
   skill-author: AlterLab
@@ -40,9 +40,11 @@ This skill should be used when:
 |----------|-------------|
 | Computing inter-coder reliability (Krippendorff's alpha, kappa) or running a codebook-coding pipeline, including human-vs-LLM double coding | `alterlab-qualitative-analysis` |
 | A pass/fail trustworthiness and reflexivity check before writing up findings | `alterlab-ssci-reflexivity-gate` |
-| Integrating a qualitative strand with a quantitative one (convergent/sequential designs, joint displays) | `alterlab-mixed-methods` |
+| Designing or integrating a study with both a qualitative and a quantitative strand (convergent/sequential designs, joint displays), including the qualitative strand's design within it | `alterlab-mixed-methods` |
 | Questionnaire items, Likert scales, or instrument validation | `alterlab-survey-design` |
 | Discourse or conversation analysis, QCA, process tracing (`alterlab-social-science-methods`); topic models or text classification (`alterlab-text-as-data`) | `alterlab-social-science-methods` / `alterlab-text-as-data` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-qualitative-analysis`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ---
 

@@ -3,7 +3,7 @@ name: alterlab-statistical-analysis
 description: Guided statistical analysis with hypothesis-test selection, assumption checking, effect sizes, power analysis, and APA-formatted reporting using scipy.stats, statsmodels, and pingouin (Bayesian alternatives with PyMC). Use when choosing and running the appropriate statistical test for data, verifying test assumptions, computing power/sample size, or producing APA-style results for academic research. For implementing specific models programmatically prefer alterlab-statsmodels. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`. Core deps are scipy, statsmodels (>= 0.14; current 0.15), and pingouin>=0.6 (current 0.6.1; 0.6 renamed output columns, e.g. p-val to p_val, CI95% to CI95, cohen-d to cohen_d); Bayesian examples additionally need pymc and arviz.
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "statsmodels>=0.14" --with "pingouin>=0.6" python analysis.py` (no install step; the interpreter pin matters because an older default Python resolves older releases). Core deps are scipy, statsmodels (>= 0.14; current 0.15), and pingouin>=0.6 (current 0.6.1; 0.6 renamed output columns, e.g. p-val to p_val, CI95% to CI95, cohen-d to cohen_d); Bayesian examples additionally need pymc and arviz.
 metadata:
     skill-author: AlterLab
     version: "1.0.1"
@@ -37,6 +37,9 @@ Use when:
 | Full Bayesian or hierarchical modelling workflows (custom priors, NUTS diagnostics, LOO model comparison) | `alterlab-pymc` |
 | Pooling effect sizes across studies (random-effects meta-analysis, heterogeneity, funnel plots) | `alterlab-meta-analysis` |
 | Complex-sample survey data needing weights, strata, and design-based standard errors | `alterlab-survey-analysis` |
+| Predictive modelling: train/test splits, cross-validated tuning, and held-out metrics (accuracy, ROC AUC, RMSE, test R²) rather than inference | `alterlab-scikit-learn` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-statsmodels`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 

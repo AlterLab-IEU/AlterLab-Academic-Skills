@@ -3,11 +3,11 @@ name: alterlab-scvi-tools
 description: Train deep generative models for single-cell omics with scvi-tools — probabilistic batch correction and integration (scVI), reference-mapping transfer learning (scArches), differential expression with uncertainty, and multimodal models (totalVI for CITE-seq, MultiVI for multiome). Use when correcting batch effects, integrating multimodal data, or doing advanced probabilistic single-cell modeling — for standard analysis pipelines use scanpy. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. Written for scvi-tools 1.5 (current 1.5.1 as of 2026-09), which requires Python >= 3.12. A GPU is optional but makes training practical on large datasets."
+compatibility: "Self-contained — runs under `uv run --python \">=3.12\" --with scvi-tools`; no API key or account required. Written for scvi-tools 1.5 (current 1.5.1 as of 2026-09), which requires Python >= 3.12. A GPU is optional but makes training practical on large datasets."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.1.2"
+    last_updated: "2026-11-04"
 ---
 
 # scvi-tools
@@ -38,6 +38,8 @@ Use this skill when:
 | RNA velocity from spliced/unspliced counts (scVelo's EM/dynamical models) | `alterlab-scvelo` |
 | Spatial neighborhood statistics, Moran's I, ligand-receptor on a Visium/Xenium slide | `alterlab-squidpy-spatial` |
 | Bulk RNA-seq differential expression | `alterlab-pydeseq2` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-scanpy`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 
@@ -145,6 +147,8 @@ sig = de_results[de_results["proba_de"] > 0.95]
 
 See `references/differential-expression.md` for the full output schema and interpretation.
 
+When the DE runs from a script, quote the `model.differential_expression(...)` call in the reply with every argument you set (`groupby`, `group1`, `group2`, `mode`, `delta`, `batch_correction`, `fdr_target`), plus the `proba_de` cutoff and the paths of the files written. Those settings define the test; a methods section and anyone re-running it need them verbatim, not paraphrased.
+
 ### Model Persistence
 Save and load trained models:
 
@@ -189,12 +193,20 @@ See `references/theoretical-foundations.md` for detailed background on the mathe
 
 ## Installation
 
+scvi-tools 1.5 requires **Python >= 3.12** (PyPI `requires_python`, checked 2026-11-04 for
+1.5.2), so pin the interpreter. Run install-free with uv, which resolves the package per run (a
+bare `uv pip install` fails outside a virtual environment, and a plain `uv run python` may pick an
+older Python):
+
 ```bash
-uv pip install scvi-tools
-uv pip install "scvi-tools[cuda]"      # CUDA 12; use [cuda13] for CUDA 13
-uv pip install "scvi-tools[metal]"     # Apple silicon (MPS)
-uv pip install "scvi-tools[autotune]"  # hyperparameter search (Ray Tune)
+uv run --python ">=3.12" --with scvi-tools --with scanpy python analysis.py
+uv run --python ">=3.12" --with "scvi-tools[cuda]" python analysis.py      # CUDA 12; [cuda13] for CUDA 13
+uv run --python ">=3.12" --with "scvi-tools[metal]" python analysis.py     # Apple silicon (MPS)
+uv run --python ">=3.12" --with "scvi-tools[autotune]" python analysis.py  # Ray Tune search
 ```
+
+In a project with its own virtual environment, `uv pip install scvi-tools` into that
+environment instead.
 
 Version note (2026-09): scvi-tools 1.5 dropped the JAX backend entirely, so `scvi.model.JaxSCVI`
 and the other Jax-prefixed models no longer exist — everything runs on PyTorch/Lightning (with an

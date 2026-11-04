@@ -23,12 +23,14 @@
     },
     {
       "id": "open-access-route",
+      "files": ["fixtures/manuscript_title_page.md"],
       "prompt": "What are my open access options for this manuscript? I want to understand the difference between Green, Gold, and Diamond routes and the costs involved.",
       "expected_output": "Invokes alterlab-open-science: explains the Green (self-archiving), Gold (APC-funded), and Diamond (no-fee) open access routes, their costs and trade-offs, Creative Commons licensing choices, and how funder mandates interact with each.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "open access" },
-        { "type": "behavior", "value": "Compares Green/Gold/Diamond OA routes with costs and licensing and ties them to funder requirements." }
+        { "type": "behavior", "value": "Compares Green/Gold/Diamond OA routes with costs and licensing and ties them to funder requirements." },
+        { "type": "behavior", "value": "Applies the NIH funding stated on the title page: the accepted manuscript must be deposited in PubMed Central and be public on the publication date with no embargo, so Green deposit meets the mandate without paying the journal's US$3,450 hybrid APC." }
       ]
     },
     {

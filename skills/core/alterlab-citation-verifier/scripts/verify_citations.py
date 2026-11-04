@@ -2,23 +2,31 @@
 """verify_citations.py — Existence-verify a bibliography against public scholarly APIs.
 
 Given a bibliography (BibTeX, a list of DOIs/arXiv IDs, or free-form references),
-this checks whether each entry ACTUALLY EXISTS by querying four public scholarly
-APIs (Crossref, OpenAlex, Semantic Scholar, arXiv), plus the doi.org Handle API to
-confirm whether a cited DOI is registered at all. It resolves DOI / arXiv
+this checks whether each entry ACTUALLY EXISTS by querying public scholarly indexes
+(Crossref, Semantic Scholar, Europe PMC, arXiv, and Open Library for books), plus the
+doi.org Handle API to confirm whether a cited DOI is registered at all. It resolves DOI / arXiv
 identifiers, fuzzy-matches title and authors (difflib SequenceMatcher ratio —
 Ratcliff/Obershelp, not edit-distance — default threshold 0.70), flags retractions
 (Crossref ``updated-by`` / ``update-to`` records, which since 2025 include the
-Retraction Watch database, and OpenAlex ``is_retracted``), and emits a JSON verdict
+Retraction Watch database), and emits a JSON verdict
 per entry mapped to the AlterLab citation hallucination taxonomy (TF / PAC / IH / PH / SH).
 
 Design constraints:
-- NO API key required. Optional keys only raise rate limits: ``OPENALEX_API_KEY``
-  (OpenAlex retired its ``mailto`` polite pool in Feb 2026; keyless calls share a
-  small per-IP daily budget in which DOI lookups are free but searches are metered)
-  and ``S2_API_KEY`` (Semantic Scholar). Keys are sent as headers, never logged.
+- NO API key required. The optional ``S2_API_KEY`` only gives Semantic Scholar a
+  dedicated rate limit instead of the shared keyless pool; it is sent as a header,
+  never logged. (OpenAlex was removed in v1.3.0: its keyless searches now draw on a
+  small per-IP daily budget, so real use needed an account.)
+- Semantic Scholar's keyless pool is shared by every unauthenticated caller and often
+  answers HTTP 429 — its *search* endpoint almost always does from busy networks, while
+  DOI / arXiv-ID lookups mostly answer. The script backs off and, if the pool is still
+  busy, records Semantic Scholar as *not checked* for that entry and pauses that endpoint
+  (search and lookups separately) for the rest of the run. A rate-limited source is
+  never read as "not found", and no verdict depends on Semantic Scholar search: a Total
+  Fabrication without an identifier needs Crossref plus at least one other index that
+  actually answered (Semantic Scholar, Europe PMC, arXiv or Open Library).
 - NO third-party deps required: uses ``requests`` if present, else the stdlib
   (``urllib``). Mirrors the integrity_verification_agent taxonomy exactly (see
-  ../SKILL.md and skills/core/alterlab-research-pipeline/agents/integrity_verification_agent.md).
+  ../SKILL.md and ../../alterlab-research-pipeline/agents/integrity_verification_agent.md).
 - GRACEFUL DEGRADATION: with no network, or when every source errors (rate limits,
   5xx), the entry gets an ``unverified`` verdict plus manual-verification
   instructions. It never silently passes an entry, and it never reports a Total
@@ -40,53 +48,132 @@ Usage:
                                           [--out report.json] [--offline]
   uv run python verify_citations.py - < refs.bib        # read stdin
 
-Optional environment: OPENALEX_API_KEY (free key, openalex.org/settings/api; sent
-as an Authorization: Bearer header), S2_API_KEY (Semantic Scholar, x-api-key header).
+Optional environment: S2_API_KEY (Semantic Scholar, x-api-key header: raises its shared
+keyless rate limit);
+ALTERLAB_CONTACT_EMAIL (opt-in contact address for Crossref's polite pool).
 A rate-limited source (HTTP 429) is reported in ``source_status`` and
-``summary.notes``; it never counts as "not found".
+``summary.notes`` as not checked; it never counts as "not found".
 
-Exit codes: 0 = ran (see JSON ``summary.verdict``); 2 = bad input/usage.
+Input formats (``--format auto`` detects them, and a mixed file is handled piecewise):
+- BibTeX / BibLaTeX: a dependency-free, brace-depth-aware tokenizer. Single-line and
+  multiline entries, any closing-brace indentation, nested braces, quoted values
+  (braces and ``{\\"o}`` inside), ``@type(...)`` entries, several entries per line,
+  trailing commas, case-insensitive types and field names. ``@string`` macros and
+  ``#`` concatenation are expanded (plus the standard ``jan``..``dec`` month macros);
+  ``@comment`` / ``@preamble`` / ``@string`` / ``@set`` / ``@xdata`` blocks are
+  skipped as non-references and listed. LaTeX accents pass through unchanged and are
+  folded to Unicode only when titles and surnames are compared.
+- A bare DOI / arXiv-ID list (one per line, ``#`` comments).
+- Free-form references (APA-style lines, numbered lists, blank-line-separated blocks).
+  In ``auto`` mode, reference-like text outside BibTeX entries is verified as free-form.
+- Text that is not a reference is skipped, never checked: Markdown headings, prose
+  paragraphs, and text with no year, identifier (DOI / arXiv / ISBN / URL) or author
+  name (see ``not_a_reference``). It is listed in ``input_accounting.ignored_text`` as
+  "skipped: not a reference", counted in ``ignored_text_segments``, and gets no verdict.
+  As a second safety net a free-form entry is TF only with a title plus an author or year.
+
+Input accounting: every detected entry ends up in exactly one bucket. It is either
+*parsed* (and then verified, unverified, or flagged), *rejected* (malformed, with a
+line number, the key if any, and the reason: unbalanced braces, missing citation key,
+missing comma, unterminated quote, an undefined macro in a field the check needs, or
+stray field text outside an entry), or *unsupported* (well-formed but not handled,
+with the reason, e.g. an unknown ``@type``). The JSON report carries a top-level
+``status`` ("complete" | "partial"), a ``warning`` banner, ``summary.input`` counts,
+and an ``input_accounting`` object with every diagnostic. A run where any entry was
+rejected, unsupported, or left unprocessed can never return PASS or
+PASS_WITH_CONDITIONS: its ``summary.verdict`` is PARTIAL (or FAIL when a SERIOUS
+finding dominates), and a warning banner is printed to stderr ahead of the report.
+
+Exit codes:
+  0  complete audit: every detected entry was parsed and got a verdict; read
+     ``summary.verdict`` (PASS / PASS_WITH_CONDITIONS / FAIL / UNVERIFIED).
+  2  bad input or usage: unreadable input, unknown option, or no entry could be
+     parsed (when entries were detected but all were rejected or unsupported, the
+     report is still written so the diagnostics are available).
+  3  partial audit: the report was written, but at least one detected entry was
+     rejected, unsupported, or left unprocessed (``status`` = "partial"). Fix the
+     input using ``input_accounting`` and re-run before relying on the verdict.
 """
 
 from __future__ import annotations
 
 import argparse
+import bisect
 import json
 import os
 import re
 import socket
 import sys
 import time
+import unicodedata
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from difflib import SequenceMatcher
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Sequence
 
 # --------------------------------------------------------------------------- #
 # HTTP layer — prefer requests, fall back to urllib (stdlib). Keys optional.  #
 # --------------------------------------------------------------------------- #
 
-TOOL_VERSION = "1.1.0"
-DEFAULT_MAILTO = "alterlab.ieu@gmail.com"
+TOOL_VERSION = "1.4.1"
+# Contact email for Crossref's polite pool: opt-in (--mailto or ALTERLAB_CONTACT_EMAIL). With
+# none, requests carry no address and use the public pool; no default address is ever sent.
+DEFAULT_MAILTO = os.environ.get("ALTERLAB_CONTACT_EMAIL", "").strip()
 USER_AGENT = (
     "alterlab-citation-verifier/" + TOOL_VERSION + " (https://github.com/AlterLab-IEU/"
-    "AlterLab-Academic-Skills; mailto:{mailto})"
+    "AlterLab-Academic-Skills{contact})"
 )
+
+
+def _user_agent(mailto: str) -> str:
+    return USER_AGENT.format(contact=f"; mailto:{mailto}" if mailto else "")
+
+
+def _mailto_param(mailto: str, sep: str) -> str:
+    """``sep + 'mailto=...'`` when a contact email was given, else ''."""
+    return f"{sep}mailto={urllib.parse.quote(mailto)}" if mailto else ""
 HTTP_TIMEOUT = 15
 RETRIES = 2
 BACKOFF = 1.5
-# A 429 asking us to wait longer than this (e.g. OpenAlex's exhausted daily budget
-# returns Retry-After of many hours) is reported as a source error, not retried.
+# A 429 asking us to wait longer than this (an exhausted daily quota can return a
+# Retry-After of many hours) is reported as a source error, not retried.
 MAX_RETRY_AFTER = 30
 
-# Optional credentials — never required; they only raise rate limits.
-OPENALEX_API_KEY = os.environ.get("OPENALEX_API_KEY", "").strip()
+# Optional credential — never required; it only raises Semantic Scholar's rate limit.
 S2_API_KEY = (os.environ.get("S2_API_KEY") or os.environ.get("SEMANTIC_SCHOLAR_API_KEY") or "").strip()
 
 # Minimum spacing between calls to one host. arXiv's API terms ask for >= 3 s
-# between calls; Semantic Scholar's key tier is 1 request/second.
-MIN_INTERVAL = {"export.arxiv.org": 3.0, "arxiv.org": 3.0, "api.semanticscholar.org": 1.0}
+# between calls; Semantic Scholar's key tier is 1 request/second; Crossref's public
+# pool allows 5 requests/s with one in flight (checked 2026-11-02).
+MIN_INTERVAL = {"export.arxiv.org": 3.0, "arxiv.org": 3.0, "api.semanticscholar.org": 1.0,
+                "api.crossref.org": 0.25, "openlibrary.org": 1.0, "www.ebi.ac.uk": 0.1}
 _LAST_CALL: dict[str, float] = {}
+
+# Retry policy for HTTP 429 / 5xx per rate-limit key (a host, or host + "/search" for
+# Semantic Scholar search): (retries, base backoff in seconds), doubling per attempt.
+# Semantic Scholar's keyless pool is shared by every unauthenticated caller and sends no
+# Retry-After, so lookups get the longest backoff (2 + 4 + 8 s). Its search pool is
+# usually spent from busy networks (checked 2026-11-02: 429 on every try for minutes), so
+# search gets one retry and then a long pause. Crossref's public pool answers 429
+# whenever a second request from the same IP is in flight.
+RETRY_POLICY = {"api.semanticscholar.org": (3, 2.0), "api.semanticscholar.org/search": (1, 2.0),
+                "api.crossref.org": (3, 1.0)}
+# After a key's retries are spent on HTTP 429, calls to it fail fast for this long (s),
+# so one busy shared pool cannot stall a long bibliography. Each skipped call is
+# reported as rate-limited (not checked), never as "not found".
+RATE_LIMIT_COOLDOWN = {"api.semanticscholar.org": 30.0, "api.semanticscholar.org/search": 300.0}
+_COOLDOWN_UNTIL: dict[str, float] = {}
+
+
+def _rate_key(url: str) -> str:
+    """Rate-limit bucket for a URL: its host, with Semantic Scholar search kept separate
+    from its lookups (they are limited separately, and search is far more often refused)."""
+    parts = urllib.parse.urlsplit(url)
+    host = parts.hostname or ""
+    if host == "api.semanticscholar.org" and parts.path.rstrip("/").endswith("/search"):
+        return host + "/search"
+    return host
 
 try:  # pragma: no cover - environment dependent
     import requests as _requests  # type: ignore
@@ -139,12 +226,13 @@ def _throttle(url: str) -> None:
 # What a rate limit means per host, so a 429 is reported with its remedy instead
 # of silently reading as "no match".
 _RATE_LIMIT_HINTS = {
-    "api.openalex.org": ("OpenAlex rate limit: the keyless daily budget shared by this IP is "
-                         "spent (or the request rate is too high); set a free OPENALEX_API_KEY "
-                         "or retry after the reset at midnight UTC"),
-    "api.semanticscholar.org": ("Semantic Scholar rate limit: the keyless pool is shared by all "
-                                "unauthenticated users; set S2_API_KEY or retry later"),
-    "api.crossref.org": "Crossref rate limit: slow down (polite pool allows 10 req/s, 3 concurrent)",
+    "api.semanticscholar.org": ("Semantic Scholar rate limit: not checked (which is not 'not found'); "
+                                "the keyless pool is shared by all unauthenticated users, so retry "
+                                "later or set the optional S2_API_KEY"),
+    "api.crossref.org": ("Crossref rate limit: not checked; slow down (public pool 5 req/s with one "
+                         "request in flight; polite pool with --mailto 10 req/s)"),
+    "www.ebi.ac.uk": "Europe PMC rate limit: not checked; retry later",
+    "openlibrary.org": "Open Library rate limit: not checked; retry later",
 }
 
 
@@ -156,11 +244,23 @@ def _http_get(url: str, mailto: str, accept: str = "application/json",
     Raises SourceError when the API could not answer (429/5xx after retries,
     401/403, timeout) and NetworkUnavailable on a DNS/connection failure, so the
     caller can tell "offline" and "this source failed" apart from "not found".
+
+    HTTP 429 / 5xx are retried with backoff (``RETRY_POLICY`` per host, honouring a short
+    ``Retry-After``). A host listed in ``RATE_LIMIT_COOLDOWN`` that is still answering
+    429 once its retries are spent fails fast for a while, with the same rate-limit
+    SourceError, so the entry records that source as not checked.
     """
-    headers = {"User-Agent": USER_AGENT.format(mailto=mailto), "Accept": accept}
+    host = urllib.parse.urlsplit(url).hostname or ""
+    key = _rate_key(url)
+    if time.monotonic() < _COOLDOWN_UNTIL.get(key, 0.0):
+        raise SourceError("HTTP 429 — " + _RATE_LIMIT_HINTS.get(host, "rate limited; retry later"))
+    retries, base = RETRY_POLICY.get(key, (RETRIES, BACKOFF))
+    headers = {"User-Agent": _user_agent(mailto), "Accept": accept}
     headers.update(extra_headers or {})
     last_exc: Optional[Exception] = None
-    for attempt in range(RETRIES + 1):
+    wait_hint = 0.0  # a short Retry-After the server asked for
+    reset_retried = False  # one connection reset is retried before "offline" is concluded
+    for attempt in range(retries + 1):
         _throttle(url)
         try:
             if _HAS_REQUESTS:
@@ -181,10 +281,12 @@ def _http_get(url: str, mailto: str, accept: str = "application/json",
             last_exc = exc
             if exc.retry_after > MAX_RETRY_AFTER:
                 break
+            wait_hint = exc.retry_after
         except urllib.error.HTTPError as exc:  # urllib path
             if exc.code == 429 or 500 <= exc.code < 600:
                 last_exc = exc
-                if _retry_after(exc.headers.get("Retry-After") if exc.headers else None) > MAX_RETRY_AFTER:
+                wait_hint = _retry_after(exc.headers.get("Retry-After") if exc.headers else None)
+                if wait_hint > MAX_RETRY_AFTER:
                     break
             elif exc.code in (401, 403):
                 raise SourceError(f"HTTP {exc.code} (access denied)") from exc
@@ -193,8 +295,10 @@ def _http_get(url: str, mailto: str, accept: str = "application/json",
         except urllib.error.URLError as exc:
             if isinstance(exc.reason, (socket.timeout, TimeoutError)):
                 last_exc = exc  # slow source, not an offline machine
-            else:
+            elif reset_retried or attempt >= retries:
                 raise NetworkUnavailable(str(exc.reason)) from exc  # DNS / no route
+            else:
+                reset_retried, last_exc = True, exc  # a dropped connection: try once more
         except (socket.timeout, TimeoutError) as exc:
             last_exc = exc
         except ValueError as exc:  # malformed JSON body
@@ -206,14 +310,18 @@ def _http_get(url: str, mailto: str, accept: str = "application/json",
             if "Timeout" in name:
                 last_exc = exc
             elif any(k in name for k in ("Connection", "DNS", "SSL")):
-                raise NetworkUnavailable(str(exc)) from exc
+                if reset_retried or attempt >= retries:
+                    raise NetworkUnavailable(str(exc)) from exc
+                reset_retried, last_exc = True, exc
             else:
                 last_exc = exc
-        if attempt < RETRIES:
-            time.sleep(BACKOFF * (attempt + 1))
+        if attempt < retries:
+            delay = base * (2 ** attempt) if key in RETRY_POLICY else BACKOFF * (attempt + 1)
+            time.sleep(max(delay, wait_hint))
     code = getattr(last_exc, "status", None) or getattr(last_exc, "code", None)
     if code == 429:
-        host = urllib.parse.urlsplit(url).hostname or ""
+        if key in RATE_LIMIT_COOLDOWN:
+            _COOLDOWN_UNTIL[key] = time.monotonic() + RATE_LIMIT_COOLDOWN[key]
         raise SourceError("HTTP 429 — " + _RATE_LIMIT_HINTS.get(host, "rate limited; retry later"))
     raise SourceError(f"no answer after retries ({last_exc})")
 
@@ -225,9 +333,42 @@ def _http_get(url: str, mailto: str, accept: str = "application/json",
 _WS = re.compile(r"\s+")
 _NONWORD = re.compile(r"[^\w\s]")
 
+# LaTeX accent commands -> Unicode combining marks, so a BibTeX surname such as
+# M{\"u}ller compares equal to the "Müller" an API returns. Used only for comparison;
+# the cited values themselves are passed through unchanged.
+_TEX_ACCENT_MARKS = {
+    '"': "\u0308", "'": "\u0301", "`": "\u0300", "^": "\u0302", "~": "\u0303", "=": "\u0304",
+    ".": "\u0307", "u": "\u0306", "v": "\u030c", "H": "\u030b", "c": "\u0327", "k": "\u0328",
+    "r": "\u030a", "d": "\u0323", "b": "\u0331",
+}
+_TEX_SPECIAL_LETTERS = {
+    "ss": "ß", "aa": "å", "AA": "Å", "ae": "æ", "AE": "Æ", "oe": "œ", "OE": "Œ",
+    "o": "ø", "O": "Ø", "l": "ł", "L": "Ł",
+}
+_TEX_DOTLESS_RE = re.compile(r"\\([ij])(?![A-Za-z])")
+_TEX_SYMBOL_ACCENT_RE = re.compile(r"\\([\"'`^~=.])\s*(?:\{\s*([A-Za-z])\s*\}|([A-Za-z]))")
+_TEX_LETTER_ACCENT_RE = re.compile(r"\\([uvHckrdb])(?:\s*\{\s*([A-Za-z])\s*\}|\s+([A-Za-z])(?![A-Za-z]))")
+_TEX_SPECIAL_RE = re.compile(r"\\(ss|aa|AA|ae|AE|oe|OE|o|O|l|L)(?![A-Za-z])")
+
+
+def _fold_latex(text: str) -> str:
+    """Best-effort LaTeX accent/special-letter folding to NFC Unicode (comparison only)."""
+    def accent(m: re.Match) -> str:
+        return (m.group(2) or m.group(3)) + _TEX_ACCENT_MARKS[m.group(1)]
+
+    text = _TEX_DOTLESS_RE.sub(r"\1", text)
+    text = _TEX_SYMBOL_ACCENT_RE.sub(accent, text)
+    text = _TEX_LETTER_ACCENT_RE.sub(accent, text)
+    text = _TEX_SPECIAL_RE.sub(lambda m: _TEX_SPECIAL_LETTERS[m.group(1)], text)
+    return unicodedata.normalize("NFC", text)
+
 
 def _normalize(text: str) -> str:
-    text = (text or "").lower().strip()
+    text = text or ""
+    if "\\" in text:
+        text = _fold_latex(text)
+    # BibTeX grouping braces ("{DNA}", "M{\"u}ller") are not word boundaries.
+    text = text.replace("{", "").replace("}", "").lower().strip()
     text = _NONWORD.sub(" ", text)
     return _WS.sub(" ", text).strip()
 
@@ -235,7 +376,7 @@ def _normalize(text: str) -> str:
 def title_ratio(a: str, b: str) -> float:
     """Similarity ratio (0..1) via difflib SequenceMatcher on normalized titles.
 
-    Some records drop the subtitle (OpenAlex / Semantic Scholar often store only
+    Some records drop the subtitle (Semantic Scholar and arXiv often store only
     "Main title"), so a title with a subtitle also counts as matching when its main
     title is essentially identical (ratio >= 0.9) to the other title *as a whole*.
     Comparing main titles loosely would match unrelated works that merely share a
@@ -339,46 +480,70 @@ class Entry:
     doi: str = ""
     arxiv_id: str = ""
     venue: str = ""
+    # Provenance, for input accounting and diagnostics.
+    fmt: str = ""            # "bibtex" | "doi" | "freeform"
+    line: int = 0            # 1-based line where the entry starts (0 = unknown)
+    entry_type: str = ""     # lower-cased BibTeX entry type ("article", ...)
+    warnings: list[str] = field(default_factory=list)
 
 
-def _looks_like_bibtex(text: str) -> bool:
-    return bool(re.search(r"@\w+\s*\{", text))
+@dataclass
+class ParseResult:
+    """Everything the parser found in one input.
+
+    Every detected entry lands in exactly one of ``entries`` (parsed), ``rejected``
+    (malformed) or ``unsupported`` (well-formed but not handled), so
+    ``detected == len(entries) + len(rejected) + len(unsupported)``. Non-reference
+    BibTeX blocks (``skipped``) and prose that is not a reference (``ignored_text``)
+    are listed for transparency but are not entries.
+    """
+
+    format_requested: str = "auto"
+    format_detected: str = ""
+    entries: list[Entry] = field(default_factory=list)
+    rejected: list[dict] = field(default_factory=list)
+    unsupported: list[dict] = field(default_factory=list)
+    skipped: list[dict] = field(default_factory=list)
+    ignored_text: list[dict] = field(default_factory=list)
+    warnings: list[dict] = field(default_factory=list)
+
+    @property
+    def detected(self) -> int:
+        return len(self.entries) + len(self.rejected) + len(self.unsupported)
+
+    @property
+    def complete(self) -> bool:
+        return not (self.rejected or self.unsupported)
 
 
-def parse_bibtex(text: str) -> list[Entry]:
-    entries: list[Entry] = []
-    for m in re.finditer(r"@(\w+)\s*\{([^,]*),(.*?)\n\}", text, re.DOTALL):
-        body = m.group(3)
-        key = m.group(2).strip()
+def _excerpt(text: str, limit: int = 100) -> str:
+    text = _WS.sub(" ", text or "").strip()
+    return text if len(text) <= limit else text[: limit - 1] + "…"
 
-        def fld(name: str) -> str:
-            # (?<![\w-]) keeps "title" from matching inside "booktitle"/"shorttitle";
-            # braces/quotes are optional so bare values such as `year = 2019,` parse.
-            fm = re.search(
-                rf"(?<![\w-]){name}\s*=\s*[{{\"]?(.+?)[}}\"]?\s*,?\s*$",
-                body,
-                re.IGNORECASE | re.MULTILINE | re.DOTALL,
-            )
-            return _WS.sub(" ", fm.group(1)).strip() if fm else ""
 
-        authors_raw = fld("author")
-        authors = [a.strip() for a in re.split(r"\s+and\s+", authors_raw) if a.strip()]
-        year_raw = fld("year") or fld("date")
-        ym = re.search(r"(?:19|20)\d{2}", year_raw)
-        eprint = fld("eprint")
-        bare_old = OLD_ARXIV_BARE_RE.match(eprint) if eprint else None
-        e = Entry(
-            raw=m.group(0),
-            key=key,
-            title=fld("title").replace("{", "").replace("}", ""),
-            authors=authors,
-            year=ym.group(0) if ym else year_raw,
-            doi=_first_doi(fld("doi") or body),
-            arxiv_id=bare_old.group(1) if bare_old else _first_arxiv(eprint or body),
-            venue=fld("journal") or fld("booktitle") or fld("publisher"),
-        )
-        entries.append(e)
-    return entries
+def _diag(fmt: str, line: int, reason: str, *, key: str = "", entry_type: str = "",
+          end_line: int = 0, error_line: int = 0, excerpt: str = "") -> dict:
+    """One machine-readable diagnostic for a rejected / unsupported entry or a warning."""
+    return {
+        "format": fmt,
+        "line": line,
+        "end_line": max(end_line, line),
+        "error_line": error_line or line,
+        "key": key or None,
+        "entry_type": entry_type or None,
+        "reason": reason,
+        "excerpt": _excerpt(excerpt),
+    }
+
+
+class _LineIndex:
+    """Offset -> 1-based line number."""
+
+    def __init__(self, text: str) -> None:
+        self._nl = [m.start() for m in re.finditer("\n", text)]
+
+    def __call__(self, pos: int) -> int:
+        return bisect.bisect_left(self._nl, pos) + 1
 
 
 def _first_doi(text: str) -> str:
@@ -395,6 +560,707 @@ def _first_arxiv(text: str) -> str:
     if not m:
         return ""
     return (m.group(1) or m.group(2) or "").strip()
+
+
+# --------------------------------------------------------------------------- #
+# BibTeX tokenizer — stdlib only, brace-depth and quote aware                 #
+# --------------------------------------------------------------------------- #
+
+# Citable entry types: classic BibTeX, BibLaTeX, and aliases reference managers write
+# (JabRef @electronic, IEEEtran @www, @webpage, @preprint). Matched case-insensitively.
+BIBTEX_REFERENCE_TYPES = frozenset({
+    "article", "book", "booklet", "conference", "inbook", "incollection", "inproceedings",
+    "manual", "mastersthesis", "misc", "phdthesis", "proceedings", "techreport", "unpublished",
+    "artwork", "audio", "bookinbook", "collection", "commentary", "dataset", "image",
+    "inreference", "jurisdiction", "legal", "legislation", "letter", "movie", "music",
+    "mvbook", "mvcollection", "mvproceedings", "mvreference", "online", "patent",
+    "performance", "periodical", "reference", "report", "review", "software", "standard",
+    "suppbook", "suppcollection", "suppperiodical", "thesis", "video",
+    "electronic", "www", "webpage", "preprint",
+})
+# Blocks that are not references: skipped, but listed in the input accounting.
+_BIB_NON_REFERENCE = {
+    "comment": "@comment block (not a reference)",
+    "preamble": "@preamble block (LaTeX preamble, not a reference)",
+    "string": "@string macro definition (expanded into the entries that use it)",
+    "set": "@set entry set (groups other entries; each member is verified on its own)",
+    "xdata": "@xdata container (fields shared by other entries; not itself a reference)",
+}
+_BIB_KNOWN_TYPES = BIBTEX_REFERENCE_TYPES | frozenset(_BIB_NON_REFERENCE)
+# Fields the existence check relies on: an undefined @string macro in one of them
+# would make the verdict rest on a macro name, so such an entry is rejected instead.
+_BIB_CRITICAL_FIELDS = ("title", "author", "year", "date", "doi", "eprint")
+_BIB_MONTHS = {m[:3].lower(): m for m in (
+    "January", "February", "March", "April", "May", "June", "July", "August",
+    "September", "October", "November", "December")}
+
+_BIB_ENTRY_START_RE = re.compile(r"@[ \t]*([A-Za-z][\w\-]*)[ \t\r\n]*([{(]?)")
+_BIB_LINE_ENTRY_RE = re.compile(r"[ \t]*@[ \t]*[A-Za-z][\w\-]*[ \t]*[{(]")
+_BIB_NEXT_LINE_ENTRY_RE = re.compile(r"^[ \t]*@[ \t]*[A-Za-z][\w\-]*[ \t]*[{(]", re.MULTILINE)
+_BIB_SPECIAL_RE = re.compile(r"[{}\"@\n)]")
+_BIB_KEY_RE = re.compile(r"[^\s,{}()\"#=%]+")
+_BIB_FIELD_RE = re.compile(r"[^\s,{}()\"#=%]+")
+_BIB_NUMBER_RE = re.compile(r"[0-9]+")
+_BIB_MACRO_RE = re.compile(r"[A-Za-z_][\w\-:.+/']*")
+_BIB_FIELD_DEBRIS_RE = re.compile(r"(?m)^[\s,]*[A-Za-z][\w\-]*\s*=\s*[{\"\w]")
+_BIB_COMMENTED_ENTRY_RE = re.compile(r"%+\s*@\s*[A-Za-z][\w\-]*\s*[{(]\s*([^\s,{}()\"#=%]*)")
+_BIB_EMAILISH = frozenset("._%+-")
+
+
+class _BibSyntaxError(Exception):
+    def __init__(self, reason: str, pos: int, key: str = "") -> None:
+        super().__init__(reason)
+        self.reason = reason
+        self.pos = pos
+        self.key = key
+
+
+@dataclass
+class _BibBlock:
+    entry_type: str          # as written ("ARTICLE", "Comment", ...)
+    start: int               # offset of the '@'
+    end: int                 # offset just past the block (where scanning resumes)
+    body_start: int = 0      # offset just past the opening '{' / '('
+    body_end: int = 0        # offset of the closing delimiter (end of the body)
+    error: str = ""
+    error_pos: int = -1
+
+    @property
+    def kind(self) -> str:
+        return self.entry_type.lower()
+
+
+def _bib_entry_at(text: str, at: int) -> Optional[re.Match]:
+    """The '@type' match at ``at`` if it starts a BibTeX block, else None.
+
+    '@' inside a word (an e-mail address) is ignored; '@word' without a following
+    '{' / '(' counts only for known types (so "@handle" in prose is not an entry); and
+    an '@' on a line that starts with '%' is a commented-out entry (listed, not parsed —
+    BibTeX itself would still read it, but the author meant to exclude it).
+    """
+    if at > 0 and (text[at - 1].isalnum() or text[at - 1] in _BIB_EMAILISH):
+        return None
+    if text[text.rfind("\n", 0, at) + 1:at].lstrip().startswith("%"):
+        return None
+    m = _BIB_ENTRY_START_RE.match(text, at)
+    if not m:
+        return None
+    if m.group(2) or m.group(1).lower() in _BIB_KNOWN_TYPES:
+        return m
+    return None
+
+
+def _bib_next_line_entry(text: str, pos: int) -> int:
+    """Offset of the next line (after ``pos``) that starts with '@type{' / '@type(', or EOF."""
+    m = _BIB_NEXT_LINE_ENTRY_RE.search(text, pos)
+    return m.start() if m else len(text)
+
+
+_BIB_CLOSING_LINE_RE = re.compile(r"^[ \t]*[})][ \t]*$", re.MULTILINE)
+
+
+def _bib_headerless_end(text: str, pos: int) -> int:
+    """Where an '@type' with no '{' / '(' ends: past the first line holding only '}' or
+    ')', or at the next '@type{' line, whichever comes first (else the end of input)."""
+    nxt = _bib_next_line_entry(text, pos)
+    m = _BIB_CLOSING_LINE_RE.search(text, pos, nxt)
+    return m.end() if m else nxt
+
+
+def _bib_find_block_end(text: str, at: int, body_start: int, etype: str, delim: str,
+                        li: _LineIndex) -> _BibBlock:
+    """Find where the block opened at ``at`` closes, tracking brace depth and quotes.
+
+    Recovery: a line that starts a new '@type{' / '@type(' while this block is still
+    open, or an '@type{' between fields, ends this block as malformed, so one broken
+    entry cannot swallow the entries after it.
+    """
+    is_comment = etype.lower() == "comment"
+    close = "}" if delim == "{" else ")"
+    base = 1 if delim == "{" else 0
+    depth, in_quote, quote_pos = base, False, -1
+    first_err, first_err_pos = "", -1
+    opened = li(at)
+
+    def unclosed(where: str) -> str:
+        if in_quote:
+            return f"unterminated quote: the '\"' opened at line {li(quote_pos)} is never closed {where}"
+        if depth > 0:  # for a '{' entry the count includes the entry's own brace
+            extra = "" if delim == "{" else " (and the entry's closing ')')"
+            return (f"unbalanced braces: the entry opened at line {opened} still has {depth} "
+                    f"unclosed '{{'{extra} {where}")
+        return f"missing closing ')' for the entry opened at line {opened} {where}"
+
+    for m in _BIB_SPECIAL_RE.finditer(text, body_start):
+        j = m.start()
+        c = text[j]
+        if c == "\n":
+            if not is_comment and _BIB_LINE_ENTRY_RE.match(text, j + 1):
+                return _BibBlock(etype, at, j + 1, body_start, j,
+                                 unclosed(f"when the next entry starts at line {li(j + 1)}"),
+                                 quote_pos if in_quote else at)
+        elif c == '"':
+            if not is_comment and depth == base and text[j - 1] != "\\":
+                in_quote, quote_pos = not in_quote, j
+        elif c == "{":
+            depth += 1
+        elif c == "}":
+            if in_quote and depth == base:
+                return _BibBlock(etype, at, j + 1, body_start, j,
+                                 (f"unterminated quote or unbalanced '}}' inside a quoted value "
+                                  f"(the '\"' opened at line {li(quote_pos)})"), quote_pos)
+            depth -= 1
+            if delim == "{" and depth == 0:
+                return _BibBlock(etype, at, j + 1, body_start, j, first_err, first_err_pos)
+            if depth < 0:  # only possible in a '(' entry
+                if not first_err:
+                    first_err = f"unbalanced braces: '}}' at line {li(j)} has no matching '{{'"
+                    first_err_pos = j
+                depth = 0
+        elif c == ")":
+            if delim == "(" and depth == 0 and not in_quote:
+                return _BibBlock(etype, at, j + 1, body_start, j, first_err, first_err_pos)
+        elif c == "@":
+            if not is_comment and depth == base and not in_quote:
+                nxt = _bib_entry_at(text, j)
+                if nxt and nxt.group(2):
+                    return _BibBlock(etype, at, j, body_start, j,
+                                     (f"missing closing '{close}' before the next entry "
+                                      f"'@{nxt.group(1)}' at line {li(j)}"), j)
+    resume = _bib_next_line_entry(text, body_start)
+    return _BibBlock(etype, at, resume, body_start, resume, unclosed("at the end of the input"),
+                     quote_pos if in_quote else at)
+
+
+def _scan_bibtex_blocks(text: str, li: _LineIndex) -> list[_BibBlock]:
+    """Split ``text`` into BibTeX blocks (well-formed or not), in input order."""
+    blocks: list[_BibBlock] = []
+    n, pos = len(text), 0
+    while pos < n:
+        at = text.find("@", pos)
+        if at < 0:
+            break
+        m = _bib_entry_at(text, at)
+        if not m:
+            pos = at + 1
+            continue
+        etype, delim = m.group(1), m.group(2)
+        if not delim:
+            if etype.lower() == "comment":  # "@comment text": BibTeX skips it like inter-entry text
+                eol = text.find("\n", at)
+                eol = n if eol < 0 else eol
+                blocks.append(_BibBlock(etype, at, eol))
+                pos = eol
+                continue
+            resume = _bib_headerless_end(text, m.end(1))
+            blocks.append(_BibBlock(etype, at, resume, m.end(1), resume,
+                                    error=f"missing '{{' or '(' after '@{etype}'",
+                                    error_pos=m.end(1)))
+            pos = max(resume, at + 1)
+            continue
+        blk = _bib_find_block_end(text, at, m.end(), etype, delim, li)
+        blocks.append(blk)
+        pos = max(blk.end, at + 1)
+    return blocks
+
+
+def _skip_ws(text: str, i: int, end: int) -> int:
+    while i < end and text[i].isspace():
+        i += 1
+    return i
+
+
+def _snippet(text: str, i: int, end: int) -> str:
+    return _excerpt(text[i:min(end, i + 24)].split("\n", 1)[0], 24)
+
+
+def _bib_match_brace(text: str, i: int, end: int) -> int:
+    depth = 0
+    for j in range(i, end):
+        c = text[j]
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return j
+    return -1
+
+
+def _bib_match_quote(text: str, i: int, end: int) -> int:
+    """Index of the '"' closing the quote at ``i``; -1 unterminated, -2 unbalanced '}'."""
+    depth = 0
+    for j in range(i + 1, end):
+        c = text[j]
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth < 0:
+                return -2
+        elif c == '"' and depth == 0 and text[j - 1] != "\\":
+            return j
+    return -1
+
+
+def _bib_parse_key(text: str, i: int, end: int) -> tuple[str, int]:
+    """Parse the citation key; return (key, offset after the key's comma)."""
+    i = _skip_ws(text, i, end)
+    if i >= end:
+        raise _BibSyntaxError("missing citation key: the entry is empty", i)
+    if text[i] == ",":
+        raise _BibSyntaxError("missing citation key: the entry starts with ','", i)
+    m = _BIB_KEY_RE.match(text, i)
+    if not m:
+        raise _BibSyntaxError(f"missing citation key: found {_snippet(text, i, end)!r} "
+                              "where the key should be", i)
+    key = m.group(0)
+    j = _skip_ws(text, m.end(), end)
+    if j < end and text[j] == "=":
+        raise _BibSyntaxError(f"missing citation key: the entry starts with the field "
+                              f"'{key} = ...' (expected '@type{{key, {key} = ...')", i)
+    if j >= end:
+        return key, j
+    if text[j] != ",":
+        raise _BibSyntaxError(f"missing comma after citation key '{key}' (found "
+                              f"{_snippet(text, j, end)!r}; keys cannot contain spaces)", j, key)
+    return key, j + 1
+
+
+def _bib_parse_value(text: str, i: int, end: int, name: str, li: _LineIndex,
+                     key: str) -> tuple[list[tuple[str, str]], int]:
+    """Parse ``{...}`` / ``"..."`` / number / macro parts joined by '#'."""
+    parts: list[tuple[str, str]] = []
+    while True:
+        if i >= end or text[i] == ",":
+            what = (f"dangling '#' at the end of field '{name}'" if parts
+                    else f"field '{name}' has no value after '='")
+            raise _BibSyntaxError(what, i, key)
+        c = text[i]
+        if c == "{":
+            j = _bib_match_brace(text, i, end)
+            if j < 0:
+                raise _BibSyntaxError(f"unbalanced braces in field '{name}': the '{{' at line "
+                                      f"{li(i)} is never closed", i, key)
+            parts.append(("str", text[i + 1:j]))
+            i = j + 1
+        elif c == '"':
+            j = _bib_match_quote(text, i, end)
+            if j == -1:
+                raise _BibSyntaxError(f"unterminated quote in field '{name}' (opened at line "
+                                      f"{li(i)})", i, key)
+            if j == -2:
+                raise _BibSyntaxError(f"unbalanced braces inside the quoted value of field "
+                                      f"'{name}' (line {li(i)})", i, key)
+            parts.append(("str", text[i + 1:j]))
+            i = j + 1
+        elif "0" <= c <= "9":  # (not str.isdigit: "²" is a digit to Python but not a number)
+            m = _BIB_NUMBER_RE.match(text, i)
+            parts.append(("num", m.group(0)))
+            i = m.end()
+        else:
+            m = _BIB_MACRO_RE.match(text, i)
+            if not m:
+                raise _BibSyntaxError(f"unexpected {c!r} in the value of field '{name}' at line "
+                                      f"{li(i)}", i, key)
+            parts.append(("macro", m.group(0)))
+            i = m.end()
+        j = _skip_ws(text, i, end)
+        if j < end and text[j] == "#":
+            i = _skip_ws(text, j + 1, end)
+            continue
+        return parts, i
+
+
+def _bib_parse_fields(text: str, i: int, end: int, li: _LineIndex,
+                      key: str = "") -> tuple[list[tuple[str, list, int]], list[str]]:
+    """Parse ``name = value`` pairs separated by commas (a trailing comma is fine)."""
+    fields: list[tuple[str, list, int]] = []
+    warnings: list[str] = []
+    while True:
+        i = _skip_ws(text, i, end)
+        if i >= end:
+            return fields, warnings
+        if text[i] == ",":
+            warnings.append(f"extra ',' at line {li(i)} ignored")
+            i += 1
+            continue
+        if text[i] == "%":  # BibTeX has no comments inside entries; skip the line, but say so
+            eol = text.find("\n", i, end)
+            eol = end if eol < 0 else eol
+            warnings.append(f"'%' comment line inside the entry at line {li(i)} ignored")
+            i = eol
+            continue
+        m = _BIB_FIELD_RE.match(text, i)
+        if not m:
+            raise _BibSyntaxError(f"expected a field name at line {li(i)}, found "
+                                  f"{_snippet(text, i, end)!r}", i, key)
+        name, name_pos = m.group(0), i
+        i = _skip_ws(text, m.end(), end)
+        if i >= end or text[i] == ",":
+            raise _BibSyntaxError(f"field '{name}' at line {li(name_pos)} has no value "
+                                  f"(expected '{name} = {{...}}')", name_pos, key)
+        if text[i] != "=":
+            raise _BibSyntaxError(f"missing '=' after field name '{name}' at line {li(name_pos)} "
+                                  f"(found {_snippet(text, i, end)!r})", i, key)
+        i = _skip_ws(text, i + 1, end)
+        parts, i = _bib_parse_value(text, i, end, name, li, key)
+        fields.append((name.lower(), parts, name_pos))
+        bare_end = i
+        i = _skip_ws(text, i, end)
+        if i >= end:
+            return fields, warnings
+        if text[i] != ",":
+            hint = ""
+            if parts[-1][0] != "str" and i == bare_end:
+                hint = (f"; only numbers and @string names may be unbraced — write "
+                        f"{name} = {{...}}")
+            raise _BibSyntaxError(f"missing comma after field '{name}' (found "
+                                  f"{_snippet(text, i, end)!r} at line {li(i)}){hint}", i, key)
+        i += 1
+
+
+def _bib_resolve(parts: list[tuple[str, str]], macros: dict[str, str]) -> tuple[str, list[str]]:
+    """Concatenate value parts, expanding @string macros; return (value, undefined names)."""
+    out: list[str] = []
+    undefined: list[str] = []
+    for kind, val in parts:
+        if kind == "macro":
+            low = val.lower()
+            if low in macros:
+                val = macros[low]
+            elif low in _BIB_MONTHS:
+                val = _BIB_MONTHS[low]
+            else:
+                undefined.append(val)
+        out.append(val)
+    return "".join(out), undefined
+
+
+def _split_bibtex_names(value: str) -> list[str]:
+    """Split a BibTeX name list on 'and' at brace depth 0; drop the 'others' marker."""
+    parts: list[str] = []
+    depth = last = i = 0
+    sep = re.compile(r"\s+and\s+", re.IGNORECASE)
+    while i < len(value):
+        c = value[i]
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth = max(0, depth - 1)
+        elif depth == 0 and c.isspace():
+            m = sep.match(value, i)
+            if m:
+                parts.append(value[last:i])
+                last = i = m.end()
+                continue
+        i += 1
+    parts.append(value[last:])
+    names = []
+    for p in parts:
+        p = _WS.sub(" ", p.replace("{", "").replace("}", "")).strip()
+        if p and p.lower() != "others":
+            names.append(p)
+    return names
+
+
+def _bibtex_entry(raw: str, body: str, key: str, kind: str, values: dict[str, str]) -> Entry:
+    def g(name: str) -> str:
+        return _WS.sub(" ", values.get(name, "")).strip()
+
+    year_raw = g("year") or g("date")
+    ym = re.search(r"(?:19|20)\d{2}", year_raw)
+    eprint = g("eprint")
+    bare_old = OLD_ARXIV_BARE_RE.match(eprint) if eprint else None
+    return Entry(
+        raw=raw,
+        key=key,
+        title=_WS.sub(" ", g("title").replace("{", "").replace("}", "")).strip(),
+        authors=_split_bibtex_names(values.get("author", "")),
+        year=ym.group(0) if ym else year_raw,
+        doi=_first_doi(g("doi") or body),
+        arxiv_id=bare_old.group(1) if bare_old else _first_arxiv(eprint or body),
+        venue=g("journal") or g("journaltitle") or g("booktitle") or g("publisher"),
+        fmt="bibtex",
+        entry_type=kind,
+    )
+
+
+_MD_HEADING_RE = re.compile(r"^\s{0,3}#{1,6}(?:\s|$)")
+_ISBN_RE = re.compile(r"(?i)\bISBN(?:-1[03])?:?\s*[0-9][0-9\s-]{8,}[0-9X]\b")
+_YEAR_RE = re.compile(r"(?<!\d)(?:19|20)\d{2}(?!\d)")
+# A year written the way references write it: "(2019)", "(2019a)", "(2019, May 3)", or
+# "2019." / "2019," / "2019;" / "2019:" — not a year inside running text or a date.
+_CITED_YEAR_RE = re.compile(r"\((?:19|20)\d{2}[a-z]?(?:,[^)]{0,30})?\)"
+                            r"|(?<![\d-])(?:19|20)\d{2}[a-z]?(?=[.,;:](?:\s|$))")
+# Author name shapes, looked for only in the part before the first year (where a
+# reference puts its authors): "Surname, I." anywhere there; "Smith J." / "Smith JA,"
+# (Vancouver); "J. Smith"; "et al".
+_AUTHOR_SHAPES_RE = re.compile(
+    r"[A-Z][\w'’\-]+,\s+(?:[A-Z]\.\s?){1,3}"
+    r"|\b[A-Z][a-z][\w'’\-]+\s[A-Z]{1,3}[.,](?:\s|$)"
+    r"|\b(?:[A-Z]\.\s?){1,3}[A-Z][a-z][\w'’\-]+"
+    r"|\bet al\b")
+_LIST_MARKER_RE = re.compile(r"^\s*\[?\d{1,3}[\].)]\s+")
+# "compiled in 2019." — a year after a preposition is running text, not a citation year.
+_RUNNING_YEAR_RE = re.compile(r"(?i)\b(?:in|since|until|till|during|from|by|before|after|of|on|"
+                              r"around|circa|throughout|between|and|to)$")
+_FUNCTION_WORDS = frozenset("""
+a an the is are was were be been being it its this that these those and or but of to in on
+for with by as at from into should may must will would can could not no when which who each
+so has have had we you they our your their if then than only also more most here there such
+""".split())
+
+
+def _reads_as_prose(text: str) -> bool:
+    """Running text rather than a citation: six or more words, at least 30% function words."""
+    words = re.findall(r"[A-Za-z][A-Za-z'’\-]*", text)
+    return len(words) >= 6 and sum(w.lower() in _FUNCTION_WORDS for w in words) / len(words) >= 0.3
+
+
+def not_a_reference(text: str) -> Optional[str]:
+    """Why ``text`` is not a reference (it is skipped, never checked), or None to check it.
+
+    Deliberately conservative — anything that might be a reference is checked:
+      * a Markdown heading ("# References") is skipped;
+      * a DOI, arXiv ID, ISBN or URL, or an author name before the first year (or a
+        numbered-list / "Surname, I." / "Organisation (2019)" lead), makes it a reference;
+      * otherwise text with no year is skipped (no year, identifier or author name);
+      * a list number alone ("1. Install the tool") is not an author name;
+      * a year with no author name and no identifier is a reference when written as
+        references write years ("(2019)", "Geneva: WHO; 2016.") and not after a
+        preposition; otherwise it is skipped only when the text reads as prose ("The
+        list was compiled in 2019 for the review"), and checked when it does not
+        ("Annual Report 2019 World Health Organization").
+    """
+    t = _WS.sub(" ", text or "").strip()
+    if not t:
+        return "empty"
+    if _MD_HEADING_RE.match(t):
+        return "a Markdown heading"
+    if (_first_doi(t) or _first_arxiv(t) or _ISBN_RE.search(t)
+            or re.search(r"(?i)\bhttps?://|\bwww\.", t)):
+        return None
+    body = _LIST_MARKER_RE.sub("", t)  # a list number alone does not make a reference
+    ym = _YEAR_RE.search(body)
+    head = body[: ym.start()] if ym else body[:150]
+    if _NEW_REF_LINE_RE.match(body) or _AUTHOR_SHAPES_RE.search(head[:200]):
+        return None
+    if not ym:
+        return "no year, identifier or author name"
+    cited = [m for m in _CITED_YEAR_RE.finditer(body[:200])
+             if not _RUNNING_YEAR_RE.search(body[: m.start()].rstrip("( "))]
+    if cited and not (len(body) > 250 and _reads_as_prose(body)):
+        return None
+    if _reads_as_prose(body):
+        return "prose: a year, but no author name, identifier or citation-style year"
+    return None
+
+
+def _looks_like_reference(text: str) -> bool:
+    """Heuristic: does stray text look like a citation? (see not_a_reference)"""
+    return not_a_reference(text) is None
+
+
+def _locate_blocks(text: str, blocks: Sequence[str], first_line: int = 1) -> list[tuple[int, str]]:
+    """Pair each block from _split_references with the line it starts on."""
+    out: list[tuple[int, str]] = []
+    cursor = 0
+    for blk in blocks:
+        head = (blk or "").strip().split("\n", 1)[0].strip()
+        idx = text.find(head, cursor) if head else -1
+        if idx < 0:
+            idx = cursor
+        out.append((first_line + text.count("\n", 0, idx), blk))
+        cursor = idx + len(head)
+    return out
+
+
+def _parse_bibtex_into(text: str, blocks: list[_BibBlock], res: ParseResult, li: _LineIndex,
+                       allow_residual: bool) -> None:
+    macros: dict[str, str] = {}
+    # Pass 1: @string definitions in file order. BibTeX needs a macro defined before
+    # use; resolving them all first is more lenient and never changes a defined value.
+    for b in blocks:
+        if b.kind != "string" or b.error or not b.body_start:
+            continue
+        try:
+            defs, _ = _bib_parse_fields(text, b.body_start, b.body_end, li)
+        except _BibSyntaxError as exc:
+            b.error, b.error_pos = "malformed @string: " + exc.reason, exc.pos
+            continue
+        for name, parts, pos in defs:
+            val, undefined = _bib_resolve(parts, macros)
+            macros[name] = val
+            if undefined:
+                res.warnings.append(_diag("bibtex", li(pos), (
+                    f"@string '{name}' uses undefined macro(s) {', '.join(undefined)}; "
+                    "kept as the macro name"), entry_type="string"))
+
+    seen_keys: dict[str, int] = {}
+    prev_end, prev_key, prev_rejected = 0, "", False
+    for b in blocks:
+        _bib_residual(text, prev_end, b.start, res, li, allow_residual, prev_key, prev_rejected)
+        prev_end = b.end
+        prev_key, prev_rejected = _bib_block_into(text, b, macros, res, li, seen_keys)
+    _bib_residual(text, prev_end, len(text), res, li, allow_residual, prev_key, prev_rejected)
+
+
+def _bib_block_into(text: str, b: _BibBlock, macros: dict[str, str], res: ParseResult,
+                    li: _LineIndex, seen_keys: dict[str, int]) -> tuple[str, bool]:
+    """Classify one block into parsed / rejected / unsupported / skipped.
+
+    Returns (citation key or "", whether the block was rejected).
+    """
+    kind = b.kind
+    line, end_line = li(b.start), li(max(b.start, b.end - 1))
+    raw = text[b.start:b.end]
+
+    def reject(reason: str, key: str = "", pos: int = -1) -> tuple[str, bool]:
+        res.rejected.append(_diag("bibtex", line, reason, key=key, entry_type=kind,
+                                  end_line=end_line, error_line=li(pos) if pos >= 0 else line,
+                                  excerpt=raw))
+        return key, True
+
+    if b.error:
+        km = (re.compile(r"\s*([^\s,{}()\"#=%]+)\s*,").match(text, b.body_start)
+              if b.body_start else None)
+        return reject(b.error, km.group(1) if km else "", b.error_pos)
+    if kind in ("comment", "preamble", "string"):
+        res.skipped.append({"line": line, "end_line": end_line, "entry_type": kind, "key": None,
+                            "reason": _BIB_NON_REFERENCE[kind]})
+        return "", False
+    try:
+        key, i = _bib_parse_key(text, b.body_start, b.body_end)
+        fields, warns = _bib_parse_fields(text, i, b.body_end, li, key)
+    except _BibSyntaxError as exc:
+        return reject(exc.reason, exc.key, exc.pos)
+    if kind in ("set", "xdata"):
+        res.skipped.append({"line": line, "end_line": end_line, "entry_type": kind, "key": key,
+                            "reason": _BIB_NON_REFERENCE[kind]})
+        return key, False
+    if kind not in BIBTEX_REFERENCE_TYPES:
+        res.unsupported.append(_diag("bibtex", line, (
+            f"unknown entry type '@{b.entry_type}': not a BibTeX/BibLaTeX reference type, so it "
+            "was not verified; change it to a standard type such as @misc, or check it by hand"),
+            key=key, entry_type=kind, end_line=end_line, excerpt=raw))
+        return key, False
+
+    values: dict[str, str] = {}
+    critical: list[tuple[str, list[str]]] = []
+    for name, parts, pos in fields:
+        if name in values:
+            warns.append(f"duplicate field '{name}' at line {li(pos)} ignored (first value kept)")
+            continue
+        val, undefined = _bib_resolve(parts, macros)
+        values[name] = val
+        if undefined and name in _BIB_CRITICAL_FIELDS:
+            critical.append((name, undefined))
+        elif undefined:
+            warns.append(f"field '{name}' uses undefined @string macro(s) "
+                         f"{', '.join(undefined)}; kept as the macro name")
+    if critical:
+        name, undefined = critical[0]
+        return reject(f"field '{name}' uses undefined @string macro {undefined[0]!r}; define it "
+                      f"with @string{{{undefined[0]} = {{...}}}} or wrap the value in braces", key)
+
+    low = key.lower()
+    if low in seen_keys:
+        warns.append(f"duplicate citation key '{key}' (also at line {seen_keys[low]}); both are verified")
+    else:
+        seen_keys[low] = line
+    entry = _bibtex_entry(raw, text[i:b.body_end], key, kind, values)
+    entry.line = line
+    entry.warnings = warns
+    for w in warns:
+        res.warnings.append(_diag("bibtex", line, w, key=key, entry_type=kind))
+    res.entries.append(entry)
+    return key, False
+
+
+def _bib_residual(text: str, start: int, end: int, res: ParseResult, li: _LineIndex,
+                  allow_refs: bool, prev_key: str, prev_rejected: bool) -> None:
+    """Account for text between BibTeX blocks.
+
+    BibTeX ignores it, but it must not vanish silently: stray field text (an entry
+    closed early) is rejected; reference-like text is verified as free-form in auto
+    mode (unsupported under --format bibtex); any other prose is listed as ignored.
+    """
+    seg = text[start:end]
+    if not seg.strip():
+        return
+    first = li(start)
+    paragraphs: list[list[tuple[int, str]]] = [[]]
+    for k, ln in enumerate(seg.split("\n")):
+        s = ln.strip()
+        if not s or s.startswith("%"):  # blank line or a '%' comment line
+            cm = _BIB_COMMENTED_ENTRY_RE.match(s)
+            if cm:
+                res.skipped.append({"line": first + k, "end_line": first + k,
+                                    "entry_type": "commented-out", "key": cm.group(1) or None,
+                                    "reason": ("commented-out entry (the line starts with '%'); "
+                                               "not verified — note that BibTeX itself still reads it")})
+            if k:  # (k == 0 is just the rest of the line the previous block ended on)
+                paragraphs.append([])
+        else:
+            paragraphs[-1].append((first + k, ln))
+    adjacent = True  # the first paragraph directly follows the previous block
+    for para in paragraphs:
+        if not para:
+            adjacent = False
+            continue
+        ptext = "\n".join(ln for _, ln in para).strip()
+        l0, l1 = para[0][0], para[-1][0]
+        if not re.search(r"[A-Za-z0-9{}]", ptext):  # stray punctuation, e.g. "," leftovers
+            adjacent = False
+            continue
+        if not re.search(r"[A-Za-z0-9]", ptext):  # only stray braces: no field text was lost
+            res.warnings.append(_diag("bibtex", l0, "stray brace(s) outside any entry ignored",
+                                      end_line=l1, excerpt=ptext))
+            adjacent = False
+            continue
+        if "{" in ptext or "}" in ptext or _BIB_FIELD_DEBRIS_RE.search(ptext):
+            if adjacent and prev_rejected and res.rejected:
+                last = res.rejected[-1]  # the same malformed entry spilling over
+                last["end_line"] = max(last["end_line"], l1)
+                last["reason"] += f"; stray BibTeX text follows on lines {l0}-{l1}"
+            else:
+                why = "BibTeX field text outside any entry"
+                why += (f": entry '{prev_key}' was probably closed early by an extra '}}', so these "
+                        "fields were not read" if adjacent and prev_key
+                        else ": an '@type{key,' header is missing or malformed")
+                res.rejected.append(_diag("bibtex", l0, why, end_line=l1, excerpt=ptext))
+            adjacent = False
+            continue
+        adjacent = False
+        for lineno, blk in _locate_blocks(ptext, _split_references(ptext), l0):
+            blk = _WS.sub(" ", blk).strip()
+            if not blk:
+                continue
+            why = not_a_reference(blk)
+            if why:
+                res.ignored_text.append({"line": lineno, "excerpt": _excerpt(blk), "reason": (
+                    f"skipped: not a reference ({why}); text outside any BibTeX entry, which "
+                    "BibTeX ignores")})
+            elif allow_refs:
+                e = _parse_freeform_block(blk)
+                if e:
+                    e.line = lineno
+                    res.entries.append(e)
+            else:
+                res.unsupported.append(_diag("freeform", lineno, (
+                    "reference-like text outside any @entry: --format bibtex reads only @entries, "
+                    "so it was not verified; re-run with --format auto to verify it as a "
+                    "free-form reference"), excerpt=blk))
+
+
+def _looks_like_bibtex(text: str) -> bool:
+    return bool(_scan_bibtex_blocks(text, _LineIndex(text)))
+
+
+def parse_bibtex(text: str) -> list[Entry]:
+    """Parsed BibTeX entries only (see parse_input for rejected / unsupported ones)."""
+    return parse_input(text, "bibtex").entries
 
 
 def _is_bare_identifier_line(line: str) -> bool:
@@ -418,16 +1284,8 @@ def _clean_authors(names: list[str]) -> list[str]:
 
 
 def parse_doi_list(text: str) -> list[Entry]:
-    entries: list[Entry] = []
-    for line in text.splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        doi = _first_doi(line)
-        arxiv = _first_arxiv(line) if not doi else ""
-        if doi or arxiv:
-            entries.append(Entry(raw=line, doi=doi, arxiv_id=arxiv))
-    return entries
+    """Identifier lines only (``--format doi``); see parse_input for the other lines."""
+    return parse_input(text, "doi").entries
 
 
 def _split_references(text: str) -> list[str]:
@@ -449,68 +1307,117 @@ def _split_references(text: str) -> list[str]:
     return blocks
 
 
+def _parse_freeform_block(block: str) -> Optional[Entry]:
+    """Heuristic field extraction from one free-form reference (None if empty)."""
+    block = _WS.sub(" ", block).strip()
+    if not block:
+        return None
+    if _is_bare_identifier_line(block):  # a lone DOI / arXiv ID inside a pasted list
+        return Entry(raw=block, doi=_first_doi(block), arxiv_id=_first_arxiv(block), fmt="doi")
+    ym = re.search(r"\(?((?:19|20)\d{2})\)?", block)
+    # Title heuristic: first quoted span, else the sentence after the year
+    # (split on ". " but not after an initial, so "Web 2.0" / "J. Smith" survive).
+    tm = re.search(r"[\"“](.+?)[\"”]", block)
+    if tm:
+        title = tm.group(1)
+    elif ym:
+        after = block[ym.end():].lstrip(" .)")
+        title = re.split(r"(?<!\s[A-Z])\.\s", after, maxsplit=1)[0] if after else block
+    else:
+        title = block
+    title = re.sub(r"[*_]", "", title)  # Markdown emphasis around book titles
+    title = re.sub(r"\s*\(\s*(?:\d+(?:st|nd|rd|th)|rev(?:ised)?\.?)\s*(?:ed\.?|edition)?\s*\)?\s*$",
+                   "", title, flags=re.IGNORECASE)
+    authors: list[str] = []
+    if ym and ym.start() > 0:
+        head = block[: ym.start()].strip(" .,(")
+        head = re.sub(r"^\s*\[?\d{1,3}[\].)]\s+", "", head)  # drop "12." / "[12]" markers
+        authors = _clean_authors(re.split(r",| & | and ", head))[:6]
+    return Entry(
+        raw=block,
+        title=title.strip(" .,"),
+        authors=authors,
+        year=ym.group(1) if ym else "",
+        doi=_first_doi(block),
+        arxiv_id=_first_arxiv(block),
+        fmt="freeform",
+    )
+
+
 def parse_freeform(text: str) -> list[Entry]:
     """One reference per block (see _split_references); heuristic field extraction."""
-    blocks = _split_references(text)
-    entries: list[Entry] = []
-    for block in blocks:
-        block = _WS.sub(" ", block).strip()
-        if not block:
+    return parse_input(text, "freeform").entries
+
+
+def _parse_plain_into(text: str, fmt: str, res: ParseResult) -> None:
+    """Non-BibTeX input: a DOI / arXiv-ID list or free-form references."""
+    if fmt == "auto":
+        # "doi" only when the lines are mostly bare identifiers; a full reference that
+        # merely contains a DOI stays free-form, so its title and authors are kept
+        # for the Identifier Hijacking check.
+        non_empty = [ln for ln in text.splitlines() if ln.strip() and not ln.strip().startswith("#")]
+        id_lines = sum(1 for ln in non_empty
+                       if (_first_doi(ln) or _first_arxiv(ln)) and _is_bare_identifier_line(ln))
+        mode = "doi" if non_empty and id_lines >= max(1, len(non_empty) * 0.6) else "freeform"
+    else:
+        mode = fmt
+    res.format_detected = mode
+    if mode == "freeform":
+        for lineno, blk in _locate_blocks(text, _split_references(text)):
+            why = not_a_reference(blk)
+            if why and why != "empty":
+                res.ignored_text.append({"line": lineno, "excerpt": _excerpt(blk),
+                                         "reason": f"skipped: not a reference ({why})"})
+                continue
+            e = _parse_freeform_block(blk)
+            if e:
+                e.line = lineno
+                res.entries.append(e)
+        return
+    strict = fmt == "doi"  # explicit --format doi reads identifiers only
+    for lineno, line in enumerate(text.splitlines(), 1):
+        s = line.strip()
+        if not s or s.startswith("#"):
             continue
-        if _is_bare_identifier_line(block):  # a lone DOI / arXiv ID inside a pasted list
-            entries.append(Entry(raw=block, doi=_first_doi(block), arxiv_id=_first_arxiv(block)))
-            continue
-        ym = re.search(r"\(?((?:19|20)\d{2})\)?", block)
-        # Title heuristic: first quoted span, else the sentence after the year
-        # (split on ". " but not after an initial, so "Web 2.0" / "J. Smith" survive).
-        tm = re.search(r"[\"“](.+?)[\"”]", block)
-        if tm:
-            title = tm.group(1)
-        elif ym:
-            after = block[ym.end():].lstrip(" .)")
-            title = re.split(r"(?<!\s[A-Z])\.\s", after, maxsplit=1)[0] if after else block
-        else:
-            title = block
-        title = re.sub(r"[*_]", "", title)  # Markdown emphasis around book titles
-        title = re.sub(r"\s*\(\s*(?:\d+(?:st|nd|rd|th)|rev(?:ised)?\.?)\s*(?:ed\.?|edition)?\s*\)?\s*$",
-                       "", title, flags=re.IGNORECASE)
-        authors: list[str] = []
-        if ym and ym.start() > 0:
-            head = block[: ym.start()].strip(" .,(")
-            head = re.sub(r"^\s*\[?\d{1,3}[\].)]\s+", "", head)  # drop "12." / "[12]" markers
-            authors = _clean_authors(re.split(r",| & | and ", head))[:6]
-        entries.append(
-            Entry(
-                raw=block,
-                title=title.strip(" .,"),
-                authors=authors,
-                year=ym.group(1) if ym else "",
-                doi=_first_doi(block),
-                arxiv_id=_first_arxiv(block),
-            )
-        )
-    return entries
+        doi = _first_doi(s)
+        arxiv = _first_arxiv(s) if not doi else ""
+        if (doi or arxiv) and (strict or _is_bare_identifier_line(s)):
+            res.entries.append(Entry(raw=s, doi=doi, arxiv_id=arxiv, fmt="doi", line=lineno))
+        elif not_a_reference(s):
+            res.ignored_text.append({"line": lineno, "excerpt": _excerpt(s), "reason": (
+                f"skipped: not a reference ({not_a_reference(s)}); neither an identifier nor a "
+                "recognisable reference")})
+        elif strict:
+            res.unsupported.append(_diag("doi", lineno, (
+                "no DOI or arXiv ID on this line: --format doi reads identifiers only, so it was "
+                "not verified; re-run with --format auto or --format freeform"), excerpt=s))
+        else:  # a full reference inside a mostly-identifier list
+            e = _parse_freeform_block(s)
+            if e:
+                e.line = lineno
+                res.entries.append(e)
+
+
+def parse_input(text: str, fmt: str = "auto") -> ParseResult:
+    """Parse ``text`` and account for every entry (see ParseResult)."""
+    if fmt not in ("auto", "bibtex", "doi", "freeform"):
+        raise ValueError(f"unknown format: {fmt}")
+    res = ParseResult(format_requested=fmt)
+    if fmt in ("auto", "bibtex"):
+        li = _LineIndex(text)
+        blocks = _scan_bibtex_blocks(text, li)
+        if blocks or fmt == "bibtex":
+            _parse_bibtex_into(text, blocks, res, li, allow_residual=fmt == "auto")
+            mixed = any(e.fmt != "bibtex" for e in res.entries)
+            res.format_detected = "mixed" if mixed else "bibtex"
+            return res
+    _parse_plain_into(text, fmt, res)
+    return res
 
 
 def parse_bibliography(text: str, fmt: str) -> list[Entry]:
-    if fmt == "auto":
-        if _looks_like_bibtex(text):
-            fmt = "bibtex"
-        else:
-            # "doi" only when the lines are bare identifiers; a full reference that
-            # merely contains a DOI stays free-form, so its title and authors are kept
-            # for the Identifier Hijacking check.
-            non_empty = [ln for ln in text.splitlines() if ln.strip() and not ln.strip().startswith("#")]
-            id_lines = sum(1 for ln in non_empty
-                           if (_first_doi(ln) or _first_arxiv(ln)) and _is_bare_identifier_line(ln))
-            fmt = "doi" if non_empty and id_lines >= max(1, len(non_empty) * 0.6) else "freeform"
-    if fmt == "bibtex":
-        return parse_bibtex(text)
-    if fmt == "doi":
-        return parse_doi_list(text)
-    if fmt == "freeform":
-        return parse_freeform(text)
-    raise ValueError(f"unknown format: {fmt}")
+    """Parsed entries only; use parse_input to see rejected / unsupported entries too."""
+    return parse_input(text, fmt).entries
 
 
 # --------------------------------------------------------------------------- #
@@ -518,9 +1425,13 @@ def parse_bibliography(text: str, fmt: str) -> list[Entry]:
 # --------------------------------------------------------------------------- #
 
 
+# Returned by a lookup that had nothing to query with, so the source is not counted as
+# having answered (an answer of "no match" is None).
+NOT_ASKED: dict = {"not_asked": True}
+
+
 def crossref_by_doi(doi: str, mailto: str) -> Optional[dict]:
-    q_mailto = urllib.parse.quote(mailto)
-    url = f"https://api.crossref.org/works/{urllib.parse.quote(doi)}?mailto={q_mailto}"
+    url = f"https://api.crossref.org/works/{urllib.parse.quote(doi)}{_mailto_param(mailto, '?')}"
     data = _http_get(url, mailto)
     if not data or "message" not in data:
         return None
@@ -536,7 +1447,7 @@ def crossref_by_title(entry: "Entry", mailto: str) -> Optional[dict]:
                                   entry.year) if x)
     url = (
         f"https://api.crossref.org/works?query.bibliographic={urllib.parse.quote(biblio)}"
-        f"&rows=5&mailto={urllib.parse.quote(mailto)}"
+        f"&rows=5{_mailto_param(mailto, '&')}"
     )
     data = _http_get(url, mailto)
     items = (data or {}).get("message", {}).get("items", []) if data else []
@@ -588,50 +1499,9 @@ def _crossref_norm(msg: dict) -> dict:
     }
 
 
-def _openalex_headers() -> dict:
-    # OpenAlex ignores `mailto` since Feb 2026; a free key raises the daily budget.
-    return {"Authorization": f"Bearer {OPENALEX_API_KEY}"} if OPENALEX_API_KEY else {}
-
-
-def openalex_lookup(entry: Entry, mailto: str) -> Optional[dict]:
-    if entry.doi:
-        # Singleton DOI lookups are free even without a key.
-        url = f"https://api.openalex.org/works/doi:{urllib.parse.quote(entry.doi)}"
-        data = _http_get(url, mailto, extra_headers=_openalex_headers())
-        if data and data.get("id"):
-            rec = _openalex_norm(data)
-            rec["method"] = "id"
-            return rec
-    if entry.title:
-        # Searches draw on the metered budget (shared per IP when keyless).
-        q = urllib.parse.quote(entry.title)
-        url = f"https://api.openalex.org/works?search={q}&per-page=5"
-        data = _http_get(url, mailto, extra_headers=_openalex_headers())
-        results = (data or {}).get("results", []) if data else []
-        if results:
-            rec = max((_openalex_norm(w) for w in results[:5]), key=lambda r: _rank(entry, r))
-            rec["method"] = "title"
-            return rec
-    return None
-
-
-def _openalex_norm(w: dict) -> dict:
-    surnames = []
-    for au in w.get("authorships", []):
-        disp = (au.get("author", {}) or {}).get("display_name", "")
-        if disp:
-            surnames.append(disp.split()[-1])
-    return {
-        "source": "openalex",
-        "title": w.get("title") or w.get("display_name") or "",
-        "authors": surnames,
-        "year": str(w.get("publication_year") or ""),
-        "doi": (w.get("doi") or "").replace("https://doi.org/", "").lower(),
-        "retracted": bool(w.get("is_retracted")),
-    }
-
-
 def semanticscholar_lookup(entry: Entry, mailto: str) -> Optional[dict]:
+    if not (entry.doi or entry.arxiv_id or entry.title):
+        return NOT_ASKED
     fields = "title,year,authors,externalIds"
     hdrs = {"x-api-key": S2_API_KEY} if S2_API_KEY else {}
     if entry.doi:
@@ -680,6 +1550,103 @@ def _ss_norm(p: dict) -> dict:
     }
 
 
+_EPMC_SEARCH = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
+
+
+def _phrase(text: str) -> str:
+    """Text safe inside a quoted search phrase: punctuation becomes spaces (the indexes
+    tokenise on it anyway), so quotes or colons in a title cannot break the query."""
+    t = text or ""
+    if "\\" in t:
+        t = _fold_latex(t)
+    t = t.replace("{", "").replace("}", "")  # BibTeX grouping braces are not word breaks
+    return _WS.sub(" ", re.sub(r"[^\w\s-]", " ", t)).strip()
+
+
+def _main_title(title: str) -> str:
+    """The title before a subtitle separator, when that part is long enough to search on."""
+    m = re.match(r"(.+?)(?::|\s[-—]\s|\?)", title or "")
+    return m.group(1).strip() if m and len(m.group(1).strip()) >= 12 else (title or "")
+
+
+def europepmc_lookup(entry: Entry, mailto: str) -> Optional[dict]:
+    """Europe PMC REST search: by DOI when cited, else by title phrase + first author.
+    Life sciences first, but it also indexes many other journals and preprint servers."""
+    def search(query: str) -> list:
+        qs = urllib.parse.urlencode({"query": query, "format": "json", "resultType": "lite",
+                                     "pageSize": 5})
+        data = _http_get(f"{_EPMC_SEARCH}?{qs}", mailto)
+        return ((data or {}).get("resultList") or {}).get("result") or []
+
+    if entry.doi:
+        hits = [r for r in search(f'DOI:"{entry.doi}"') if (r.get("doi") or "").lower() == entry.doi.lower()]
+        if hits:
+            rec = _epmc_norm(hits[0])
+            rec["method"] = "id"
+            return rec
+    phrase = _phrase(entry.title)
+    if len(phrase) < 6:
+        return None if entry.doi else NOT_ASKED
+    query = f'TITLE:"{phrase}"'
+    if entry.authors and _surname(entry.authors[0]):
+        query += f' AND AUTH:"{_surname(entry.authors[0])}"'
+    items = search(query)
+    if not items:
+        return None
+    rec = max((_epmc_norm(r) for r in items[:5]), key=lambda r: _rank(entry, r))
+    rec["method"] = "title"
+    return rec
+
+
+def _epmc_norm(r: dict) -> dict:
+    # authorString: "Roediger HL, Karpicke JD." -> surnames
+    surnames = [a.strip().split(" ")[0] for a in (r.get("authorString") or "").rstrip(".").split(",")
+                if a.strip()]
+    return {
+        "source": "europepmc",
+        "title": (r.get("title") or "").strip().rstrip("."),
+        "authors": [s for s in surnames if s],
+        "year": str(r.get("pubYear") or ""),
+        "doi": (r.get("doi") or "").lower(),
+        "retracted": False,  # the lite record carries no retraction flag; Crossref supplies it
+    }
+
+
+def openlibrary_lookup(entry: Entry, mailto: str) -> Optional[dict]:
+    """Open Library search (keyless) for books: main title + first author. Every edition's
+    publication year is kept, so a later edition cited by its own year still matches."""
+    if len(_phrase(entry.title)) < 6 or entry.doi or entry.arxiv_id:
+        return NOT_ASKED
+    params = {"title": _phrase(_main_title(entry.title)), "limit": 5,
+              "fields": "title,subtitle,author_name,first_publish_year,publish_year"}
+    if entry.authors and _surname(entry.authors[0]):
+        params["author"] = _surname(entry.authors[0])
+    data = _http_get("https://openlibrary.org/search.json?" + urllib.parse.urlencode(params), mailto)
+    docs = (data or {}).get("docs") or []
+    if not docs:
+        return None
+    rec = max((_openlibrary_norm(d) for d in docs[:5]), key=lambda r: _rank(entry, r))
+    rec["method"] = "title"
+    return rec
+
+
+def _openlibrary_norm(d: dict) -> dict:
+    title = d.get("title") or ""
+    if d.get("subtitle"):
+        title = f"{title}: {d['subtitle']}"
+    years = sorted({str(y) for y in (d.get("publish_year") or []) if y})
+    first = str(d.get("first_publish_year") or "")
+    return {
+        "source": "openlibrary",
+        "title": title,
+        "authors": [n.split()[-1] for n in d.get("author_name") or [] if n.split()],
+        "year": first or (years[0] if years else ""),
+        "years": sorted(set(years) | ({first} if first else set())),
+        "doi": "",
+        "retracted": False,
+    }
+
+
 def arxiv_lookup(entry: Entry, mailto: str) -> Optional[dict]:
     if entry.arxiv_id:
         url = f"https://export.arxiv.org/api/query?id_list={urllib.parse.quote(entry.arxiv_id)}&max_results=1"
@@ -687,7 +1654,7 @@ def arxiv_lookup(entry: Entry, mailto: str) -> Optional[dict]:
         q = urllib.parse.quote(f'ti:"{entry.title}"')
         url = f"https://export.arxiv.org/api/query?search_query={q}&max_results=5"
     else:
-        return None
+        return NOT_ASKED
     text = _http_get(url, mailto, accept="application/atom+xml")
     if not text or "<entry>" not in text:
         return None
@@ -752,6 +1719,11 @@ def doi_registered(doi: str, mailto: str) -> Optional[bool]:
 # Verdict engine                                                              #
 # --------------------------------------------------------------------------- #
 
+# Indexes that, besides Crossref, can back a Total Fabrication for an entry with no
+# identifier when they answer with no match. Semantic Scholar search is one of them but
+# never required: its keyless pool is often spent.
+TF_SECOND_INDEXES = ("semanticscholar", "europepmc", "arxiv", "openlibrary")
+
 VERDICTS = {
     "verified": "Entry exists; title+authors match an authoritative record.",
     "TF": "Total Fabrication — entry found in NO source.",
@@ -770,6 +1742,16 @@ SEVERITY = {
     "SH": "SERIOUS",
     "unverified": "MEDIUM",
 }
+# Run-level verdicts (summary.verdict), most severe first. Only PASS and
+# PASS_WITH_CONDITIONS are passes, and both require a complete audit.
+REPORT_VERDICTS = {
+    "FAIL": "At least one SERIOUS finding (TF / IH / PH / retraction).",
+    "PARTIAL": ("Not every detected entry was parsed and verified (rejected, unsupported, or "
+                "unprocessed entries; see input_accounting). Not a pass."),
+    "UNVERIFIED": "Nothing SERIOUS found, but at least one entry could not be checked. Not a pass.",
+    "PASS_WITH_CONDITIONS": "Every entry was checked; only fixable metadata issues (PAC).",
+    "PASS": "Every detected entry was parsed and verified with no flags.",
+}
 
 
 def _is_placeholder(entry: Entry) -> bool:
@@ -780,8 +1762,23 @@ def _is_placeholder(entry: Entry) -> bool:
     return False
 
 
+def _ref_id(entry: Entry) -> str:
+    return entry.key or entry.doi or entry.arxiv_id or (entry.title[:40] or entry.raw[:40])
+
+
+def _tf_eligible(entry: Entry) -> bool:
+    """Second safety net behind the parser: a free-form entry can be a Total Fabrication
+    only when it has a title-like segment (two or more words, distinct from the whole
+    text) plus an author or a year. Anything thinner is unverified at most."""
+    if entry.fmt != "freeform":
+        return True
+    title = _normalize(entry.title)
+    distinct = title and title != _normalize(entry.raw)
+    return bool(distinct and len(title.split()) >= 2 and (entry.authors or entry.year))
+
+
 def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> dict:
-    ref_id = entry.key or entry.doi or entry.arxiv_id or (entry.title[:40] or entry.raw[:40])
+    ref_id = _ref_id(entry)
 
     # PH check first — placeholders never reach the network.
     if _is_placeholder(entry):
@@ -803,14 +1800,16 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
             # A DOI that does not resolve may still belong to a real work cited
             # with a wrong identifier; the title search lets that surface as PAC.
             return rec or (crossref_by_title(entry, mailto) if entry.title else None)
-        return crossref_by_title(entry, mailto) if entry.title else None
+        return crossref_by_title(entry, mailto) if entry.title else NOT_ASKED
 
     sources: list[tuple[str, Callable[[], Optional[dict]]]] = [
         ("crossref", _crossref),
-        ("openalex", lambda: openalex_lookup(entry, mailto)),
         ("semanticscholar", lambda: semanticscholar_lookup(entry, mailto)),
+        ("europepmc", lambda: europepmc_lookup(entry, mailto)),
         ("arxiv", lambda: arxiv_lookup(entry, mailto)),
     ]
+    if not has_identifier:  # books rarely carry a DOI; a cited DOI is settled by Crossref / doi.org
+        sources.append(("openlibrary", lambda: openlibrary_lookup(entry, mailto)))
     for name, fn in sources:
         try:
             rec = fn()
@@ -821,6 +1820,8 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
         except SourceError as exc:
             status[name] = f"error: {exc}"
             continue
+        if rec is NOT_ASKED:
+            continue  # nothing to query this source with: it neither answered nor failed
         status[name] = "record" if rec else "no_record"
         if rec:
             matches.append(rec)
@@ -922,24 +1923,35 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
         near_mashup = (best is not None and a_overlap is not None and a_overlap >= 0.5
                        and t_ratio >= 0.5)
         if not near_mashup:
-            # TF needs Crossref plus a broad index (OpenAlex or Semantic Scholar) to
-            # have answered: Crossref alone misses books and grey literature.
-            if answered("crossref") and (answered("openalex") or answered("semanticscholar")):
+            # TF needs Crossref plus at least one other index that actually answered, with
+            # no match in any of them: Crossref alone misses books and grey literature. A
+            # source that was rate-limited or failed never counts as having answered.
+            others = [src for src in TF_SECOND_INDEXES if answered(src)]
+            unchecked = [f"{src} {'rate-limited (HTTP 429)' if '429' in st else 'failed'}"
+                         for src, st in status.items() if st.startswith("error") or st == "offline"]
+            if answered("crossref") and others and not _tf_eligible(entry):
+                return _unverified(entry, ref_id,
+                                   reason=("no source returned a matching record, but this free-form "
+                                           "entry has too little reference structure (a title plus an "
+                                           "author or a year) to be called fabricated"),
+                                   status=status, matches=matches)
+            if answered("crossref") and others:
                 closest = (f" Closest record: '{best['title']}' (title ratio {t_ratio:.2f})."
                            if best else "")
                 return _verdict(entry, ref_id, "TF",
                                 detail=("No source returned a record matching the cited title and "
-                                        "authors — entry appears fabricated." + closest),
+                                        "authors — entry appears fabricated. Answered with no "
+                                        f"match: crossref, {', '.join(others)}."
+                                        + (f" Not checked: {', '.join(unchecked)}." if unchecked else "")
+                                        + closest),
                                 matches=matches, status=status)
-            limited = [f"{src} {'rate-limited (HTTP 429)' if '429' in st else 'failed'}"
-                       for src, st in status.items()
-                       if src in ("openalex", "semanticscholar") and st.startswith("error")]
             return _unverified(entry, ref_id,
-                               reason=("no matching record in the sources that answered, and "
-                                       "OpenAlex / Semantic Scholar could not be queried to rule "
-                                       "out books or grey literature"
-                                       + (" (" + ", ".join(limited) + "; see summary.notes)"
-                                          if limited else "")),
+                               reason=("no matching record in the sources that answered, but "
+                                       + ("only Crossref answered" if answered("crossref")
+                                          else "Crossref did not answer")
+                                       + ", so books and grey literature cannot be ruled out"
+                                       + (" (" + ", ".join(unchecked) + "; see summary.notes)"
+                                          if unchecked else "")),
                                status=status, matches=matches)
         pac_reasons.append(f"title ratio {t_ratio:.2f} < {threshold:.2f} but the closest record "
                            f"shares the cited authors — possible mashup of real references")
@@ -976,8 +1988,8 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
         result["flags"] = result.get("flags", []) + ["RETRACTED"]
         # Retraction does not change existence verdict but is a SERIOUS flag.
         result["severity"] = "SERIOUS"
-        result["detail"] += (" RETRACTED: Crossref (publisher or Retraction Watch notice) and/or "
-                             "OpenAlex mark this work as retracted.")
+        result["detail"] += (" RETRACTED: Crossref (publisher or Retraction Watch notice) marks "
+                             "this work as retracted.")
     if concern:
         result["flags"] = result.get("flags", []) + ["EXPRESSION_OF_CONCERN"]
         result["detail"] += " An expression of concern is on record for this work."
@@ -1004,6 +2016,13 @@ def _verdict(entry: Entry, ref_id: str, code: str, detail: str, matches: list[di
         "matches": [{k: m.get(k) for k in ("source", "method", "title", "year", "doi", "retracted")}
                     for m in matches],
         "flags": [],
+        # Where the entry came from in the input, so a verdict can be traced to a line.
+        "input": {
+            "format": entry.fmt or None,
+            "line": entry.line or None,
+            "entry_type": entry.entry_type or None,
+            "warnings": list(entry.warnings),
+        },
     }
 
 
@@ -1027,7 +2046,73 @@ def _unverified(entry: Entry, ref_id: str, reason: str, status: Optional[dict] =
 # --------------------------------------------------------------------------- #
 
 
-def build_report(results: list[dict], mailto: str, threshold: float, offline: bool) -> dict:
+def input_accounting(res: ParseResult, processed: int,
+                     unprocessed: Sequence[Entry] = ()) -> dict:
+    """The report's ``input_accounting`` object.
+
+    ``processed`` counts parsed entries that received a verdict; a parsed entry without
+    one (for example, the run was interrupted) is ``unprocessed``. Invariants:
+    ``detected == parsed + rejected + unsupported`` and
+    ``parsed == processed + unprocessed``.
+    """
+    parsed = len(res.entries)
+    unprocessed_n = max(parsed - processed, len(unprocessed), 0)
+    return {
+        "complete": res.complete and unprocessed_n == 0,
+        "format_requested": res.format_requested,
+        "format_detected": res.format_detected,
+        "detected": res.detected,
+        "parsed": parsed,
+        "rejected": len(res.rejected),
+        "unsupported": len(res.unsupported),
+        "processed": processed,
+        "unprocessed": unprocessed_n,
+        "parsed_by_format": dict(sorted(Counter(e.fmt or "unknown" for e in res.entries).items())),
+        "non_reference_blocks": dict(sorted(Counter(b["entry_type"] for b in res.skipped).items())),
+        "ignored_text_segments": len(res.ignored_text),
+        "rejected_entries": res.rejected,
+        "unsupported_entries": res.unsupported,
+        "unprocessed_entries": [{"ref_id": _ref_id(e), "line": e.line or None, "format": e.fmt or None}
+                                for e in unprocessed],
+        "skipped_blocks": res.skipped,
+        "ignored_text": res.ignored_text,
+        "warnings": res.warnings,
+    }
+
+
+def _results_only_accounting(n: int) -> dict:
+    """Accounting for a caller that passes verdicts without parse information."""
+    return {"complete": True, "format_requested": None, "format_detected": None,
+            "detected": n, "parsed": n, "rejected": 0, "unsupported": 0, "processed": n,
+            "unprocessed": 0, "parsed_by_format": {}, "non_reference_blocks": {},
+            "ignored_text_segments": 0, "rejected_entries": [], "unsupported_entries": [],
+            "unprocessed_entries": [], "skipped_blocks": [], "ignored_text": [], "warnings": []}
+
+
+def _partial_warning(acc: dict) -> str:
+    rej, uns, unp = acc.get("rejected", 0), acc.get("unsupported", 0), acc.get("unprocessed", 0)
+    return (f"PARTIAL AUDIT: {rej + uns + unp} of {acc.get('detected', 0)} detected entries were "
+            f"not verified ({rej} rejected as malformed, {uns} unsupported, {unp} unprocessed); "
+            "see input_accounting. This run cannot pass until every entry is parsed and verified.")
+
+
+def build_report(results: list[dict], mailto: str, threshold: float, offline: bool,
+                 accounting: Optional[dict] = None) -> dict:
+    """Assemble the JSON report.
+
+    Pass ``accounting=input_accounting(parse_input(...), processed=len(results))`` (the
+    CLI always does) so the verdict reflects the whole input. Without it — the v1.1
+    call signature — the results are taken to be the entire input.
+    """
+    acc = dict(accounting) if accounting is not None else _results_only_accounting(len(results))
+    # A complete audit needs every detected entry parsed AND given a verdict. Checked
+    # here too (not only trusted from the caller), so PASS can never rest on a subset.
+    complete = (bool(acc.get("complete")) and not acc.get("rejected") and not acc.get("unsupported")
+                and not acc.get("unprocessed")
+                and acc.get("parsed", len(results)) == len(results)
+                and acc.get("processed", len(results)) == len(results))
+    acc["complete"] = complete
+
     counts = {k: 0 for k in VERDICTS}
     sev = {"SERIOUS": 0, "MEDIUM": 0, "MINOR": 0}
     for r in results:
@@ -1040,11 +2125,14 @@ def build_report(results: list[dict], mailto: str, threshold: float, offline: bo
     fabrication_risk = round(fabricated / n, 3)
     integrity = round((counts["verified"]) / n, 3)
 
-    # SERIOUS findings (TF / IH / PH / retraction) dominate; otherwise any entry that
-    # could not be checked makes the run UNVERIFIED — never a (conditional) pass.
+    # SERIOUS findings (TF / IH / PH / retraction) dominate. Otherwise an incomplete
+    # input makes the run PARTIAL, and any entry that could not be checked (or no
+    # entry at all) makes it UNVERIFIED — never a (conditional) pass.
     if sev["SERIOUS"] > 0:
         verdict = "FAIL"
-    elif counts["unverified"]:
+    elif not complete:
+        verdict = "PARTIAL"
+    elif counts["unverified"] or not results:
         verdict = "UNVERIFIED"
     elif counts["PAC"] > 0 or sev["MEDIUM"] > 0:
         verdict = "PASS_WITH_CONDITIONS"
@@ -1062,20 +2150,37 @@ def build_report(results: list[dict], mailto: str, threshold: float, offline: bo
                 hint = st.split("HTTP 429 — ", 1)[1] if "HTTP 429 — " in st else ""
                 if hint and hint not in notes:
                     notes.append(hint)
+    warning = None if complete else _partial_warning(acc)
+    if warning:
+        notes.insert(0, warning)
+    if not results:
+        notes.append("no entries were verified")
+    if acc.get("ignored_text_segments"):
+        notes.append(f"{acc['ignored_text_segments']} text segment(s) skipped: not a reference "
+                     "(headings, prose), so not verified and given no verdict "
+                     "(see input_accounting.ignored_text)")
+    if acc.get("warnings"):
+        notes.append(f"{len(acc['warnings'])} parser warning(s) (see input_accounting.warnings)")
 
     return {
         "tool": "alterlab-citation-verifier/verify_citations.py",
         "version": TOOL_VERSION,
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        # "complete" only when every detected entry was parsed and verified.
+        "status": "complete" if complete else "partial",
+        "warning": warning,
         "config": {"mailto": mailto, "threshold": threshold, "offline": offline,
                    "http_backend": "requests" if _HAS_REQUESTS else "urllib",
-                   # whether optional keys were present — never the keys themselves
-                   "openalex_api_key": bool(OPENALEX_API_KEY),
+                   # whether the optional key was present — never the key itself
                    "s2_api_key": bool(S2_API_KEY)},
         "taxonomy": VERDICTS,
         "summary": {
             "total": len(results),
             "verdict": verdict,
+            "verdict_meaning": REPORT_VERDICTS[verdict],
+            "status": "complete" if complete else "partial",
+            "input": {k: acc.get(k, 0) for k in ("detected", "parsed", "rejected", "unsupported",
+                                                 "processed", "unprocessed")},
             "verdict_counts": counts,
             "severity_counts": sev,
             "citation_integrity_score": integrity,
@@ -1084,8 +2189,40 @@ def build_report(results: list[dict], mailto: str, threshold: float, offline: bo
             "source_errors": source_errors,
             "notes": notes,
         },
+        "input_accounting": acc,
         "entries": results,
     }
+
+
+def _stderr_banner(report: dict, limit: int = 12) -> str:
+    """Human-readable warning printed to stderr ahead of the JSON report."""
+    acc = report.get("input_accounting") or {}
+    lines: list[str] = []
+    if report.get("status") != "complete":
+        bar = "=" * 78
+        lines += [bar, "WARNING: " + (report.get("warning") or "PARTIAL AUDIT")]
+        items = ([("rejected", d) for d in acc.get("rejected_entries", [])]
+                 + [("unsupported", d) for d in acc.get("unsupported_entries", [])]
+                 + [("unprocessed", d) for d in acc.get("unprocessed_entries", [])])
+        for kind, d in items[:limit]:
+            where = f"line {d.get('line') or '?'}"
+            if d.get("error_line") and d.get("error_line") != d.get("line"):
+                where += f" (problem at line {d['error_line']})"
+            key = d.get("key") or d.get("ref_id")
+            reason = d.get("reason") or "not verified (the run stopped before this entry)"
+            lines.append(f"  - {where}{' [' + key + ']' if key else ''} {kind}: {reason}")
+        if len(items) > limit:
+            lines.append(f"  ... and {len(items) - limit} more (see input_accounting)")
+        lines += [f"  summary.verdict = {report['summary']['verdict']}; status = partial", bar]
+    ignored = acc.get("ignored_text") or []
+    if ignored:
+        where = ", ".join(f"line {d['line']}" for d in ignored[:5]) + (" ..." if len(ignored) > 5 else "")
+        lines.append(f"note: {len(ignored)} text segment(s) skipped: not a reference (headings, "
+                     f"prose); not verified ({where})")
+    for w in (acc.get("warnings") or [])[:5]:
+        lines.append(f"note: line {w.get('line')}{' [' + w['key'] + ']' if w.get('key') else ''}: "
+                     f"{w.get('reason')}")
+    return "\n".join(lines)
 
 
 # --------------------------------------------------------------------------- #
@@ -1095,45 +2232,101 @@ def build_report(results: list[dict], mailto: str, threshold: float, offline: bo
 
 def _read_input(path: str) -> str:
     if path == "-":
-        return sys.stdin.read()
-    import os
-    if os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as fh:
-            return fh.read()
-    return path  # treat the argument itself as inline text
+        text = sys.stdin.read()
+    elif os.path.exists(path):
+        with open(path, "r", encoding="utf-8-sig") as fh:  # utf-8-sig drops a BOM
+            text = fh.read()
+    else:
+        text = path  # treat the argument itself as inline text
+    return text[1:] if text.startswith("﻿") else text
+
+
+def _verify_safely(entry: Entry, mailto: str, threshold: float, offline: bool) -> dict:
+    """verify_entry, but an unexpected error on one entry yields `unverified` for that
+    entry instead of aborting the run or silently dropping it."""
+    try:
+        return verify_entry(entry, mailto, threshold, offline)
+    except Exception as exc:  # noqa: BLE001
+        r = _unverified(entry, _ref_id(entry),
+                        reason=f"internal error while verifying this entry ({type(exc).__name__}: {exc})")
+        r["internal_error"] = True
+        return r
+
+
+_CLI_EPILOG = """\
+input accounting:
+  Every detected entry is parsed (then verified), rejected (malformed: line, key,
+  reason), or unsupported (detected but not handled, with the reason). The JSON
+  report carries status ("complete" | "partial"), warning, summary.input and
+  input_accounting. A run with any rejected, unsupported, or unprocessed entry is
+  PARTIAL (or FAIL), never PASS; a warning banner is printed to stderr.
+
+exit codes:
+  0  complete audit: every detected entry was parsed and got a verdict; read
+     summary.verdict (PASS / PASS_WITH_CONDITIONS / FAIL / UNVERIFIED)
+  2  bad input or usage: unreadable input, unknown option, or no entry could be
+     parsed (the report is still written when entries were detected)
+  3  partial audit: the report was written, but at least one detected entry was
+     rejected, unsupported, or left unprocessed (status = "partial")
+"""
 
 
 def main(argv: Optional[list[str]] = None) -> int:
-    ap = argparse.ArgumentParser(description="Verify that bibliography entries exist via public scholarly APIs.")
+    ap = argparse.ArgumentParser(
+        description="Verify that bibliography entries exist via public scholarly APIs.",
+        epilog=_CLI_EPILOG, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("input", help="Path to a .bib/.txt file, '-' for stdin, or inline text.")
-    ap.add_argument("--format", choices=["auto", "bibtex", "doi", "freeform"], default="auto")
-    ap.add_argument("--mailto", default=DEFAULT_MAILTO, help="Polite-pool contact email.")
+    ap.add_argument("--format", choices=["auto", "bibtex", "doi", "freeform"], default="auto",
+                    help="Input format (default auto: BibTeX, DOI/arXiv list, free-form, or a mix).")
+    ap.add_argument("--mailto", default=DEFAULT_MAILTO,
+                    help="Your contact email for Crossref's polite pool (optional; default: "
+                         "$ALTERLAB_CONTACT_EMAIL, else none is sent).")
     ap.add_argument("--threshold", type=float, default=0.70, help="Fuzzy title-match ratio (0..1).")
     ap.add_argument("--out", default=None, help="Write JSON report to this path (default stdout).")
     ap.add_argument("--offline", action="store_true", help="Skip the network; emit 'unverified' verdicts.")
     args = ap.parse_args(argv)
 
-    text = _read_input(args.input)
     try:
-        entries = parse_bibliography(text, args.format)
+        text = _read_input(args.input)
+    except (OSError, UnicodeDecodeError) as exc:
+        print(f"error: could not read input: {exc}", file=sys.stderr)
+        return 2
+    try:
+        parsed = parse_input(text, args.format)
     except Exception as exc:  # noqa: BLE001
         print(f"error: could not parse bibliography: {exc}", file=sys.stderr)
         return 2
-    if not entries:
-        print("error: no bibliography entries parsed from input.", file=sys.stderr)
+    if parsed.detected == 0:
+        hint = (f" ({len(parsed.ignored_text)} text segment(s) skipped: not a reference.)"
+                if parsed.ignored_text else "")
+        print("error: no bibliography entries parsed from input." + hint, file=sys.stderr)
         return 2
 
-    results = [verify_entry(e, args.mailto, args.threshold, args.offline) for e in entries]
-    report = build_report(results, args.mailto, args.threshold, args.offline)
+    results: list[dict] = []
+    try:
+        for e in parsed.entries:
+            results.append(_verify_safely(e, args.mailto, args.threshold, args.offline))
+    except KeyboardInterrupt:
+        print(f"interrupted: {len(parsed.entries) - len(results)} entries were not verified; "
+              "writing a partial report.", file=sys.stderr)
+    acc = input_accounting(parsed, processed=len(results), unprocessed=parsed.entries[len(results):])
+    report = build_report(results, args.mailto, args.threshold, args.offline, accounting=acc)
+    banner = _stderr_banner(report)
+    if banner:
+        print(banner, file=sys.stderr)
     out = json.dumps(report, indent=2, ensure_ascii=False)
     if args.out:
         with open(args.out, "w", encoding="utf-8") as fh:
             fh.write(out + "\n")
         print(f"wrote {report['summary']['total']} verdicts → {args.out} "
-              f"(verdict={report['summary']['verdict']})", file=sys.stderr)
+              f"(verdict={report['summary']['verdict']}, status={report['status']})", file=sys.stderr)
     else:
         print(out)
-    return 0
+    if not parsed.entries:
+        print(f"error: none of the {parsed.detected} detected entries could be parsed "
+              "(see the diagnostics above).", file=sys.stderr)
+        return 2
+    return 0 if report["status"] == "complete" else 3
 
 
 if __name__ == "__main__":

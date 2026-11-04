@@ -13,9 +13,9 @@
 
 ## 📝 Repository description
 
-> 242 evaluated academic Claude/agent skills across 18 research domains — bioinformatics, cheminformatics, data science, databases, clinical, social science, Turkish academia & more. Every skill ships an executable eval. Citation verifier, research→write→review pipeline, 7 multi-agent workflows. Claude Code plugins; also Cursor, Codex, Gemini CLI.
+> 241 evaluated academic Claude/agent skills across 18 research domains — bioinformatics, cheminformatics, data science, databases, clinical, social science, Turkish academia & more. Every skill ships an executable eval. Citation verifier, research→write→review pipeline, 7 multi-agent workflows. Claude Code plugins; also Cursor, Codex, Gemini CLI.
 
-<sub>347 characters (under GitHub's 350 cap). Leads with **242 evaluated academic Claude/agent skills**; every claim is grounded in `skills.json` (`summary.total = 242`, `summary.eval_coverage = 242/242`, 18 domains) and `CHANGELOG.md` `[3.0.0]` (the seven workflows ship in the `alterlab-workflows` plugin).</sub>
+<sub>347 characters (under GitHub's 350 cap). Leads with **241 evaluated academic Claude/agent skills**; every claim is grounded in `skills.json` (`summary.total = 241`, `summary.eval_coverage = 241/241`, 18 domains) and `CHANGELOG.md` `[3.0.0]` (the seven workflows ship in the `alterlab-workflows` plugin).</sub>
 
 <br>
 
@@ -42,7 +42,7 @@ All lowercase-kebab, ordered by discovery value. Anchored in the suite's real do
 | 13 | `clinical-research` | Real domain (7 skills) |
 | 14 | `data-visualization` | Real domain (9 skills) |
 | 15 | `scientific-writing` | Writing-tools domain (14 skills) |
-| 16 | `model-context-protocol` | Bundled OpenAlex / Crossref / Zotero MCP servers (`.mcp.json`) |
+| 16 | `model-context-protocol` | Bundled keyless Crossref MCP server (`.mcp.json`) |
 | 17 | `reproducible-research` | Evals + provenance + figure-stamp positioning |
 | 18 | `citation` | Headline deterministic citation verifier |
 | 19 | `prompt-engineering` | High-traffic adjacent discovery term |
@@ -73,7 +73,7 @@ https://alterlab-ieu.github.io/AlterLab-Academic-Skills/
 REPO="AlterLab-IEU/AlterLab-Academic-Skills"
 
 gh repo edit "$REPO" \
-  --description "242 evaluated academic Claude/agent skills across 18 research domains — bioinformatics, cheminformatics, data science, databases, clinical, social science, Turkish academia & more. Every skill ships an executable eval. Citation verifier, research→write→review pipeline, 7 multi-agent workflows. Claude Code plugins; also Cursor, Codex, Gemini CLI." \
+  --description "241 evaluated academic Claude/agent skills across 18 research domains — bioinformatics, cheminformatics, data science, databases, clinical, social science, Turkish academia & more. Every skill ships an executable eval. Citation verifier, research→write→review pipeline, 7 multi-agent workflows. Claude Code plugins; also Cursor, Codex, Gemini CLI." \
   --homepage "https://alterlab-ieu.github.io/AlterLab-Academic-Skills/" \
   --add-topic claude \
   --add-topic claude-skills \

@@ -16,8 +16,13 @@ Main classes:
   - ParallelDeepResearch: Deep research via Chat API (core model)
   - ParallelExtract:      URL content extraction (Extract API, verification only)
 
-Environment variable required:
+This script is the OPTIONAL paid backend of alterlab-parallel-web. The skill's default,
+keyless path does the same search / research / extract jobs with Claude's WebSearch and
+WebFetch; run this script only when the user asks for Parallel.
+
+Environment variable this script needs (the skill does not):
   PARALLEL_API_KEY - Your Parallel API key from https://platform.parallel.ai
+Without it the script exits 1 before contacting anything and writes no -o file.
 """
 
 import os
@@ -28,15 +33,19 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 
+KEY_MISSING = (
+    "PARALLEL_API_KEY is not set, so the Parallel backend cannot run; nothing was sent and "
+    "no output file was written.\n"
+    "Get a key at https://platform.parallel.ai and set it (export PARALLEL_API_KEY=...), or use "
+    "the skill's keyless path: WebSearch for search/research, WebFetch for extract."
+)
+
+
 def _get_api_key():
     """Validate and return the Parallel API key."""
     api_key = os.getenv("PARALLEL_API_KEY")
     if not api_key:
-        raise ValueError(
-            "PARALLEL_API_KEY environment variable not set.\n"
-            "Get your key at https://platform.parallel.ai and set it:\n"
-            "  export PARALLEL_API_KEY='your_key_here'"
-        )
+        raise ValueError(KEY_MISSING)
     return api_key
 
 
@@ -517,57 +526,43 @@ Examples:
         parser.print_help()
         return 1
 
-    output_file = None
-    if hasattr(args, "output") and args.output:
-        output_file = open(args.output, "w", encoding="utf-8")
+    # The key is checked before any import or file is touched: a keyless run must say
+    # what is missing (not "install openai") and must not leave an empty file in sources/.
+    if not os.getenv("PARALLEL_API_KEY"):
+        print(f"Error: {KEY_MISSING}", file=sys.stderr)
+        return 1
 
     try:
         if args.command == "search":
-            searcher = ParallelSearch()
-            result = searcher.search(
-                objective=args.objective,
-                model=args.model,
-            )
-            if args.json:
-                text = json.dumps(result, indent=2, ensure_ascii=False, default=str)
-                (output_file or sys.stdout).write(text + "\n")
-            else:
-                _print_search_results(result, output_file)
-
+            result = ParallelSearch().search(objective=args.objective, model=args.model)
+            printer = _print_search_results
         elif args.command == "extract":
-            extractor = ParallelExtract()
-            result = extractor.extract(
-                urls=args.urls,
-                objective=args.objective,
-                full_content=args.full_content,
-            )
-            if args.json:
-                text = json.dumps(result, indent=2, ensure_ascii=False, default=str)
-                (output_file or sys.stdout).write(text + "\n")
-            else:
-                _print_extract_results(result, output_file)
-
-        elif args.command == "research":
-            researcher = ParallelDeepResearch()
-            result = researcher.research(
-                query=args.query,
-                model=args.model,
-            )
-            if args.json:
-                text = json.dumps(result, indent=2, ensure_ascii=False, default=str)
-                (output_file or sys.stdout).write(text + "\n")
-            else:
-                _print_research_results(result, output_file)
-
-        return 0
-
+            result = ParallelExtract().extract(
+                urls=args.urls, objective=args.objective, full_content=args.full_content)
+            printer = _print_extract_results
+        else:
+            result = ParallelDeepResearch().research(query=args.query, model=args.model)
+            printer = _print_research_results
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
 
+    if not result.get("success"):
+        # A failed call is reported and exits non-zero; it is never saved as a source.
+        print(f"Error: {result.get('error', 'Unknown error')}", file=sys.stderr)
+        return 1
+
+    output_file = open(args.output, "w", encoding="utf-8") if args.output else None
+    try:
+        if args.json:
+            text = json.dumps(result, indent=2, ensure_ascii=False, default=str)
+            (output_file or sys.stdout).write(text + "\n")
+        else:
+            printer(result, output_file)
     finally:
         if output_file:
             output_file.close()
+    return 0
 
 
 if __name__ == "__main__":

@@ -110,6 +110,12 @@ All new skills added to this project must meet these requirements:
 - AI disclosure requirements must be included
 - Ethical considerations must be addressed for the domain
 
+### Keyless-first (enforced by `python3 scripts/check_keyless.py`)
+- A skill does what it claims with **no external API key, account or licence**: Claude's own tools (WebSearch, WebFetch, Read, Bash), keyless public APIs, local libraries and simulators, and Claude's own reasoning instead of a second paid LLM.
+- A credential may only *add* something: the user's own private account or data, a higher rate limit, or a paid service the user explicitly asks for. Declare each one in `metadata.credentials: "optional: NAME (what it adds)"`; `compatibility` and `description` never make one a precondition.
+- When the user asks for a keyed backend whose key is missing, exit with a clear message — never answer silently from another backend.
+- At least 3 `should_trigger` evals run with no `env:` requirement, so the keyless path is what gets graded.
+
 ### Testing
 - Each skill should be tested with at least 3 representative prompts
 - Verify that the skill activates correctly based on its trigger description

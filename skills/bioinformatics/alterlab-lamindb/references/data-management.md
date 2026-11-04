@@ -340,10 +340,14 @@ ln.Artifact.values("suffix").annotate(avg_size=Avg("size"))
 ```python
 # Check cache location
 ln.settings.cache_dir
+```
 
+```bash
 # Configure cache
 lamin cache set /path/to/cache
+```
 
+```python
 # Clear cache for specific artifact
 artifact.delete_cache()
 

@@ -13,11 +13,13 @@
     },
     {
       "id": "sequence-similarity-search",
+      "files": ["fixtures/kras_gdomain.fasta"],
       "prompt": "Here's a protein sequence (the KRAS G-domain). Find me experimentally determined structures with similar sequence at 90% identity and an e-value cutoff of 0.1.",
       "expected_output": "Triggers the PDB skill. Uses rcsbapi.search SeqSimilarityQuery with the provided sequence, identity_cutoff=0.9, evalue_cutoff=0.1, sequence_type='protein', and returns the list of matching PDB entries.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Runs a sequence similarity search against the PDB with identity and e-value cutoffs." }
+        { "type": "behavior", "value": "Runs a sequence similarity search against the PDB with identity and e-value cutoffs." },
+        { "type": "behavior", "value": "Searches with the 169-residue KRAS4B sequence in the attached FASTA (not a sequence it supplies itself) and reports several hundred matching entries (814 entries / 857 polymer entities on 2026-10-23), noting that a 90% identity cutoff also admits HRAS/NRAS structures (e.g. 5P21) besides KRAS." }
       ]
     },
     {

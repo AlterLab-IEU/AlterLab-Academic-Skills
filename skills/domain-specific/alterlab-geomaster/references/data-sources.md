@@ -89,12 +89,51 @@ elevation.clean('srtm.tif', 'srtm_filled.tif')
 
 | Dataset | Resolution | Temporal | Access |
 |---------|------------|----------|--------|
-| **ERA5** | 31km | Hourly (1979+) | https://cds.climate.copernicus.eu/ |
+| **ERA5** | 31km (0.25° grid) | Hourly (1940+) | keyless: `gs://gcp-public-data-arco-era5` (ARCO-ERA5); account: https://cds.climate.copernicus.eu/ |
 | **MERRA-2** | 50km | Hourly (1980+) | https://gmao.gsfc.nasa.gov/ |
 | **JRA-55** | 55km | 3-hourly (1958+) | https://jra.kishou.go.jp/JRA-55/index_en.html |
 
+**ERA5 without an account (default): ARCO-ERA5.** Google publishes hourly ERA5 (single levels
+plus 37 pressure levels, 0.25°) as an analysis-ready Zarr store that anyone can read
+anonymously. Verified live 2026-11-02 with xarray 2026.9.0, zarr 3.4.1 and gcsfs 2026.10.1:
+the store's attributes gave `valid_time_start` 1940-01-01, `valid_time_stop` 2026-06-30 and
+`valid_time_stop_era5t` 2026-10-27, and the 3 × 4 cell box below loaded in under a second
+(9.32 °C at 37.75 N, 237.5 E). Each chunk is one hourly global field (721 × 1440), so a
+single time step costs about one chunk however small the box.
+
 ```python
-# Download ERA5 via CDS API
+# uv run --python ">=3.11" --with xarray --with zarr --with gcsfs python era5_arco.py
+import xarray as xr
+
+ds = xr.open_zarr(
+    "gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3",
+    chunks=None,                       # no dask needed for small reads
+    storage_options={"token": "anon"},  # anonymous: no Google account or key
+)
+print(ds.attrs["valid_time_stop"])   # the time axis runs past this date and is empty there
+
+t2m = ds["2m_temperature"].sel(       # variables use long CF names; t2m in K
+    time="2023-01-01T12:00",          # one hourly step; use slice("2023-01-01", "2023-01-07") for a range
+    latitude=slice(38.0, 37.5),       # latitude is stored 90 -> -90, so slice north to south
+    longitude=slice(-122.75 % 360, -122.0 % 360),  # longitude is 0..359.75; convert negatives
+).load()
+print((t2m - 273.15).to_pandas())     # 3 x 4 cells, °C
+```
+
+Pressure-level variables (`temperature`, `geopotential`, `u_component_of_wind`, ...) add a
+`level` dimension in hPa (`.sel(level=500)`). Cite ERA5 as Hersbach et al. (2020), *Q. J. R.
+Meteorol. Soc.* 146:1999–2049, doi:10.1002/qj.3803, and name the ARCO-ERA5 store and the
+access date.
+
+**Optional: the Copernicus CDS API (needs a free account).** `cdsapi` reads `~/.cdsapirc`
+(or `CDSAPI_URL` + `CDSAPI_KEY`) and needs each dataset's licence accepted on the CDS site; a
+keyless request is refused with HTTP 401 "authentication required" (checked 2026-11-02). Use
+it for CDS-only products — ERA5-Land, ERA5 ensemble members, other catalogue datasets — or a
+server-side cut to NetCDF/GRIB. If the user asks for it and no key is configured, say so and
+offer the ARCO-ERA5 route; do not fall back silently.
+
+```python
+# Optional: download ERA5 via CDS API (requires ~/.cdsapirc or CDSAPI_URL + CDSAPI_KEY)
 import cdsapi
 
 c = cdsapi.Client()

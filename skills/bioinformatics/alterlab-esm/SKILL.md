@@ -3,16 +3,19 @@ name: alterlab-esm
 description: Run ESM protein language models — ESMC for embeddings and representations, ESMFold2 for structure prediction, and ESM3 for generative multimodal protein design across sequence, structure, and function — locally or through the hosted Biohub Platform API (formerly Forge). Use when working with protein sequences, structures, or function prediction, designing novel proteins, generating protein embeddings, performing inverse folding, or doing protein-engineering tasks. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Runs under `uv run python` with the `esm` package (3.4.1.post1 as of 2026-09; requires Python >= 3.12 and torch >= 2.11). Local weights come from Hugging Face (`huggingface_hub` login) and run best on a CUDA GPU; CPU works for small ESMC embeddings but is slow. The hosted path is the Biohub Platform (`https://biohub.ai`, formerly forge.evolutionaryscale.ai) and needs an API token, read from the `ESM_API_KEY` environment variable by default."
+compatibility: "No API key required: the open ESMC (300M/600M) and ESM3-sm-open-v1 weights are public on Hugging Face (no HF_TOKEN) and run locally under `uv run python` with the `esm` package (3.4.1.post1 as of 2026-09; Python >= 3.12, torch >= 2.11) — a CUDA GPU is fastest, CPU works for small ESMC embeddings (slow). The hosted Biohub Platform (larger ESM3 / ESMC-6B / ESMFold2 models) is an optional extra that uses an ESM_API_KEY."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    credentials: "optional: ESM_API_KEY (hosted Biohub Platform — ESM3 medium/large, ESMC-6B, ESMFold2; the open local weights need none); HF_TOKEN (only for gated HF repos — the ESMC and ESM3-open weights are public)"
+    version: "1.1.1"
     last_updated: "2026-09-23"
 ---
 
 # ESM: Evolutionary Scale Modeling
 
 ## Overview
+
+**Keyless by default.** The open weights — ESMC 300M/600M and ESM3-sm-open-v1 — are public on Hugging Face (verified: not gated, no `HF_TOKEN` needed) and run locally. Embeddings, logits, masked-sequence completion, inverse folding, and generative design all work offline on these weights; a small ESMC model runs on CPU (slowly) when no GPU is available. The hosted Biohub Platform (the 7B/98B ESM3 models, ESMC-6B, ESMFold2) is an optional add-on that uses an `ESM_API_KEY`; when no token is set, use the open local model instead.
 
 ESM provides state-of-the-art protein language models for understanding, generating, and designing proteins. Three families ship in the same `esm` package:
 
@@ -47,6 +50,10 @@ an ESM model, inverse folding, or generative sequence design.
 | Antibody–antigen or mixed multi-entity complexes | `alterlab-chai` |
 | Design a sequence for a fixed backbone (ProteinMPNN family) | `alterlab-proteinmpnn`, `alterlab-ligandmpnn` |
 | Generate a de-novo backbone to design onto | `alterlab-rfdiffusion` |
+| Low-dimensional latent embedding / batch integration of single-cell RNA-seq (cells, not proteins) | `alterlab-scvi-tools` |
+| Deterministic sequence bookkeeping — molecular weight, isoelectric point, parsing a FASTA | `alterlab-biopython` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-alphafold`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 
@@ -294,11 +301,15 @@ uv pip install "esm>=3.4,<3.5"     # 3.4.1.post1 as of 2026-09; needs Python >= 
 uv pip install flash-attn --no-build-isolation
 ```
 
+Local weights for the open models (`esmc_300m`, `esmc_600m`, `esm3-sm-open-v1`) are pulled
+from the public Hugging Face `biohub` repos and need **no** Hugging Face login — the repos
+are not gated. `huggingface_hub.login()` is only needed if you point at a gated/private
+repo or want higher download rate limits.
+
 The hosted clients (`esm.sdk.client`, `esmc_client`, `esmfold2_client`) ship inside the
-`esm` package — no extra install. Create an API token in the Biohub developer console
-(`https://biohub.ai/developer-console/api-keys`) and export it as `ESM_API_KEY`. Local
-weights are pulled from Hugging Face, so run `huggingface_hub.login()` once with a
-read-scoped token.
+`esm` package — no extra install, and only used for the larger hosted-only models. For
+those, create an API token in the Biohub developer console
+(`https://biohub.ai/developer-console/api-keys`) and export it as `ESM_API_KEY`.
 
 **ESMC through the Biohub Platform:**
 

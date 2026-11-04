@@ -1,0 +1,22 @@
+# SYNTHETIC FIXTURE — created for benchmarking; not real data or real persons.
+application_id,route,working_days_to_approval
+E01,paper,2
+E02,paper,3
+E03,paper,3
+E04,paper,4
+E05,paper,4
+E06,paper,5
+E07,paper,6
+E08,paper,8
+E09,paper,14
+E10,paper,31
+E11,online,3
+E12,online,4
+E13,online,5
+E14,online,6
+E15,online,7
+E16,online,9
+E17,online,12
+E18,online,16
+E19,online,27
+E20,online,45

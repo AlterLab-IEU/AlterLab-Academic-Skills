@@ -2,7 +2,7 @@
 name: alterlab-syllabus-ai-policy
 description: "Drafts course-level generative-AI use policies and syllabus statements: assigns each graded task a permitted/restricted/prohibited tier (modeled on Cornell's prohibit/allow-with-attribution/encourage framework), writes the disclosure clause with current APA (2025: cite the shared chat or the tool) and MLA generative-AI citation templates, and adds assessment-integrity, accessibility, and equity language bound to the institution's own academic-integrity code. Ships scripts/policy_builder.py to emit a paste-ready statement and scripts/policy_lint.py to flag a vague or self-contradicting draft. Use when the request mentions a syllabus AI policy, a course statement on ChatGPT or generative AI, an academic-integrity clause for AI tools, an AI-disclosure rule, or per-assignment permitted/prohibited AI tiers. For full course/backward design, syllabus, or rubrics use alterlab-teaching-design; for human-subjects AI-tool ethics use alterlab-research-ethics. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*) WebFetch
+allowed-tools: Read Write Edit Bash(python:*) WebFetch Bash(uv run:*)
 compatibility: No API key or network required — emits institution-parameterized policy text from local templates via `uv run python`; WebFetch is used only to read a linked institutional academic-integrity code when the user supplies its URL
 metadata:
   skill-author: AlterLab
@@ -51,6 +51,8 @@ This skill is a narrow add-on. Route adjacent asks to the right sibling:
 | Verifying that *citations* a student or author produced actually exist | `alterlab-citation-verifier` | Citation existence-checking, not policy drafting |
 | Turkish-system integrity/ethics process (ÜAK, YÖK etik kurul) | `alterlab-tr-research-ethics` | Turkey-specific ethics workflow, parameterized differently |
 | Institutional accreditation / assurance-of-learning reporting | `alterlab-accreditation-aol` | Program-level AoL, not a course AI clause |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-teaching-design`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 If the request mixes "design my course" **and** "write my AI policy", do the AI
 policy here and hand the rest to `alterlab-teaching-design`.
@@ -138,7 +140,7 @@ Detail, sample wording, and the equity checklist live in
 ### 1. Build a statement from course context
 
 ```bash
-uv run python skills/faculty-life/alterlab-syllabus-ai-policy/scripts/policy_builder.py \
+uv run python scripts/policy_builder.py \
     --course "PSY 201 Research Methods" --level undergraduate \
     --doc-standard apa \
     --integrity-code "IEU Student Disciplinary Regulation" \
@@ -162,7 +164,7 @@ never invents an integrity code, a tool capability, or a citation URL.
 ### 2. Lint a draft (yours or the generated one)
 
 ```bash
-uv run python skills/faculty-life/alterlab-syllabus-ai-policy/scripts/policy_lint.py ai_policy.md
+uv run python scripts/policy_lint.py ai_policy.md
 ```
 
 `policy_lint.py` flags the common failure modes: a vague catch-all ("use AI

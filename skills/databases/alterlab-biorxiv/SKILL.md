@@ -2,12 +2,12 @@
 name: alterlab-biorxiv
 description: Search the bioRxiv preprint server and retrieve paper metadata or download PDFs via its API. Use when finding life sciences preprints by keywords, authors, DOI, date ranges, or categories, or when conducting a biology literature review of not-yet-peer-reviewed work. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
 compatibility: Keyless bioRxiv API (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.2.0"
+    last_updated: "2026-11-02"
 ---
 
 # bioRxiv Database
@@ -23,9 +23,11 @@ For **published, peer-reviewed** literature use `alterlab-pubmed`; for **compute
 The bioRxiv `/details` endpoint returns preprints by date range, 30 records per page. It accepts a server-side **subject-category** filter (`?category=cell_biology`), but has **no keyword or author filter**. So this tool:
 
 1. Paginates the date range (following the cursor until all records are retrieved), passing `--category` to the server so only that subject is fetched, then
-2. Filters **client-side** by keyword (substring over title/abstract) and author (substring over the author list).
+2. Filters **client-side** by keyword (substring over title/abstract).
 
-Implication: a wide date range means many API calls and a large download. Keep ranges as tight as the question allows, and use `--category` (cuts API calls) and `--limit` to bound the work.
+**Author search** does not need that scan. By default `--author` asks Europe PMC, which indexes bioRxiv preprints and filters by author on the server, keylessly. The query is `AUTH:"<name>" AND PUBLISHER:"bioRxiv"` within the date range. A year of one author's preprints takes about two seconds; scanning a year of bioRxiv would take about 1,400 requests. Europe PMC can lag bioRxiv by a few days. `--author-source scan` forces the old client-side scan. The scan is also used when you add `--category` (Europe PMC has no bioRxiv categories), and when Europe PMC cannot be reached, with a note on stderr.
+
+Implication: for keyword and date-range searches, a wide date range means many API calls and a large download. Keep ranges as tight as the question allows, and use `--category` (cuts API calls) and `--limit` to bound the work.
 
 ## When to Use This Skill
 
@@ -44,9 +46,11 @@ Use this skill when:
 |----------|-------------|
 | Peer-reviewed, MeSH-indexed biomedical journal articles | `alterlab-pubmed` |
 | CS / physics / math / quantitative-biology preprints on arXiv | `alterlab-arxiv` |
-| Citation counts or cross-publisher bibliometrics for preprints | `alterlab-openalex` |
+| Citation counts or cross-publisher bibliometrics for preprints | `alterlab-research-lookup` |
 | Depositing your own preprint (server choice, license, versioning) | `alterlab-preprint-deposition` |
 | Multi-database systematic review with PRISMA screening | `alterlab-literature-review` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-pubmed`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Running the script
 
@@ -93,7 +97,7 @@ python scripts/biorxiv_search.py \
 
 ### 2. Author Search
 
-Find all papers by a specific author within a date range.
+Find all papers by a specific author within a date range. This goes through Europe PMC's server-side author filter (fast); add `--author-source scan` to filter bioRxiv's own date listing instead.
 
 **Basic Usage:**
 ```bash

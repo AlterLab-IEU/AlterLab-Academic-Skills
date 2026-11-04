@@ -1,0 +1,30 @@
+##fileformat=VCFv4.2
+##fileDate=20261020
+##source=GATK HaplotypeCaller (synthetic eval fixture: real GRCh38 coordinates, fictional sample)
+##reference=GRCh38 (hg38, UCSC-style chr names)
+##contig=<ID=chr3,length=198295559,assembly=GRCh38>
+##contig=<ID=chr7,length=159345973,assembly=GRCh38>
+##contig=<ID=chr11,length=135086622,assembly=GRCh38>
+##contig=<ID=chr13,length=114364328,assembly=GRCh38>
+##contig=<ID=chr17,length=83257441,assembly=GRCh38>
+##contig=<ID=chr19,length=58617616,assembly=GRCh38>
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Approximate read depth">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">
+##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype quality">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	PT-0193
+chr3	36988684	.	C	A	1924.55	PASS	DP=48	GT:AD:DP:GQ	1/1:1,47:48:99
+chr3	36993447	.	C	G	1482.45	PASS	DP=66	GT:AD:DP:GQ	0/1:36,30:66:99
+chr7	117559590	.	ATCT	A	1106.66	PASS	DP=33	GT:AD:DP:GQ	0/1:18,15:33:97
+chr11	5227002	.	T	A	886.55	PASS	DP=45	GT:AD:DP:GQ	0/1:25,20:45:99
+chr13	32314943	.	A	G	2294.52	PASS	DP=69	GT:AD:DP:GQ	0/1:39,30:69:99
+chr13	32315647	.	A	G	1116.99	PASS	DP=54	GT:AD:DP:GQ	0/1:32,22:54:99
+chr13	32332778	.	AAAAG	A	2159.18	PASS	DP=41	GT:AD:DP:GQ	0/1:22,19:41:99
+chr13	32341511	.	T	C	876.95	PASS	DP=84	GT:AD:DP:GQ	0/1:45,39:84:99
+chr17	7668434	.	T	G	1485.34	PASS	DP=35	GT:AD:DP:GQ	1/1:1,34:35:77
+chr17	7670684	.	C	G	1053.74	PASS	DP=48	GT:AD:DP:GQ	0/1:22,26:48:99
+chr17	43096531	.	C	T	315.8	PASS	DP=53	GT:AD:DP:GQ	0/1:32,21:53:99
+chr17	43124027	.	ACT	A	790.14	PASS	DP=86	GT:AD:DP:GQ	0/1:38,48:86:99
+chr19	11089550	.	T	C	1884.44	PASS	DP=88	GT:AD:DP:GQ	0/1:40,48:88:99
+chr19	11089606	.	G	A	1595.3	PASS	DP=41	GT:AD:DP:GQ	0/1:20,21:41:99

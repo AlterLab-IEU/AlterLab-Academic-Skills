@@ -1,0 +1,24 @@
+relation,display_relation,x_index,x_id,x_type,x_name,x_source,y_index,y_id,y_type,y_name,y_source
+disease_protein,associated with,1,0005148,disease,type 2 diabetes mellitus,MONDO,2,6934,gene/protein,TCF7L2,NCBI
+disease_protein,associated with,1,0005148,disease,type 2 diabetes mellitus,MONDO,3,5468,gene/protein,PPARG,NCBI
+disease_protein,associated with,1,0005148,disease,type 2 diabetes mellitus,MONDO,4,3767,gene/protein,KCNJ11,NCBI
+disease_protein,associated with,1,0005148,disease,type 2 diabetes mellitus,MONDO,5,169026,gene/protein,SLC30A8,NCBI
+disease_protein,associated with,1,0005148,disease,type 2 diabetes mellitus,MONDO,6,6927,gene/protein,HNF1A,NCBI
+disease_protein,associated with,1,0005148,disease,type 2 diabetes mellitus,MONDO,7,3667,gene/protein,IRS1,NCBI
+disease_protein,associated with,1,0005148,disease,type 2 diabetes mellitus,MONDO,8,3643,gene/protein,INSR,NCBI
+disease_protein,associated with,1,0005148,disease,type 2 diabetes mellitus,MONDO,9,6833,gene/protein,ABCC8,NCBI
+indication,indication,10,DB00331,drug,metformin,DrugBank,1,0005148,disease,type 2 diabetes mellitus,MONDO
+indication,indication,11,DB01132,drug,pioglitazone,DrugBank,1,0005148,disease,type 2 diabetes mellitus,MONDO
+indication,indication,12,DB01261,drug,sitagliptin,DrugBank,1,0005148,disease,type 2 diabetes mellitus,MONDO
+indication,indication,13,DB09038,drug,empagliflozin,DrugBank,1,0005148,disease,type 2 diabetes mellitus,MONDO
+indication,indication,14,DB00222,drug,glimepiride,DrugBank,1,0005148,disease,type 2 diabetes mellitus,MONDO
+indication,indication,15,DB01067,drug,glipizide,DrugBank,1,0005148,disease,type 2 diabetes mellitus,MONDO
+drug_protein,target,11,DB01132,drug,pioglitazone,DrugBank,3,5468,gene/protein,PPARG,NCBI
+drug_protein,target,15,DB01067,drug,glipizide,DrugBank,9,6833,gene/protein,ABCC8,NCBI
+drug_protein,target,10,DB00331,drug,metformin,DrugBank,16,5562,gene/protein,PRKAA1,NCBI
+drug_protein,target,12,DB01261,drug,sitagliptin,DrugBank,17,1803,gene/protein,DPP4,NCBI
+disease_phenotype_positive,phenotype present,1,0005148,disease,type 2 diabetes mellitus,MONDO,18,HP:0003074,effect/phenotype,hyperglycemia,HPO
+disease_phenotype_positive,phenotype present,1,0005148,disease,type 2 diabetes mellitus,MONDO,19,HP:0000103,effect/phenotype,polyuria,HPO
+disease_phenotype_positive,phenotype present,1,0005148,disease,type 2 diabetes mellitus,MONDO,20,HP:0001959,effect/phenotype,polydipsia,HPO
+disease_protein,associated with,21,0005155,disease,hypertension,MONDO,22,183,gene/protein,AGT,NCBI
+protein_protein,ppi,8,3643,gene/protein,INSR,NCBI,7,3667,gene/protein,IRS1,NCBI

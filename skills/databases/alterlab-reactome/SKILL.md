@@ -2,12 +2,12 @@
 name: alterlab-reactome
 description: Query the Reactome REST API for pathway analysis, over-representation/enrichment, gene-to-pathway mapping, disease pathways, molecular interactions, and expression analysis. Use when running pathway enrichment on a gene list, mapping genes to curated biological pathways, or exploring disease pathways for systems biology studies. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
 compatibility: Keyless Reactome Content Service and Analysis Service REST APIs (no authentication required); verified against Reactome release 97 (2026-09)
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.2"
+    last_updated: "2026-10-23"
 ---
 
 # Reactome Database
@@ -36,6 +36,8 @@ This skill should be used when:
 | Genome-scale metabolic models and flux balance analysis | `alterlab-cobrapy` |
 | Differential expression statistics from RNA-seq counts | `alterlab-pydeseq2` |
 | Target-disease evidence scoring for drug discovery | `alterlab-opentargets` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-kegg`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 
@@ -71,7 +73,7 @@ Python client library that wraps Reactome API calls for easier programmatic acce
 
 **Installation:**
 ```bash
-uv pip install reactome2py
+uv run --with reactome2py python my_script.py   # install-free; no pip step
 ```
 
 **Note:** The reactome2py package (version 3.0.0, released January 2021) is functional but not actively maintained. For the most up-to-date functionality, consider using direct REST API calls.
@@ -295,14 +297,20 @@ python scripts/reactome_query.py entities R-HSA-69278
 # Search for a pathway by name
 python scripts/reactome_query.py search "cell cycle"
 
-# Perform overrepresentation analysis
+# Perform overrepresentation analysis (one identifier per line)
 python scripts/reactome_query.py analyze gene_list.txt
+
+# Expression analysis: a '#'-headed TSV (#Gene<TAB>sample1<TAB>sample2...) is posted as-is;
+# prints expression columns, per-pathway mean values and the unmapped-ID count
+python scripts/reactome_query.py analyze expression.tsv
 
 # Get database version
 python scripts/reactome_query.py version
 ```
 
-The script depends only on `requests`; run it with `uv run --with requests scripts/reactome_query.py ...`.
+The script depends only on `requests`; run it with `uv run --with requests python scripts/reactome_query.py ...`
+when `requests` is not installed. It retries 429/5xx and the Cloudflare 520-526 errors reactome.org
+intermittently returns, and writes results next to the input as `<name>_results.json`.
 
 ## Additional Resources
 

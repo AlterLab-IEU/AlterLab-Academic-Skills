@@ -1,18 +1,30 @@
 #!/usr/bin/env python3
 """
-Convert documents to Markdown with AI-enhanced image descriptions.
+Convert documents to Markdown with descriptions of the images inside them.
 
-This script demonstrates how to use MarkItDown with OpenRouter to generate
-detailed descriptions of images in documents (PowerPoint, PDFs with images, etc.)
+Two backends:
+
+* ``claude`` (keyless; the default when no OPENROUTER_API_KEY is set). MarkItDown
+  converts the text, and every embedded image (PPTX slides, DOCX/XLSX media, PDF
+  images when PyMuPDF is installed, or the input image itself) is written to
+  ``<output stem>_images/`` with a manifest ``<output stem>_images.json`` that
+  carries the chosen description prompt. Claude then Reads each image and writes
+  the descriptions into the Markdown, so no second model or API key is involved.
+* ``openrouter`` (optional key). MarkItDown calls a vision model through OpenRouter
+  (OpenAI-compatible client) and writes the descriptions inline.
+
+``--backend auto`` uses ``openrouter`` when a key is available and ``claude``
+otherwise, and says which on stderr. ``--backend openrouter`` without a key exits 2
+instead of silently converting without descriptions.
 """
 
 import argparse
+import json
 import os
 import re
 import sys
+import zipfile
 from pathlib import Path
-from markitdown import MarkItDown
-from openai import OpenAI
 
 
 # AlterLab model convention — default reviewed 2026-09-23; override via ALTERLAB_MODEL.
@@ -121,6 +133,9 @@ def convert_with_ai(
         model = alterlab_model()
     model = openrouter_slug(model)
     try:
+        from markitdown import MarkItDown
+        from openai import OpenAI
+
         # Initialize OpenRouter client (OpenAI-compatible)
         client = OpenAI(
             api_key=api_key,
@@ -168,6 +183,116 @@ def convert_with_ai(
         return False
 
 
+IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff", ".webp"}
+
+
+def extract_images(input_file: Path, image_dir: Path) -> list:
+    """Write the images embedded in input_file to image_dir; return manifest rows.
+
+    PPTX pictures are mapped to their slide with python-pptx (installed by
+    markitdown[pptx]); otherwise DOCX/XLSX/PPTX media are read from the zip's media
+    folder. PDF images need PyMuPDF. An image input is copied as-is.
+    """
+    suffix = input_file.suffix.lower()
+    rows = []
+
+    def _save(name, blob, **where):
+        image_dir.mkdir(parents=True, exist_ok=True)
+        out = image_dir / name
+        out.write_bytes(blob)
+        rows.append({"image": str(out), "bytes": len(blob), **where})
+
+    if suffix in IMAGE_SUFFIXES:
+        _save(f"image_01{suffix}", input_file.read_bytes(), source="input file")
+        return rows
+    if suffix == ".pptx":
+        try:
+            from pptx import Presentation
+            from pptx.enum.shapes import MSO_SHAPE_TYPE
+        except ImportError:
+            Presentation = None
+        if Presentation is not None:
+            def _pictures(shapes):
+                for shape in shapes:
+                    if shape.shape_type == MSO_SHAPE_TYPE.GROUP:
+                        yield from _pictures(shape.shapes)
+                    elif shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
+                        yield shape
+
+            for s_no, slide in enumerate(Presentation(str(input_file)).slides, 1):
+                title = slide.shapes.title.text if slide.shapes.title is not None else ""
+                for i, pic in enumerate(_pictures(slide.shapes), 1):
+                    _save(f"slide{s_no:02d}_img{i:02d}.{pic.image.ext}", pic.image.blob,
+                          slide=s_no, slide_title=title, shape_name=pic.name)
+            return rows
+    if suffix in (".pptx", ".docx", ".xlsx"):
+        media = {".pptx": "ppt/media/", ".docx": "word/media/", ".xlsx": "xl/media/"}[suffix]
+        with zipfile.ZipFile(input_file) as z:
+            names = sorted(n for n in z.namelist() if n.startswith(media))
+            for i, name in enumerate(names, 1):
+                _save(f"media{i:02d}{Path(name).suffix.lower()}", z.read(name), source=name)
+        return rows
+    if suffix == ".pdf":
+        try:
+            import pymupdf as fitz  # PyMuPDF >= 1.24
+        except ImportError:
+            try:
+                import fitz  # older PyMuPDF
+            except ImportError:
+                print("note: PDF images are not extracted without PyMuPDF (uv run --with "
+                      "pymupdf); Claude can Read the PDF pages directly instead.", file=sys.stderr)
+                return rows
+        doc = fitz.open(str(input_file))
+        for p_no, page in enumerate(doc, 1):
+            for i, img in enumerate(page.get_images(full=True), 1):
+                info = doc.extract_image(img[0])
+                if info and info.get("image"):
+                    _save(f"page{p_no:02d}_img{i:02d}.{info.get('ext', 'png')}", info["image"],
+                          page=p_no, width=info.get("width"), height=info.get("height"))
+        if not rows:
+            print("note: this PDF embeds no raster images; figures drawn as vectors are part of "
+                  "the page - Read the PDF pages to describe them.", file=sys.stderr)
+    return rows
+
+
+def convert_keyless(input_file: Path, output_file: Path, prompt: str) -> bool:
+    """Convert with MarkItDown (no LLM) and stage the images for Claude to describe."""
+    from markitdown import MarkItDown
+
+    result = MarkItDown().convert(str(input_file))
+    image_dir = output_file.with_name(f"{output_file.stem}_images")
+    rows = extract_images(input_file, image_dir)
+    content = f"# {result.title or input_file.stem}\n\n"
+    content += f"**Source**: {input_file.name}\n"
+    content += f"**Format**: {input_file.suffix}\n\n"
+    content += "---\n\n"
+    content += result.markdown
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    output_file.write_text(content, encoding="utf-8")
+    manifest = output_file.with_name(f"{output_file.stem}_images.json")
+    manifest.write_text(json.dumps({"markdown": str(output_file), "prompt": prompt,
+                                    "images": rows}, indent=2), encoding="utf-8")
+    print(f"✓ Converted to: {output_file}")
+    print(f"✓ {len(rows)} image(s) staged in {image_dir} (manifest: {manifest})")
+    if rows:
+        print("Next: Read each image in the manifest, describe it with the manifest's prompt, "
+              "and add each description to the Markdown next to its slide/page.", file=sys.stderr)
+    return True
+
+
+def _key_from_env_file():
+    """OPENROUTER_API_KEY from a .env file in the current or a parent directory."""
+    for parent in [Path.cwd(), *Path.cwd().parents]:
+        env = parent / ".env"
+        if env.is_file():
+            for line in env.read_text(encoding="utf-8", errors="replace").splitlines():
+                if line.startswith("OPENROUTER_API_KEY="):
+                    value = line.split("=", 1)[1].strip().strip("'\"")
+                    if value:
+                        return value
+    return None
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Convert documents to Markdown with AI-enhanced image descriptions",
@@ -180,7 +305,15 @@ Available prompt types:
   data_viz      - For data visualizations and charts
   medical       - For medical imaging
 
+Backends:
+  auto (default)  openrouter when OPENROUTER_API_KEY is set, else claude
+  claude          keyless: convert, then stage the images for Claude to describe with Read
+  openrouter      MarkItDown calls a vision model through OpenRouter (needs the key)
+
 Examples:
+  # Keyless: convert slides and stage their images for Claude to describe
+  python convert_with_ai.py slides.pptx slides.md --backend claude --prompt-type data_viz
+
   # Convert a scientific paper
   python convert_with_ai.py paper.pdf output.md --prompt-type scientific
   
@@ -195,7 +328,7 @@ Examples:
   python convert_with_ai.py image.jpg image.md
 
 Environment Variables:
-  OPENROUTER_API_KEY    OpenRouter API key (required if not passed via --api-key)
+  OPENROUTER_API_KEY    Optional OpenRouter API key for --backend openrouter (or --api-key)
   ALTERLAB_MODEL        Override the default model ID (see skills/core/shared/model_env.md)
 
 Popular Models (use with --model):
@@ -208,8 +341,14 @@ Popular Models (use with --model):
     parser.add_argument('input', type=Path, help='Input file')
     parser.add_argument('output', type=Path, help='Output Markdown file')
     parser.add_argument(
+        '--backend', '-b',
+        choices=['auto', 'claude', 'openrouter'],
+        default='auto',
+        help='auto (default): openrouter when a key is set, else the keyless claude backend'
+    )
+    parser.add_argument(
         '--api-key', '-k',
-        help='OpenRouter API key (or set OPENROUTER_API_KEY env var)'
+        help='OpenRouter API key for --backend openrouter (or set OPENROUTER_API_KEY env var)'
     )
     parser.add_argument(
         '--model', '-m',
@@ -243,18 +382,32 @@ Popular Models (use with --model):
             print("\n" + "="*60 + "\n")
         sys.exit(0)
     
-    # Get API key
-    api_key = args.api_key or os.environ.get('OPENROUTER_API_KEY')
-    if not api_key:
-        print("Error: OpenRouter API key required. Set OPENROUTER_API_KEY environment variable or use --api-key")
-        print("Get your API key at: https://openrouter.ai/keys")
-        sys.exit(1)
-    
     # Validate input file
     if not args.input.exists():
         print(f"Error: Input file '{args.input}' does not exist")
         sys.exit(1)
-    
+
+    api_key = args.api_key or os.environ.get('OPENROUTER_API_KEY') or _key_from_env_file()
+    backend = args.backend
+    if backend == 'openrouter' and not api_key:
+        print("Error: --backend openrouter needs OPENROUTER_API_KEY (or --api-key); not falling "
+              "back to a conversion without descriptions. Keyless alternative: --backend claude "
+              "(stages the images for Claude to describe with Read).", file=sys.stderr)
+        sys.exit(2)
+    if backend == 'auto':
+        backend = 'openrouter' if api_key else 'claude'
+        if backend == 'claude':
+            print("note: no OPENROUTER_API_KEY - keyless backend: converting with MarkItDown and "
+                  "staging the images for Claude to describe.", file=sys.stderr)
+    if backend == 'claude':
+        prompt = args.custom_prompt or PROMPTS.get(args.prompt_type, PROMPTS['general'])
+        try:
+            success = convert_keyless(args.input, args.output, prompt)
+        except Exception as e:  # noqa: BLE001 - report and exit non-zero
+            print(f"✗ Error: {e}", file=sys.stderr)
+            success = False
+        sys.exit(0 if success else 1)
+
     # Convert file
     success = convert_with_ai(
         input_file=args.input,

@@ -30,9 +30,13 @@ Use this skill when the user wants to:
 |----------|-------------|
 | Looking up a pathway or reaction annotation rather than simulating | `alterlab-kegg`, `alterlab-reactome` |
 | Enzyme kinetic parameters (kcat, Km) for a reaction | `alterlab-brenda` |
+| Differential gene expression on RNA-seq counts (which genes change between conditions) | `alterlab-pydeseq2` |
+| Gene regulatory network inference (TF→target links) from an expression matrix | `alterlab-arboreto` |
 | Graph analysis of the metabolic network (centrality, communities) rather than flux | `alterlab-networkx` |
 | Metabolomics measurements and their identification | `alterlab-metabolomics-wb`, `alterlab-hmdb` |
 | Multi-objective optimization that is not a flux-balance problem | `alterlab-pymoo` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-kegg`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Installation and Requirements
 

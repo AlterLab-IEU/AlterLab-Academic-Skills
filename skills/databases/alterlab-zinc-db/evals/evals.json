@@ -3,20 +3,25 @@
   "evals": [
     {
       "id": "docking-library-subset",
+      "requires": ["net:cartblanche22.docking.org"],
       "prompt": "I'm setting up a molecular docking screen and need a library of ~10,000 random purchasable drug-like compounds from ZINC22, with their ZINC IDs, SMILES, and tranche data.",
-      "expected_output": "Invokes alterlab-zinc-db. Uses the CartBlanche22 random endpoint (substance/random) with subset=drug-like and output_fields=zinc_id,smiles,tranche to assemble a docking library, and explains the tranche encoding (H-count, LogP, MW) for filtering.",
+      "expected_output": "Invokes alterlab-zinc-db. Uses the CartBlanche22 random endpoint (substance/random) with subset=drug-like and output_fields=zinc_id,smiles,tranche to assemble a docking library, and explains the ZINC-22 tranche encoding (H## = heavy-atom count, P###/M### = positive/negative logP bin) for filtering.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "tranche" }
+        { "type": "output_contains", "value": "tranche" },
+        { "type": "behavior", "value": "Decodes ZINC-22 tranche codes as heavy-atom count and logP bin, not as H-bond donors or molecular weight." }
       ]
     },
     {
       "id": "purchasable-analogs",
+      "files": ["fixtures/hit_compound.smi"],
+      "requires": ["net:sw.docking.org", "net:cartblanche22.docking.org"],
       "prompt": "Here's the SMILES of a hit compound. Find me purchasable analogs in ZINC within a Tanimoto distance of 5, with their supplier catalogs.",
       "expected_output": "Invokes alterlab-zinc-db. Plans a distance-5 similarity search for purchasable analogs with zinc_id, smiles, and catalogs, noting that the CartBlanche22 smiles.txt API currently returns zinc22_missing without running the query, so it routes the search through the CartBlanche22 web UI or SmallWorld (sw.docking.org) and reports which vendors offer the hits instead of claiming no analogs exist.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Sets up a ZINC similarity search with a distance threshold via a working route (web UI or SmallWorld) and returns purchasable analogs with supplier/catalog info." }
+        { "type": "behavior", "value": "Sets up a ZINC similarity search with a distance threshold via a working route (web UI or SmallWorld) and returns purchasable analogs with supplier/catalog info." },
+        { "type": "behavior", "value": "Searches with the hit SMILES from the attached file (the 4-anilinoquinazoline AG-1478, COc1cc2ncnc(Nc3cccc(Cl)c3)c2cc1OC) instead of asking for a structure or substituting another compound." }
       ]
     },
     {

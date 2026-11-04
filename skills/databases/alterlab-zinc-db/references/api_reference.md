@@ -181,7 +181,7 @@ Customize API responses using the `output_fields` parameter:
 | `sub_id` | Internal substance ID | 123456 |
 | `supplier_code` | Vendor catalog number | AB-1234567 |
 | `catalogs` | List of suppliers | [emolecules, mcule, mcule-ultimate] |
-| `tranche` | Encoded molecular properties | H02P025M300-0 |
+| `tranche` | Tranche (heavy-atom count × logP bin) | H17P050 |
 | `mwt` | Molecular weight | 325.45 |
 | `logp` | LogP (partition coefficient) | 2.5 |
 | `hba` | H-bond acceptors | 4 |
@@ -210,138 +210,95 @@ curl -X GET "https://cartblanche22.docking.org/substances.txt" \
 
 ## Tranche System
 
-ZINC organizes compounds into tranches based on molecular properties for efficient filtering and organization.
+ZINC-22 bins every molecule by **heavy-atom count** and **calculated logP** (both computed
+with RDKit). Source: Tingle et al., "ZINC-22─A Free Multi-Billion-Scale Database of
+Tangible Compounds for Ligand Discovery", *J. Chem. Inf. Model.* 2023, 63, 1166–1176
+(doi:10.1021/acs.jcim.2c01253): the tranche browser's two axes are "heavy atom count
+(horizontal) and lipophilicity (vertical)".
 
-### Tranche Code Format
+### Tranche code format
 
-**Pattern**: `H##P###M###-phase`
+| Part | Meaning | Example |
+|------|---------|---------|
+| `H##` | heavy-atom count | `H17` = 17 heavy atoms |
+| `P###` / `M###` | logP bin; `P` = positive, `M` = negative, value × 100 | `P050` = 0.50, `M100` = −1.00 |
 
-| Component | Description | Range |
-|-----------|-------------|-------|
-| H## | Hydrogen bond donors | 00-99 |
-| P### | LogP × 10 | 000-999 (e.g., P035 = LogP 3.5) |
-| M### | Molecular weight | 000-999 Da |
-| phase | Reactivity classification | 0-9 |
+| Tranche | Reading |
+|---------|---------|
+| `H17P050` | 17 heavy atoms, logP bin 0.50 |
+| `H12M100` | 12 heavy atoms, logP bin −1.00 |
+| `H08M500` … `H16P240` | the corners of the ZINC-22 2D fragment subset |
 
-### Examples
+`H` is not H-bond donors and `M` is not molecular weight. ZINC15/20 tranches were
+letter-coded on other axes (MW, logP, reactivity, purchasability, pH, charge) — do not
+decode those with this table. Compute MW, HBD/HBA, TPSA and similar properties from the
+SMILES with RDKit (`alterlab-rdkit`).
 
-| Tranche Code | Interpretation |
-|--------------|----------------|
-| `H00P010M250-0` | 0 H-donors, LogP=1.0, MW=250 Da, phase 0 |
-| `H05P035M400-0` | 5 H-donors, LogP=3.5, MW=400 Da, phase 0 |
-| `H02P-005M180-0` | 2 H-donors, LogP=-0.5, MW=180 Da, phase 0 |
+### ZINC-22 identifiers
 
-### Reactivity Phases
+ZINC-22 IDs are 16 characters: `ZINC`, two tranche characters, two database-source
+characters (`00` for the commercial libraries), then an 8-character radix-62 serial
+(Tingle et al. 2023). Legacy ZINC15/20 IDs (`ZINC000019632618`) carry no tranche.
 
-| Phase | Description |
-|-------|-------------|
-| 0 | Unreactive (preferred for screening) |
-| 1-9 | Increasing reactivity (PAINS, reactive groups) |
-
-### Parsing Tranches in Python
+### Parsing tranches in Python
 
 ```python
 import re
 
-def parse_tranche(tranche_str):
-    """
-    Parse ZINC tranche code.
-
-    Args:
-        tranche_str: Tranche code (e.g., "H05P035M400-0")
-
-    Returns:
-        dict with h_donors, logp, mw, phase
-    """
-    pattern = r'H(\d+)P(-?\d+)M(\d+)-(\d+)'
-    match = re.match(pattern, tranche_str)
-
-    if not match:
+def parse_tranche(code):
+    """'H17P050' -> {'heavy_atoms': 17, 'logp_bin': 0.5}; 'H12M100' -> logp_bin -1.0."""
+    m = re.search(r"H(\d{2})([PM])(\d{3})", code or "")
+    if not m:
         return None
+    sign = 1 if m.group(2) == "P" else -1
+    return {"heavy_atoms": int(m.group(1)), "logp_bin": sign * int(m.group(3)) / 100.0}
 
-    return {
-        'h_donors': int(match.group(1)),
-        'logp': int(match.group(2)) / 10.0,
-        'mw': int(match.group(3)),
-        'phase': int(match.group(4))
-    }
-
-# Example usage
-tranche = "H05P035M400-0"
-props = parse_tranche(tranche)
-print(props)  # {'h_donors': 5, 'logp': 3.5, 'mw': 400, 'phase': 0}
-```
-
-### Filtering by Tranches
-
-Download specific tranches from file repositories:
-```bash
-# Download all compounds in a specific tranche
-wget https://files.docking.org/zinc22/H05/H05P035M400-0.db2.gz
+print(parse_tranche("H17P050"))  # {'heavy_atoms': 17, 'logp_bin': 0.5}
 ```
 
 ## File Repository Access
 
-### Directory Structure
+ZINC-22 3D builds are served from https://files.docking.org/zinc22/ (also via Globus, and
+as open-data buckets on AWS S3 and Oracle OCI, where a docking program can read the files
+without downloading them). The tree is organised by build and tranche and has changed
+between releases, so **do not hand-build file paths** — let CartBlanche22 generate them.
 
-ZINC22 3D structures are organized hierarchically by H-bond donors:
+### Getting the exact URLs
 
-```
-https://files.docking.org/zinc22/
-├── H00/
-│   ├── H00P010M200-0.db2.gz
-│   ├── H00P020M250-0.db2.gz
-│   └── ...
-├── H01/
-├── H02/
-└── ...
-```
+1. https://cartblanche22.docking.org → **Tranches → 3D** opens the 3D tranche browser.
+2. Select tranches (click cells, rows or columns) or a preset such as lead-like or
+   fragment-like; each cell shows how many molecules it holds.
+3. Choose a format and a method — curl, wget or PowerShell scripts, or an S3/OCI file
+   list — and download the generated script. It contains the exact URLs.
 
-### File Formats
+### File formats
 
-| Extension | Format | Description |
-|-----------|--------|-------------|
-| `.db2.gz` | DOCK database | Compressed multi-conformer DB for DOCK |
-| `.mol2.gz` | MOL2 | Multi-molecule format with 3D coordinates |
-| `.sdf.gz` | SDF | Structure-Data File format |
-| `.smi` | SMILES | Plain text SMILES with ZINC IDs |
+Four ready-to-dock 3D formats exist (Tingle et al. 2023):
 
-### Downloading 3D Structures
+| Format | Program | Notes |
+|--------|---------|-------|
+| DB2 | UCSF DOCK 3.7 / 3.8 | Multi-conformer, protonated and charged. DOCK 6 does not read DB2 and Open Babel has no DB2 reader, so it cannot be converted |
+| MOL2 | DOCK 6, GOLD, Glide (after import) | 3D coordinates |
+| SDF | RDKit-based tools, Glide, most toolkits | 3D coordinates |
+| PDBQT | AutoDock Vina, AutoDock-GPU | Ready for Vina |
 
-**Single tranche**:
-```bash
-wget https://files.docking.org/zinc22/H05/H05P035M400-0.db2.gz
-```
-
-**Multiple tranches** (parallel download with aria2c):
-```bash
-# Create URL list
-cat > tranche_urls.txt <<EOF
-https://files.docking.org/zinc22/H05/H05P035M400-0.db2.gz
-https://files.docking.org/zinc22/H05/H05P035M400-0.db2.gz
-https://files.docking.org/zinc22/H05/H05P040M400-0.db2.gz
-EOF
-
-# Download in parallel
-aria2c -i tranche_urls.txt -x 8 -j 4
-```
-
-**Recursive download** (use with caution - large data):
-```bash
-wget -r -np -nH --cut-dirs=1 -A "*.db2.gz" \
-  https://files.docking.org/zinc22/H05/
-```
-
-### Extracting Structures
+### Bulk download
 
 ```bash
-# Decompress
-gunzip H05P035M400-0.db2.gz
-
-# Convert to other formats using OpenBabel
-obabel H05P035M400-0.db2 -O output.sdf
-obabel H05P035M400-0.db2 -O output.mol2
+# urls.txt = the URL list from the tranche-browser script
+aria2c -i urls.txt -x 8 -j 4            # parallel, resumable
+xargs -n1 -P8 wget -q -c < urls.txt     # without aria2c
 ```
+
+A whole 3D format of ZINC-22 is many terabytes; select tranches first and check the
+browser's molecule counts before starting.
+
+### Individual compounds
+
+For a short list of ZINC IDs, look them up (`scripts/query_zinc.py id ... --wait`), add the
+hits to the CartBlanche22 cart and download the 3D files from there instead of whole
+tranches. A compound may have no 3D build yet (over 95% of molecules up to 24 heavy atoms
+had been built at publication); build missing ones yourself from the SMILES.
 
 ## Advanced Query Patterns
 
@@ -412,59 +369,32 @@ task = advanced_zinc_search(
 
 ### Property-Based Filtering
 
-Filter compounds by molecular properties using tranche data:
+The tranche gives only heavy-atom count and a logP bin. Filter on those, then compute any
+other property from the SMILES:
 
 ```python
-def filter_by_properties(df, mw_range=None, logp_range=None,
-                        max_hbd=None, phase=0):
+import pandas as pd
+
+def filter_by_tranche(df, heavy_atoms=None, logp_range=None):
+    """Keep rows whose tranche falls inside the given bins.
+
+    df: DataFrame with a 'tranche' column (exported result rows)
+    heavy_atoms: (min, max) heavy-atom count, inclusive
+    logp_range: (min, max) logP bin, inclusive
     """
-    Filter DataFrame by molecular properties.
-
-    Args:
-        df: DataFrame with 'tranche' column
-        mw_range: Tuple (min_mw, max_mw)
-        logp_range: Tuple (min_logp, max_logp)
-        max_hbd: Maximum H-bond donors
-        phase: Reactivity phase (0 = unreactive)
-
-    Returns:
-        Filtered DataFrame
-    """
-    # Parse tranches
-    df['tranche_props'] = df['tranche'].apply(parse_tranche)
-    df['mw'] = df['tranche_props'].apply(lambda x: x['mw'] if x else None)
-    df['logp'] = df['tranche_props'].apply(lambda x: x['logp'] if x else None)
-    df['hbd'] = df['tranche_props'].apply(lambda x: x['h_donors'] if x else None)
-    df['phase'] = df['tranche_props'].apply(lambda x: x['phase'] if x else None)
-
-    # Apply filters
-    mask = pd.Series([True] * len(df))
-
-    if mw_range:
-        mask &= (df['mw'] >= mw_range[0]) & (df['mw'] <= mw_range[1])
-
+    props = df["tranche"].apply(parse_tranche)
+    hac = props.apply(lambda p: p["heavy_atoms"] if p else None)
+    logp = props.apply(lambda p: p["logp_bin"] if p else None)
+    mask = hac.notna()
+    if heavy_atoms:
+        mask &= hac.between(*heavy_atoms)
     if logp_range:
-        mask &= (df['logp'] >= logp_range[0]) & (df['logp'] <= logp_range[1])
-
-    if max_hbd is not None:
-        mask &= df['hbd'] <= max_hbd
-
-    if phase is not None:
-        mask &= df['phase'] == phase
-
+        mask &= logp.between(*logp_range)
     return df[mask]
 
-# Example: filter exported result rows by molecular properties.
-# `df` is a DataFrame with a 'tranche' column (exported from the UI task view,
-# or read from the bulk file repository) — advanced_zinc_search only returns the
-# task handle, so the rows are fetched separately.
-filtered = filter_by_properties(
-    df,
-    mw_range=(300, 450),
-    logp_range=(1.0, 4.0),
-    max_hbd=3,
-    phase=0
-)
+# Lead-like-ish window: 17-25 heavy atoms, logP bin -1.0 to 3.5
+subset = filter_by_tranche(df, heavy_atoms=(17, 25), logp_range=(-1.0, 3.5))
+# MW / HBD / HBA: compute with RDKit (see the RDKit Integration section below)
 ```
 
 ## Rate Limiting and Best Practices
@@ -535,31 +465,20 @@ def robust_zinc_query(url, max_retries=3, timeout=30):
 
 ## Integration with Molecular Docking
 
-### Preparing DOCK6 Libraries
+### DOCK 3.8 (DB2)
+
+DOCK 3.7/3.8 reads ZINC-22 DB2 files directly: download the DB2 files for the selected
+tranches (tranche-browser script, format DB2) and list them in the docking run's ligand
+input. DOCK 6 does not read DB2 — use MOL2 for DOCK 6.
+
+### AutoDock Vina
+
+Download the PDBQT build for the selected tranches (tranche-browser script, format PDBQT)
+and dock it directly. If you start from SDF instead, prepare PDBQT with Meeko:
 
 ```bash
-# 1. Download tranche files
-wget https://files.docking.org/zinc22/H05/H05P035M400-0.db2.gz
-
-# 2. Decompress
-gunzip H05P035M400-0.db2.gz
-
-# 3. Use directly with DOCK6
-dock6 -i dock.in -o dock.out -l H05P035M400-0.db2
-```
-
-### AutoDock Vina Integration
-
-```bash
-# 1. Download MOL2 format
-wget https://files.docking.org/zinc22/H05/H05P035M400-0.mol2.gz
-gunzip H05P035M400-0.mol2.gz
-
-# 2. Convert to PDBQT using prepare_ligand script
-prepare_ligand4.py -l H05P035M400-0.mol2 -o ligands.pdbqt -A hydrogens
-
-# 3. Run Vina
-vina --receptor protein.pdbqt --ligand ligands.pdbqt \
+mk_prepare_ligand.py -i ligands.sdf --multimol_outdir pdbqt/
+vina --receptor protein.pdbqt --ligand pdbqt/ZINC....pdbqt \
      --center_x 25.0 --center_y 25.0 --center_z 25.0 \
      --size_x 20.0 --size_y 20.0 --size_z 20.0
 ```

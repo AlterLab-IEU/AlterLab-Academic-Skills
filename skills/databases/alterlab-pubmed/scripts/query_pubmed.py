@@ -78,6 +78,8 @@ def main():
     p_f.add_argument("pmids", nargs="+", help="One or more PMIDs")
 
     args = parser.parse_args()
+    if not args.api_key:
+        print("NCBI_API_KEY not set: using keyless E-utilities (3 requests/s).", file=sys.stderr)
     try:
         if args.command == "search":
             result = search(args.term, args.retmax, args.api_key)

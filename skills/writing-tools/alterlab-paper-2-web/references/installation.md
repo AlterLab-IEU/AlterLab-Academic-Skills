@@ -1,5 +1,10 @@
 # Installation and Configuration
 
+> **Optional route.** This file documents the third-party Paper2All pipeline, which needs model
+> API keys (`OPENROUTER_API_KEY`, `OPENAI_API_KEY`) and sends paper content to the providers.
+> The default, keyless route — Claude reads the paper and builds the outputs with the bundled
+> scripts — is in `keyless_workflow.md`.
+
 ## System Requirements
 
 ### Hardware Requirements

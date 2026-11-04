@@ -4,10 +4,11 @@
     {
       "id": "pathogenic-variant-lookup",
       "prompt": "Is the BRCA1 variant NM_000059.3:c.1310_1313del classified as pathogenic in ClinVar? Tell me its clinical significance and the review status.",
-      "expected_output": "Invokes alterlab-clinvar to query ClinVar (web syntax like BRCA1[gene] or E-utilities esearch/esummary) for the variant, reporting its germline ACMG/AMP classification (Pathogenic/LP/VUS/LB/Benign) and its review-status star rating, advising the user to prefer 3- or 4-star ratings.",
+      "expected_output": "Invokes alterlab-clinvar to query ClinVar (web syntax or E-utilities esearch/esummary, e.g. BRCA2[gene] AND \"c.1310_1313del\"[Variant name]) for the variant, reporting its germline ACMG/AMP classification (Pathogenic/LP/VUS/LB/Benign) and its review-status star rating, advising the user to prefer 3- or 4-star ratings. Flags that NM_000059 is a BRCA2 transcript, not BRCA1 (BRCA1's is NM_007294), and that ClinVar now lists version .4: NM_000059.4(BRCA2):c.1310_1313del (p.Lys437fs) is VCV000037737, Pathogenic, reviewed by expert panel (3 stars, last evaluated 2016-04-22). If it also covers the BRCA1 variant of the same name, that is VCV000433697, Pathogenic, reviewed by expert panel (verified via E-utilities 2026-10-23).",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Returns a clinical significance classification and the review-status star rating, and notes that higher star ratings carry more confidence." }
+        { "type": "behavior", "value": "Returns a clinical significance classification and the review-status star rating, and notes that higher star ratings carry more confidence." },
+        { "type": "behavior", "value": "Points out that NM_000059 is a BRCA2 RefSeq transcript (not BRCA1) and reports the matching record, VCV000037737, as Pathogenic with expert-panel (3-star) review." }
       ]
     },
     {
@@ -22,11 +23,15 @@
     },
     {
       "id": "annotate-vcf",
+      "files": ["fixtures/patient_PT-0193.GRCh38.vcf"],
+      "requires": ["cmd:bcftools"],
       "prompt": "I have a patient VCF on GRCh38. Annotate it with ClinVar clinical significance and then filter down to just the pathogenic variants.",
       "expected_output": "Invokes alterlab-clinvar to download the matching-build ClinVar VCF (vcf_GRCh38/clinvar.vcf.gz) and use bcftools annotate to add INFO/CLNSIG (and CLNDN/CLNREVSTAT), then bcftools view to filter on CLNSIG matching Pathogenic. Should stress matching the genome build between the user's VCF and the ClinVar VCF.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Uses the build-matched ClinVar VCF with bcftools to annotate CLNSIG and filter pathogenic variants, and warns about genome-build (GRCh37 vs GRCh38) consistency." }
+        { "type": "behavior", "value": "Uses the build-matched ClinVar VCF with bcftools to annotate CLNSIG and filter pathogenic variants, and warns about genome-build (GRCh37 vs GRCh38) consistency." },
+        { "type": "output_contains", "value": ["F508del", "Phe508del", "c.1521_1523del", "117559590"] },
+        { "type": "behavior", "value": "After reconciling chromosome names (the fixture uses chr7-style names, the ClinVar VCF uses 7), reports the five Pathogenic variants in fixtures/patient_PT-0193.GRCh38.vcf: CFTR c.1521_1523del p.Phe508del (chr7:117559590), HBB c.20A>T p.Glu7Val (chr11:5227002), BRCA2 c.1310_1313del (chr13:32332778), TP53 c.1025G>C p.Arg342Pro (chr17:7670684) and BRCA1 c.68_69del (chr17:43124027); LDLR c.2T>C (chr19:11089550) is Likely pathogenic and appears only if likely-pathogenic calls are kept; the benign, VUS, conflicting and two non-ClinVar sites are dropped (ClinVar GRCh38 VCF of 2026-10-19)." }
       ]
     },
     {
@@ -35,7 +40,7 @@
       "expected_output": "Invokes alterlab-clinvar to explain ClinVar's conflict-resolution strategy: compare review status (star ratings), examine each submitter's assertion criteria and submission dates, weigh population frequency context (e.g. gnomAD), prefer expert-panel classifications, and defer to a genetics professional for clinical use.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "review status" }
+        { "type": "output_contains", "value": ["review status", "review_status", "review-status", "star rating", "stars", "inceleme durumu"] }
       ]
     },
     {

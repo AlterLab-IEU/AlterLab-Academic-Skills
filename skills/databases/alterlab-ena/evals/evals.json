@@ -3,11 +3,13 @@
   "evals": [
     {
       "id": "download-reads-by-run",
-      "prompt": "I need the raw FASTQ reads for ENA run accession ERR123456 to feed into my alignment pipeline. How do I retrieve them?",
-      "expected_output": "Invokes alterlab-ena. Uses the Portal API filereport endpoint (result=read_run, fields fastq_ftp/fastq_md5) to locate the FASTQ file URLs for the run, and recommends FTP/Aspera (or enaBrowserTools) for the actual download with MD5 verification. Notes the 50 req/sec rate limit and citing the study accession.",
+      "prompt": "I need the raw FASTQ reads for ENA run accession ERR214763 to feed into my alignment pipeline. How do I retrieve them?",
+      "expected_output": "Invokes alterlab-ena. Uses the Portal API filereport endpoint (result=read_run, fields fastq_ftp/fastq_md5) to locate the FASTQ file URLs for the run (ERR214763 is a PAIRED Illumina run of study PRJEB1234: ERR214763_1.fastq.gz and ERR214763_2.fastq.gz on ftp.sra.ebi.ac.uk, with one MD5 each), and recommends FTP/Aspera (or enaBrowserTools) for the actual download with MD5 verification. Notes the 50 req/sec rate limit and citing the study accession.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "FASTQ" }
+        { "type": "output_contains", "value": "FASTQ" },
+        { "type": "output_contains", "value": "ERR214763_2.fastq.gz" },
+        { "type": "behavior", "value": "Looks the run up live and reports that it is paired-end with two FASTQ files (_1 and _2) and their MD5 checksums, and names the study PRJEB1234 for citation." }
       ]
     },
     {
@@ -16,7 +18,7 @@
       "expected_output": "Invokes alterlab-ena. Uses the Portal API search endpoint with result=sample and query=study_accession=PRJEB1234, returning a tabulated (TSV/JSON) metadata summary of the study's samples.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "Portal API" }
+        { "type": "output_contains", "value": ["Portal API", "portal/api", "result=sample", "sample search", "filereport", "file report"] }
       ]
     },
     {

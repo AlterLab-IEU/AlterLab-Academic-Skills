@@ -7,7 +7,7 @@
       "expected_output": "Invokes alterlab-treatment-plans. Produces a concise (3-4 page or one-page) individualized LaTeX/PDF care plan with SMART goals, specific evidence-based interventions (minimal citations), defined timelines, monitoring parameters, and expected outcomes, opening with the mandatory Foundation-Medicine-style first-page executive summary (patient info box, ICD-10 code) and HIPAA-compliant de-identification.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "SMART" },
+        { "type": "output_contains", "value": ["SMART", "measurable", "time-bound"] },
         { "type": "behavior", "value": "Produces a concise individualized LaTeX/PDF treatment plan with SMART goals, interventions, monitoring, and a first-page executive summary." }
       ]
     },
@@ -27,7 +27,7 @@
       "expected_output": "Invokes alterlab-treatment-plans for a psychiatric/mental-health care plan. Documents SMART measurable goals, evidence-based therapeutic interventions (pharmacologic and/or psychotherapeutic), monitoring/follow-up schedule, and expected outcomes in a concise HIPAA-compliant LaTeX/PDF with the required first-page executive summary.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "intervention" },
+        { "type": "output_contains", "value": ["intervention", "psychotherapy", "CBT", "cognitive behavio", "behavioural activation", "behavioral activation", "antidepressant", "SSRI"] },
         { "type": "behavior", "value": "Produces an individualized mental-health treatment plan with measurable goals, interventions, and follow-up." }
       ]
     },

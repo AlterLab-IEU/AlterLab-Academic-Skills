@@ -3,6 +3,7 @@
   "evals": [
     {
       "id": "cfa-fit",
+      "files": ["fixtures/survey_cfa.csv", "fixtures/survey_cfa_codebook.md"],
       "prompt": "I have a 3-factor questionnaire and want to run a confirmatory factor analysis and report whether it fits.",
       "expected_output": "Invokes alterlab-sem-psychometrics: specifies the CFA in semopy (=~ syntax), fits it, reports CFI/TLI/RMSEA against Hu & Bentler cutoffs, and reports reliability with omega computed from the standardized loadings (not alpha alone).",
       "assertions": [
@@ -13,11 +14,13 @@
     },
     {
       "id": "full-sem",
+      "files": ["fixtures/customer_survey_sem.csv", "fixtures/customer_survey_sem_codebook.md"],
       "prompt": "Fit a structural equation model where trust predicts satisfaction and satisfaction predicts loyalty, all latent.",
       "expected_output": "Invokes alterlab-sem-psychometrics: writes the measurement (=~) and structural (~) parts in semopy, fits, and reports standardized path coefficients with model fit.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Builds a latent-variable SEM with measurement and structural parts and reports fit + standardized paths." }
+        { "type": "behavior", "value": "Builds a latent-variable SEM with measurement and structural parts and reports fit + standardized paths." },
+        { "type": "behavior", "value": "Reports standardized structural paths of about .64 (trust to satisfaction) and .52 (satisfaction to loyalty) with fit indices indicating good fit." }
       ]
     },
     {
@@ -31,11 +34,13 @@
     },
     {
       "id": "irt-2pl",
+      "files": ["fixtures/test_items.csv"],
       "prompt": "Fit an item response theory model to my dichotomous test items and give me item difficulty and discrimination.",
       "expected_output": "Invokes alterlab-sem-psychometrics: uses a 2PL/Rasch IRT fit (girth twopl_mml / rasch_mml), returns discrimination and difficulty, and notes R mirt for polytomous/multidimensional needs.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Fits an IRT model and reports item discrimination/difficulty, flagging R mirt for models beyond 2PL." }
+        { "type": "behavior", "value": "Fits an IRT model and reports item discrimination/difficulty, flagging R mirt for models beyond 2PL." },
+        { "type": "behavior", "value": "Identifies item7 as the weakest-discriminating item." }
       ]
     },
     {

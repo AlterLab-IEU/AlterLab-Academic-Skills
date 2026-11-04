@@ -2,7 +2,7 @@
 name: alterlab-edgartools
 description: Accesses, analyzes, and extracts data from SEC EDGAR filings using the edgartools Python library. Use when working with SEC filings, financial statements (income statement, balance sheet, cash flow), XBRL financial data, insider trading (Form 4), institutional holdings (13F), company financials, annual/quarterly reports (10-K, 10-Q), proxy statements (DEF 14A), 8-K current events, company screening by ticker/CIK/industry, multi-period financial analysis, or any SEC regulatory filings. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
 compatibility: Requires edgartools 5.x (current 5.58.0, Python >=3.10). No API key, but SEC fair-access rules require an identity (name + email) sent as the User-Agent and at most 10 requests/second. Needs network access to SEC EDGAR.
 metadata:
     skill-author: AlterLab
@@ -30,6 +30,8 @@ Python library for accessing all SEC filings since 1994 with structured data ext
 | Aggregate hedge-fund statistics from Form PF published by the OFR | `alterlab-hedgefund-monitor` |
 | Federal debt, Treasury statements, or auction results | `alterlab-usfiscaldata` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-alpha-vantage`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Authentication (Required)
 
 The SEC requires identification for API access. Always set identity before any operations:
@@ -45,13 +47,17 @@ edgartools sends this identity as the HTTP User-Agent the SEC asks for ("Sample 
 
 ## Installation
 
+No install step: `uv run` resolves the package per run.
+
 ```bash
-uv pip install edgartools
+uv run --python ">=3.11" --with "edgartools>=5.58" python script.py
 # For AI/MCP features:
-uv pip install "edgartools[ai]"
+uv run --python ">=3.11" --with "edgartools[ai]>=5.58" python script.py
 ```
 
-API examples here are checked against edgartools 5.58.0 (current as of 2026-09). To run a one-off without a venv: `uv run --with edgartools python ...`. In 5.x, `cashflow_statement()` is a deprecated alias (removed in 6.0) — use `cash_flow_statement()`.
+Pin the interpreter: edgartools 5.x needs Python >= 3.10, and on an older default Python an
+unpinned `--with edgartools` silently resolves 4.6.3 with the old API. API examples here are
+checked against edgartools 5.58.0 (5.62.0 is current as of 2026-10). In 5.x, `cashflow_statement()` is a deprecated alias (removed in 6.0) — use `cash_flow_statement()`.
 
 ## Core Workflow
 

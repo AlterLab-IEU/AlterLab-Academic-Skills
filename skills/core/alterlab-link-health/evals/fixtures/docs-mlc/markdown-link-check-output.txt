@@ -1,0 +1,16 @@
+$ npx markdown-link-check docs/*.md
+
+FILE: docs/getting-started.md
+  [✖] ./install.md → Status: 400
+  [✖] https://example-lab.org/old/protocol.pdf → Status: 404
+  [✖] ./img/diagram.png → Status: 400
+  [✓] https://www.python.org/
+
+  4 links checked.
+
+  ERROR: 3 dead links found!
+
+FILE: docs/installation.md
+  [✓] https://example-lab.org/protocols/v2/protocol.pdf
+
+  1 links checked.

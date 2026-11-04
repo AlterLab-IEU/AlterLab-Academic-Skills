@@ -3,11 +3,12 @@ name: alterlab-clinvar
 description: Query NCBI ClinVar via the E-utilities API or FTP for the clinical significance (pathogenicity) of human germline genetic variants, searching by gene, variant, condition, or genomic position and interpreting ACMG/AMP classifications and review-status star ratings. Use when assessing whether a variant is pathogenic, likely pathogenic, VUS, likely benign, or benign, resolving conflicting interpretations, or annotating a VCF with ClinVar clinical significance. For population allele frequencies by ancestry use alterlab-gnomad; for somatic cancer mutation frequencies use alterlab-cosmic. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless NCBI E-utilities REST API; optional NCBI API key raises rate limits
+compatibility: No API key required. Keyless NCBI E-utilities REST API (db=clinvar, 3 requests/s per IP) and the public ClinVar FTP; an optional NCBI_API_KEY raises the limit to 10 requests/s
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.1.1"
+    last_updated: "2026-10-22"
+    credentials: "optional: NCBI_API_KEY (raises E-utilities from 3 to 10 requests/s)"
 ---
 
 # ClinVar Database
@@ -36,6 +37,8 @@ This skill should be used when:
 | Somatic cancer mutation catalog, Cancer Gene Census, mutational signatures | `alterlab-cosmic` |
 | How often a gene is mutated in tumor cohorts (TCGA, MSK-IMPACT) | `alterlab-cbioportal` |
 | Pharmacogenomic gene–drug dosing (CPIC/DPWG) | `alterlab-clinpgx` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-gnomad`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 **Three classification types (since 2024).** ClinVar now keeps separate aggregate
 classifications for **germline** pathogenicity (ACMG/AMP), **somatic clinical impact**
@@ -80,7 +83,7 @@ Always inspect the `querytranslation` field in the response: if a `[...]` tag is
 
 **Best practices:**
 - Test queries on the web interface before automating
-- Use API keys to increase rate limits from 3 to 10 requests/second
+- Keyless access allows 3 requests/second; an optional `NCBI_API_KEY` raises it to 10
 - Implement exponential backoff for rate limit errors
 - Set `Entrez.email` when using Biopython
 
@@ -143,10 +146,10 @@ Refer to `references/data_formats.md` for comprehensive documentation on file fo
 **Example download:**
 ```bash
 # Download latest monthly VCV XML release
-wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/ClinVarVCVRelease_00-latest.xml.gz
+curl -O https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/ClinVarVCVRelease_00-latest.xml.gz
 
 # Download VCF for GRCh38
-wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz
+curl -O https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz
 ```
 
 ### 4. Process and Analyze ClinVar Data
@@ -305,8 +308,8 @@ Contact: clinvar@ncbi.nlm.nih.gov for submission account setup.
 **Steps:**
 1. Download appropriate ClinVar VCF (match genome build: GRCh37 or GRCh38):
    ```bash
-   wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz
-   wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz.tbi
+   curl -O https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz
+   curl -O https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz.tbi
    ```
 2. Annotate using bcftools:
    ```bash
@@ -341,7 +344,7 @@ Contact: clinvar@ncbi.nlm.nih.gov for submission account setup.
 **Steps:**
 1. Download monthly release for reproducibility:
    ```bash
-   wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/ClinVarVCVRelease_YYYY-MM.xml.gz
+   curl -O https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/ClinVarVCVRelease_YYYY-MM.xml.gz
    # previous years' monthly files move to xml/archive/<year>/
    ```
 2. Parse XML and load into database (PostgreSQL, MySQL, MongoDB)

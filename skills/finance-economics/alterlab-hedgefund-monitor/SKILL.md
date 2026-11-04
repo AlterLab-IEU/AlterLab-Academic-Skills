@@ -2,12 +2,12 @@
 name: alterlab-hedgefund-monitor
 description: Queries the OFR (Office of Financial Research) Hedge Fund Monitor API for time series on hedge fund size, leverage, counterparties, liquidity, complexity, and risk management, including SEC Form PF aggregated statistics, CFTC Traders in Financial Futures, FICC Sponsored Repo volumes, and FRB SCOOS dealer financing terms (no API key or registration required). Use when working with hedge fund data, systemic risk monitoring, financial stability research, hedge fund leverage or leverage ratios, counterparty concentration, Form PF statistics, repo market data, or OFR financial research data. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read Write WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
 compatibility: No API key or registration required. Queries the open OFR Hedge Fund Monitor REST API; needs network access.
 metadata:
     skill-author: AlterLab
-    version: "1.1.1"
-    last_updated: "2026-09-23"
+    version: "1.1.2"
+    last_updated: "2026-11-04"
 ---
 
 # OFR Hedge Fund Monitor API
@@ -30,6 +30,8 @@ Free, open REST API from the U.S. Office of Financial Research (OFR) providing a
 | Treasury yields, Fed policy rates, or financial-conditions indices | `alterlab-fred` |
 | Treasury debt, auctions, or Daily Treasury Statement cash balances | `alterlab-usfiscaldata` |
 | Security prices or fund NAV/price histories | `alterlab-alpha-vantage` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-edgartools`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Quick Start
 
@@ -69,6 +71,12 @@ exist only at the strategy level.
 ## Authentication
 
 None required. The API is fully open and free.
+
+**Say how it was retrieved.** End every answer with a short "How this was retrieved" line: the
+endpoint URL with its parameters (e.g. `/series/multifull?mnemonics=…&start_date=2015-01-01`),
+the dataset and its cadence (e.g. SEC Form PF, quarterly), that no API key or registration is
+needed, and the retrieval date. In a paper, cite the OFR Hedge Fund Monitor, the dataset, the
+mnemonic and the retrieval date of every series used.
 
 ## Datasets
 
@@ -158,7 +166,5 @@ mnemonics = [
 - **[references/datasets.md](references/datasets.md)** — Dataset descriptions (fpf, tff, scoos, ficc) and dataset-specific notes
 - **[references/parameters.md](references/parameters.md)** — Complete parameter reference with periodicity codes, how values
 - **[references/examples.md](references/examples.md)** — Python examples: discovery, bulk download, spread analysis, DataFrame workflows
-
-Cite the OFR Hedge Fund Monitor, the dataset (e.g. SEC Form PF), the mnemonic, and the retrieval date for every series used.
 
 Part of the AlterLab Academic Skills suite.

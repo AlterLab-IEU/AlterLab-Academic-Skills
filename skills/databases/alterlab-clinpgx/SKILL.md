@@ -2,7 +2,7 @@
 name: alterlab-clinpgx
 description: Access ClinPGx pharmacogenomics data (the successor to PharmGKB) to query gene-drug interactions, CPIC/DPWG dosing guidelines, drug labels, and pharmacogene records. Use when interpreting pharmacogenes (CYP2D6, CYP2C19, TPMT, DPYD, SLCO1B1), looking up genotype-guided drug dosing, checking PGx drug-safety associations (e.g. HLA-B*57:01 and abacavir), or supporting precision medicine and clinical pharmacogenomics decisions. For star-allele definitions/frequencies see PharmVar; for germline/somatic variant pathogenicity see alterlab-clinvar. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
 compatibility: Keyless ClinPGx (PharmGKB) API for basic access (no authentication required)
 metadata:
     skill-author: AlterLab
@@ -42,6 +42,9 @@ Use this skill for:
 | Population allele frequencies for a variant (gnomAD v4) | `alterlab-gnomad` |
 | Drug–drug interactions or general pharmacology with no genetic component | `alterlab-drugbank` |
 | FDA adverse-event reports, recalls, or full-text label search | `alterlab-fda` |
+| Literature search — guideline publications, review papers, full citations and abstracts | `alterlab-pubmed` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-clinvar`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Setup and Access Essentials
 

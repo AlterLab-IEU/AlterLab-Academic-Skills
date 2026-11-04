@@ -22,6 +22,7 @@
     },
     {
       "id": "in-silico-mutagenesis",
+      "files": ["fixtures/enhancer.fasta"],
       "prompt": "Run in-silico mutagenesis across this enhancer to find which bases drive its activity.",
       "expected_output": "Invokes alterlab-borzoi to systematically mutate bases and read predicted-track deltas, localizing functionally important positions in the regulatory element.",
       "assertions": [

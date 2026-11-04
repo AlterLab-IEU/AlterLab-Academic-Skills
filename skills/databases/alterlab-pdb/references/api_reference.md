@@ -255,7 +255,12 @@ query = SeqSimilarityQuery(
 
 ### Structure Similarity Search
 
-Find structures with similar 3D geometry using BioZernike:
+Find structures with similar 3D geometry. Since rcsb-api 1.6.0 (2026-03) this is the
+embeddings-based search: hits above a predicted TM-score `ptmscore_cutoff` (default 0.8),
+`similarity_type` "local" (default) or "global", at most `number_of_candidates` (default
+10000). The BioZernike `operator` (`strict_shape_match` / `relaxed_shape_match`) is
+deprecated: on 2026-11-04 strict, relaxed and no operator all returned 1,408 entries for
+4HHB assembly 1, and `similarity_type="global"` returned 479.
 
 ```python
 from rcsbapi.search import StructSimilarityQuery

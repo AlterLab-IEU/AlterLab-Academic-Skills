@@ -1,5 +1,10 @@
 # Usage Examples and Workflows
 
+> **Optional route.** This file documents the third-party Paper2All pipeline, which needs model
+> API keys (`OPENROUTER_API_KEY`, `OPENAI_API_KEY`) and sends paper content to the providers.
+> The default, keyless route — Claude reads the paper and builds the outputs with the bundled
+> scripts — is in `keyless_workflow.md`.
+
 > Throughout these examples, `pipeline_all.py` (website, poster, PR) reads the compiled
 > **PDF** in the paper folder (`paper.pdf`) and requires `OPENROUTER_API_KEY` exported in
 > the shell, while Paper2Video (`pipeline_light.py` / `pipeline.py`) reads the **LaTeX

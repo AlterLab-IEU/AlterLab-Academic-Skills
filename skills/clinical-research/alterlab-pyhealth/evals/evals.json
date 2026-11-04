@@ -4,11 +4,12 @@
     {
       "id": "mortality-prediction-mimic4",
       "prompt": "I want to predict ICU mortality on MIMIC-IV. Load the dataset, set up the mortality task, split by patient, and train an interpretable RETAIN model monitoring AUPRC since the outcome is rare.",
-      "expected_output": "Invokes alterlab-pyhealth. Loads MIMIC-IV with MIMIC4EHRDataset(root=..., tables=[...]) (or MIMIC4Dataset(ehr_root=..., ehr_tables=[...])), sets the MortalityPredictionMIMIC4() task class, uses split_by_patient to prevent leakage, builds get_dataloader loaders, initializes RETAIN(dataset=sample_dataset, ...) whose inputs, 'mortality' label, and binary mode come from the task schema (no feature_keys/label_key/mode arguments in PyHealth 2.x), trains with Trainer(metrics=[...]) monitoring pr_auc (AUPRC for imbalance), and evaluates. Recommends RETAIN for interpretability.",
+      "expected_output": "Invokes alterlab-pyhealth. Loads MIMIC-IV with MIMIC4EHRDataset(root=..., tables=[...]) (or MIMIC4Dataset(ehr_root=..., ehr_tables=[...])), sets the MortalityPredictionMIMIC4() task class, uses split_by_patient to prevent leakage, builds get_dataloader loaders, initializes RETAIN(dataset=sample_dataset, ...) whose inputs, 'mortality' label, and binary mode come from the task schema (no feature_keys/label_key/mode arguments in PyHealth 2.x), trains with Trainer(metrics=[...]) monitoring pr_auc (AUPRC for imbalance), and evaluates. Recommends RETAIN for interpretability. No MIMIC-IV copy is provided, so it says full MIMIC-IV needs the user's own PhysioNet credentialed access and either runs the same pipeline on the open MIMIC-IV demo (physionet.org/files/mimic-iv-demo/2.2), labelling the numbers as a demo smoke test, or gives ready-to-run code with root= pointing at the user's copy; it never reports AUPRC or other metrics it did not compute.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "split_by_patient" },
-        { "type": "behavior", "value": "Uses a MIMIC-IV dataset loader, a mortality task class instance, split_by_patient, RETAIN built from the sample dataset (no 1.x feature_keys/label_key arguments), and the Trainer monitoring AUPRC (pr_auc)." }
+        { "type": "behavior", "value": "Uses a MIMIC-IV dataset loader, a mortality task class instance, split_by_patient, RETAIN built from the sample dataset (no 1.x feature_keys/label_key arguments), and the Trainer monitoring AUPRC (pr_auc)." },
+        { "type": "behavior", "value": "States that full MIMIC-IV needs PhysioNet credentialed access, then either runs the pipeline on the open MIMIC-IV demo with the results labelled as demo results or gives ready-to-run code for the user's copy, and reports no metric it did not compute." }
       ]
     },
     {

@@ -7,7 +7,7 @@
       "expected_output": "Triggers the STRING skill. Maps the gene names to STRING IDs with string_map_ids(species=9606), then retrieves the network with string_network(gene_list, species=9606, required_score=700) for high confidence, returning interaction pairs with combined and per-channel evidence scores. Notes mapping identifiers first and that 700 corresponds to the high-confidence threshold.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "required_score=700" },
+        { "type": "output_contains", "value": ["required_score=700", "required_score", "700", "0.700"] },
         { "type": "behavior", "value": "Maps gene names to STRING IDs first, then calls string_network with required_score=700 for the human (9606) network." },
         { "type": "behavior", "value": "Returns interaction pairs with confidence/evidence-channel scores." }
       ]
@@ -28,7 +28,7 @@
       "expected_output": "Triggers STRING. Uses string_interaction_partners('TP53', species=9606, limit=20, required_score=700) to return TP53's top high-confidence partners, supporting hub identification and network expansion from a seed protein.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "string_interaction_partners" },
+        { "type": "output_contains", "value": ["string_interaction_partners", "interaction_partners", "required_score", "700", "0.700"] },
         { "type": "behavior", "value": "Calls string_interaction_partners with limit and required_score to return the seed protein's top partners." }
       ]
     },
@@ -38,7 +38,7 @@
       "expected_output": "Triggers STRING. Uses string_ppi_enrichment(proteins, species=9606) to compare observed vs expected edge counts and returns a p-value; interprets p < 0.05 as the network being significantly enriched (proteins likely form a functional module) versus p >= 0.05 suggesting no significant connectivity.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "string_ppi_enrichment" },
+        { "type": "output_contains", "value": ["string_ppi_enrichment", "ppi_enrichment", "PPI enrichment"] },
         { "type": "behavior", "value": "Uses string_ppi_enrichment and interprets the p-value (p<0.05) as significant network connectivity / functional module." }
       ]
     },

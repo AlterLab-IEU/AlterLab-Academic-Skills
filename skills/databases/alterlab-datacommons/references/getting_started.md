@@ -10,11 +10,13 @@ This guide provides end-to-end examples for common Data Commons workflows.
 # Install with Pandas support
 pip install "datacommons-client[pandas]"
 
-# Set up API key for datacommons.org
+# Optional: the client's observation/node methods need a key (resolve works without)
 export DC_API_KEY="your_api_key_here"
 ```
 
-Request an API key at: https://apikeys.datacommons.org/
+Request an API key at: https://apikeys.datacommons.org/. Without a key, use the keyless
+`scripts/query_datacommons.py` (datacommons.org website API) for the same statistics —
+see "Keyless Path" in SKILL.md.
 
 ## Example 1: Basic Population Query
 

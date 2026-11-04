@@ -3,11 +3,12 @@ name: alterlab-pubmed
 description: Provide direct REST API access to PubMed via the NCBI E-utilities API, supporting advanced Boolean/MeSH queries, batch processing, and citation management. Use when searching biomedical literature by MeSH terms, retrieving abstracts or PMIDs in bulk, or scripting custom PubMed queries over raw HTTP/REST — for Python workflows prefer biopython (Bio.Entrez) instead, use this for direct REST work or custom API implementations. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless NCBI E-utilities REST API (3 requests/s per IP); an optional NCBI API key (NCBI_API_KEY) raises this to 10 requests/s
+compatibility: No API key required. Keyless NCBI E-utilities REST API (3 requests/s per IP); an optional NCBI_API_KEY raises this to 10 requests/s
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.4"
+    last_updated: "2026-11-04"
+    credentials: "optional: NCBI_API_KEY (raises E-utilities from 3 to 10 requests/s)"
 ---
 
 # PubMed Database
@@ -42,11 +43,13 @@ This skill should be used when:
 
 | Scenario | Use Instead |
 |----------|-------------|
-| Cross-disciplinary literature search, citation counts, bibliometrics | `alterlab-openalex` |
+| Cross-disciplinary literature search, citation counts, bibliometrics | `alterlab-research-lookup` |
 | Life-science preprints not yet peer reviewed | `alterlab-biorxiv` |
 | Trial registrations, recruitment status, NCT records | `alterlab-clinicaltrials` |
 | Checking that a bibliography's references exist or were retracted | `alterlab-citation-verifier` |
 | Python Entrez workflows inside a larger Biopython pipeline | `alterlab-biopython` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-research-lookup`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 
@@ -203,8 +206,8 @@ Find articles using partial citation information or specific identifiers.
 # By PMID
 12345678[pmid]
 
-# By DOI
-10.1056/NEJMoa123456[doi]
+# By DOI (-> PMID 33301246)
+10.1056/NEJMoa2034577[doi]
 
 # By PMC ID
 PMC123456[pmc]

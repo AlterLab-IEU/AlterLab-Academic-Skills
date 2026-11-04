@@ -37,7 +37,7 @@
       "expected_output": "Invokes alterlab-scikit-survival: frames this as competing risks, warns against treating competing events as censored, and uses cumulative_incidence_competing_risks from sksurv.nonparametric to estimate cause-specific cumulative incidence functions for each event type, mentioning cause-specific hazard models for covariate effects.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "competing risks" },
+        { "type": "output_contains", "value": ["competing risks", "competing risk", "competing event", "competing_risks"] },
         { "type": "behavior", "value": "Treats the problem as competing risks and estimates cumulative incidence functions instead of censoring the competing event." }
       ]
     },

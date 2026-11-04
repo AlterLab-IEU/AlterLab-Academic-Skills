@@ -2,7 +2,7 @@
 name: alterlab-tubitak-proposal
 description: "Scaffolds TÜBİTAK ARDEB proposals in the directorate's own section order: 1001 against the official .doc form (TR/EN özet ≤600 words each, ÖZGÜN DEĞER, YÖNTEM, PROJE YÖNETİMİ with iş paketleri and B Planı, YAYGIN ETKİ, EK-1/EK-2; ≤25 pages), and the PBS-typed 1002-A Hızlı Destek and 3501 Kariyer Geliştirme forms with per-section word ranges. Checks program caps (1001 ≤36 months, 3,000,000 TRY; 1002-A ≤12 months, 150,000 TRY/year; 3501 ≤36 months, 1,500,000 TRY, PI ≤7 years post-PhD, doçent or below), drafts to each program's criteria (1001 panel 35/25/20/20; 3501 adds kariyer geliştirme potansiyeli) and applies TÜBİTAK's generative-AI (ÜYZ) disclosure rules; submission via PBS after ARBİS. Delegates generic grant craft to alterlab-research-grants and BİDEB fellowships to alterlab-tubitak-bideb. Use when the user wants to write a TÜBİTAK 1001, 1002-A or 3501 proposal, draft özgün değer or yaygın etki sections, or map broader-impacts framing to TÜBİTAK terms. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*) WebFetch
+allowed-tools: Read Write Edit Bash(python:*) WebFetch Bash(uv run:*)
 compatibility: No API key required — generates proposal scaffolds offline; the structure checker runs via `uv run python` on stdlib only. Program caps/forms change by call period; WebFetch the live program pages to confirm before submission.
 metadata:
   skill-author: AlterLab
@@ -77,6 +77,8 @@ does **not** check journal indexing, compute career points, or write a non-Turki
 | Depositing the accepted manuscript on **Aperta** under the Open Science Policy | `alterlab-aperta` |
 | Turkish APA-7 / TR Dizin manuscript style for the paper itself | `alterlab-tr-academic-style` |
 | Searching DergiPark / YÖK theses for the literature review | `alterlab-dergipark`, `alterlab-yok-tez` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-research-grants`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ---
 
@@ -223,7 +225,7 @@ Full glossary in `references/terminology_bridge.md`.
 ### 1. Choose the variant and generate the scaffold
 
 ```bash
-uv run python skills/turkish-academia/alterlab-tubitak-proposal/scripts/scaffold_proposal.py \
+uv run python scripts/scaffold_proposal.py \
     --program 1001 \
     --title "<project title>" \
     --out proposal_scaffold.md
@@ -248,7 +250,7 @@ which new skills it builds.
 ### 3. Check the limits and structure
 
 ```bash
-uv run python skills/turkish-academia/alterlab-tubitak-proposal/scripts/scaffold_proposal.py \
+uv run python scripts/scaffold_proposal.py \
     --check proposal_scaffold.md --program 1001
 ```
 

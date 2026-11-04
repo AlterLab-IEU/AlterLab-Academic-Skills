@@ -3,12 +3,14 @@
   "evals": [
     {
       "id": "drug-disease-neighbors",
-      "prompt": "Using PrimeKG, find the genes and drugs associated with type 2 diabetes and summarize the strongest relationships.",
-      "expected_output": "Invokes alterlab-primekg: runs query_primekg.py to search for the disease node, retrieves its direct neighbors (associated genes, drugs, phenotypes) from kg.csv, and summarizes the relationships across the relevant relation types.",
+      "files": ["fixtures/kg.csv"],
+      "prompt": "Using PrimeKG, find the genes and drugs associated with type 2 diabetes and summarize the strongest relationships. A PrimeKG-schema kg.csv subset is at fixtures/kg.csv (point PRIMEKG_DATA_PATH at it).",
+      "expected_output": "Invokes alterlab-primekg: sets PRIMEKG_DATA_PATH to the attached kg.csv and runs query_primekg.py (search_nodes / get_neighbors / get_disease_context) to find the type-2-diabetes disease node, retrieve its direct neighbors and bucket them by relation. On the attached subset the associated genes are TCF7L2, PPARG, KCNJ11, SLC30A8, HNF1A, IRS1, INSR and ABCC8 (disease_protein) and the drugs are metformin, pioglitazone, sitagliptin, empagliflozin, glimepiride and glipizide (indication), with hyperglycemia/polyuria/polydipsia as phenotypes.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "PrimeKG" },
-        { "type": "behavior", "value": "Queries the PrimeKG knowledge graph for a disease's neighboring genes and drugs and summarizes the relations." }
+        { "type": "behavior", "value": "Queries the PrimeKG knowledge graph for a disease's neighboring genes and drugs and summarizes the relations." },
+        { "type": "behavior", "value": "On the attached kg.csv, reports type-2-diabetes-associated genes including TCF7L2, PPARG and KCNJ11 (disease_protein) and indicated drugs including metformin, pioglitazone and sitagliptin (indication)." }
       ]
     },
     {

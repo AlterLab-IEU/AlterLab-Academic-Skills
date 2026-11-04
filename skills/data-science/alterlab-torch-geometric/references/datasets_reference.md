@@ -462,7 +462,7 @@ PyG integrates seamlessly with OGB datasets:
 
 ```python
 # OGB datasets are provided by the separate `ogb` package, not torch_geometric.datasets.
-# Install: uv pip install ogb
+# Run with: uv run --python ">=3.12" --with torch --with torch_geometric --with ogb python script.py
 from ogb.nodeproppred import PygNodePropPredDataset
 dataset = PygNodePropPredDataset(name='ogbn-arxiv')
 # (PyG also ships a convenience torch_geometric.datasets.OGB_MAG wrapper.)

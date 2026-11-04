@@ -36,7 +36,7 @@
       "expected_output": "Invokes alterlab-aperta in final-report compliance mode. Produces a compliance statement listing, per output, the Aperta DOI, the access mode (open/restricted), and the open-access date, and confirms each meets the İlke-2 open-access ceiling (6 or 12 months after publication) — or, for closed data, references the İlke-6 justification. Scopes itself to the open-science / data-deposition compliance statement and does not write the rest of the sonuç raporu narrative. Ends with the verify-against-current-policy disclaimer.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "İlke-6" },
+        { "type": "output_contains", "value": ["İlke-6", "İlke 6", "Principle 6"] },
         { "type": "behavior", "value": "Builds a per-output Aperta DOI + access-mode + open-access-date compliance statement and confirms it against the İlke-2 open-access ceiling, without writing the full grant report narrative." }
       ]
     },

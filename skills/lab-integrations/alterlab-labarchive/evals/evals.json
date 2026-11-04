@@ -34,7 +34,37 @@
       "expected_output": "Invokes alterlab-labarchive. Uses the site_reports API (e.g. detailed_usage_report with start_date/end_date) to generate the institutional usage/activity report, noting it is an Enterprise feature.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "usage report" }
+        { "type": "output_contains", "value": ["usage report", "usage_report", "detailed_usage_report"] }
+      ]
+    },
+    {
+      "id": "audit-export-offline",
+      "prompt": "I exported one of my LabArchives notebooks to export_Lab_Notebook/ before archiving it. Without any API credentials, audit it: how many pages and entries, and are there any pages where I dumped raw data but forgot to write a note explaining it?",
+      "files": ["fixtures/export_Lab_Notebook"],
+      "expected_output": "Invokes alterlab-labarchive on the keyless path (e.g. scripts/analyze_export.py) with no credentials: walks the exported folder tree and reports 3 pages, 2 text entries and 3 attachment entries (a .pdf, a .csv and a .tif), and flags the provenance gap at 00_Experiments/01_Run-12, which holds a raw CSV and a gel TIFF but no text entry describing them. Does not contact the LabArchives API.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Run-12" },
+        { "type": "behavior", "value": "Audits the exported tree offline, counting 3 pages / 2 text + 3 attachment entries and flagging Run-12 as the attachment-without-text provenance gap, with no API call." }
+      ]
+    },
+    {
+      "id": "review-signing-and-client-offline",
+      "prompt": "I'm writing a LabArchives API client in Python and the signatures keep getting rejected. I don't want to keep hammering the API with my token while I debug. How is the request signature built, and does it matter whether I use labapi or the labarchives-py wrapper?",
+      "expected_output": "Invokes alterlab-labarchive and explains the signing offline: sig = base64(HMAC(access_password, akid + method_name + expires)) with expires in epoch-milliseconds, sent as the akid/expires/sig query params so the password itself is never transmitted. Crucially warns that the hash differs between clients — labapi uses HMAC-SHA512 while the git labarchives-py wrapper uses HMAC-SHA1 — so a signature valid for one may be rejected by the other; match the client to what the institution's API expects and test against the tenant. Does not require making a live call to answer.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "HMAC" },
+        { "type": "behavior", "value": "Describes the akid+method+expires HMAC signature with epoch-ms expires and flags the SHA512 (labapi) vs SHA1 (labarchives-py) difference, without needing a live call." }
+      ]
+    },
+    {
+      "id": "draft-entry-html-offline",
+      "prompt": "Draft the rich-text HTML for a LabArchives entry summarizing today's qPCR run (plate layout, Ct values table, a short conclusion) plus the caption I should put on the raw .eds attachment, so it's ready to push once I set up my API token.",
+      "expected_output": "Invokes alterlab-labarchive and drafts the entry content offline with no credentials: valid rich-text HTML for the entry (headings, a Ct-values table, a conclusion paragraph) suitable for entries/add_entry with part_type 'text entry', and a provenance caption for the .eds attachment (instrument, run date, operator, software version). Notes the entry is pushed later with page.entries.create / entries/add_entry once LA_APP_TOKEN and the access password are set, without claiming anything was uploaded.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Produces ready-to-push entry HTML and an attachment provenance caption offline, deferring the actual upload to the credentialed add_entry/add_attachment call." }
       ]
     },
     {

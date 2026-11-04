@@ -361,7 +361,7 @@ Example: Detect ORR difference 45% vs 30% (15 percentage points)
 
 **Kaplan-Meier Plot Best Practices**
 
-```python
+```text
 # Key elements for publication-quality survival curve
 1. X-axis: Time (months or years), starts at 0
 2. Y-axis: Survival probability (0 to 1.0 or 0% to 100%)

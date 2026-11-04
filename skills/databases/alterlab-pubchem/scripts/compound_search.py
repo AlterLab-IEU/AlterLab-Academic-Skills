@@ -13,7 +13,7 @@ from typing import List, Dict, Optional, Union
 try:
     import pubchempy as pcp
 except ImportError:
-    print("Error: pubchempy is not installed. Install it with: pip install pubchempy")
+    print("Error: pubchempy is not installed. Run install-free: uv run --with 'pubchempy>=1.0.5' python scripts/compound_search.py ...")
     sys.exit(1)
 
 

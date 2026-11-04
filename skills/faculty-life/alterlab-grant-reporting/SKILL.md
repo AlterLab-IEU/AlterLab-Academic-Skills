@@ -53,6 +53,8 @@ Use this skill when the user needs to:
 | Program / department **accreditation** assessment & assurance-of-learning reports | `alterlab-accreditation-aol` |
 | Verifying that the **citations** in the report actually exist | `alterlab-citation-verifier` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-research-grants`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 This skill assumes the award is already made. If the user is still competing for
 funding, stop and route to the pre-award skill above.
 
@@ -123,7 +125,7 @@ Reporting deadlines are deterministic functions of the award dates, and missing
 one can suspend payments. Use the helper instead of recalling rules from memory:
 
 ```bash
-uv run python skills/faculty-life/alterlab-grant-reporting/scripts/report_deadlines.py \
+uv run python scripts/report_deadlines.py \
     --funder nih-snap --budget-period-start 2026-09-01 --project-end 2028-08-31
 ```
 

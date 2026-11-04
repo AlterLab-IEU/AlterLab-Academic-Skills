@@ -2,6 +2,16 @@
   "skill": "alterlab-remote-compute",
   "evals": [
     {
+      "id": "local-validate-before-dispatch",
+      "prompt": "Before I spend cluster hours or cloud credits, I want to run my job script on my own machine on a tiny input to make sure it works, using the same submit/poll flow I'll use on the cluster. I don't have any provider account set up yet. How?",
+      "expected_output": "Invokes alterlab-remote-compute and uses the keyless local backend of scripts/dispatch.py: write a small CPU/reduced-size runner script, then `dispatch.py submit --backend local --script run_local.sh` (no account/token) to run it here and get a handle, and `dispatch.py poll --backend local --handle <h>` to read SUCCEEDED/FAILED through the same submit → poll contract, inspecting the captured stdout/stderr. Only after validation switch --backend slurm or rest for the full run.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "local" },
+        { "type": "behavior", "value": "Validates the job on the local machine with no account/token via the dispatcher's default local backend, using the same submit/poll flow before any cluster or cloud dispatch." }
+      ]
+    },
+    {
       "id": "slurm-submit-track",
       "prompt": "I'm on my university's HPC cluster. Help me submit a GPU batch job with sbatch that runs my folding script for up to 8 hours, then track it until it finishes and tell me if it succeeded or failed.",
       "expected_output": "Invokes alterlab-remote-compute for the SLURM submit → poll → harvest path: writes an sbatch job script with #SBATCH --gres=gpu:1 and --time directives, submits with `sbatch --parsable`, and polls terminal state with sacct (not just squeue), checking the exit code before declaring success.",

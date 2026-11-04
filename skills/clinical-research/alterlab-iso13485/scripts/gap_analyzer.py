@@ -159,11 +159,15 @@ REQUIRED_PROCEDURES = {
 
 # Additional key documents (not procedures but required)
 KEY_DOCUMENTS = {
-    "Quality Manual": ["quality manual", "qm-", "quality management system"],
+    "Quality Manual": ["quality manual", "qm-"],
     "Medical Device File": ["medical device file", "mdf", "device master record", "dmr"],
     "Quality Policy": ["quality policy"],
     "Quality Objectives": ["quality objective"],
 }
+# These two are matched against the file name and the document's first line (its title), not
+# the whole text: SOPs routinely say "quality management system" or cite "the Quality Manual"
+# and "the medical device file", and none of that means the document itself exists.
+TITLE_MATCHED_DOCUMENTS = {"Quality Manual", "Medical Device File"}
 
 
 class GapAnalyzer:
@@ -245,7 +249,12 @@ class GapAnalyzer:
         """Search for key documents."""
         matches = []
         for file_path, content in documents:
-            if any(keyword in content for keyword in keywords):
+            if doc_name in TITLE_MATCHED_DOCUMENTS:
+                first_line = next((ln for ln in content.splitlines() if ln.strip()), "")
+                haystack = f"{file_path.name.lower()} {first_line}"
+            else:
+                haystack = content
+            if any(keyword in haystack for keyword in keywords):
                 matches.append(str(file_path.relative_to(self.docs_dir)))
 
         if matches:

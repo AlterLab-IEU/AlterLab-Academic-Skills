@@ -4,7 +4,7 @@
     {
       "id": "gdp-growth-transformation",
       "prompt": "I'm building a macro panel. Pull U.S. real GDP and apply year-over-year percent change at the source, plus the monthly unemployment rate. Which FRED series and parameters?",
-      "expected_output": "Triggers FRED. Uses GDPC1 (Real GDP) with units=pc1 (percent change from a year ago) via get_observations, and UNRATE for the unemployment rate. Uses the FREDQuery class or the series/observations endpoint, and reminds the user to set FRED_API_KEY.",
+      "expected_output": "Triggers FRED. Uses GDPC1 (Real GDP) with units=pc1 (percent change from a year ago) via get_observations, and UNRATE for the unemployment rate. Gets the data keylessly from fredgraph.csv (id=GDPC1&transformation=pc1, id=UNRATE; scripts/fred_keyless.py), or with the optional FRED_API_KEY through the FREDQuery class / series/observations endpoint (units=pc1); it does not claim a key is required.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "GDPC1"},
@@ -14,6 +14,7 @@
     },
     {
       "id": "series-search-discovery",
+      "requires": ["env:FRED_API_KEY"],
       "prompt": "I don't know the exact series ID. How do I search FRED for monthly consumer price index series and list the matching IDs and titles?",
       "expected_output": "Triggers FRED. Uses search_series (the fred/series/search endpoint) with the query 'consumer price index' and a filter_variable=frequency / filter_value=Monthly, iterating the returned 'seriess' to print id and title.",
       "assertions": [
@@ -25,32 +26,74 @@
     {
       "id": "vintage-alfred",
       "prompt": "For a real-time forecasting study I need GDP exactly as it was first reported on a given date, not the latest revised value. Can FRED give me vintage data?",
-      "expected_output": "Triggers FRED. Explains ALFRED vintage access via realtime_start/realtime_end on get_observations, and get_vintage_dates to list all revision vintages for the series. Notes this avoids look-ahead bias from later revisions.",
+      "expected_output": "Triggers FRED. Explains ALFRED vintage access: keylessly via alfredgraph.csv?id=GDP&vintage_date=YYYY-MM-DD (scripts/fred_keyless.py --vintage-date), or with the optional key via realtime_start/realtime_end on get_observations and get_vintage_dates to list all revision vintages for the series. Notes this avoids look-ahead bias from later revisions.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "ALFRED"},
-        {"type": "behavior", "value": "Uses realtime_start/realtime_end (or get_vintage_dates) to retrieve the originally-reported vintage rather than the revised series."}
+        {"type": "behavior", "value": "Uses realtime_start/realtime_end (or get_vintage_dates), or the keyless ALFRED CSV with vintage_date, to retrieve the originally-reported vintage rather than the revised series."}
       ]
     },
     {
       "id": "frequency-aggregation",
       "prompt": "I have the daily 10-year Treasury yield from FRED but I want it as a monthly average. How do I aggregate it server-side?",
-      "expected_output": "Triggers FRED. Uses get_observations on DGS10 with frequency=m and aggregation_method=avg to convert the daily series to a monthly average. Notes the FRED_API_KEY requirement.",
+      "expected_output": "Triggers FRED. Converts the daily DGS10 series to a monthly average server-side: keylessly with fredgraph.csv?id=DGS10&fq=Monthly&fam=avg (scripts/fred_keyless.py --frequency m --aggregation avg), or with the optional FRED_API_KEY via get_observations frequency=m and aggregation_method=avg. No key is required.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "DGS10"},
-        {"type": "output_contains", "value": "aggregation_method"},
-        {"type": "behavior", "value": "Applies frequency=m with aggregation_method=avg on DGS10 to produce a monthly average."}
+        {"type": "output_contains", "value": ["aggregation_method", "fam=avg", "aggregation=\"avg\"", "aggregation='avg'", "--aggregation avg"]},
+        {"type": "behavior", "value": "Applies frequency=m with aggregation_method=avg (or the keyless fq=Monthly&fam=avg) on DGS10 to produce a monthly average."}
       ]
     },
     {
       "id": "regional-geofred",
+      "requires": ["env:FRED_API_KEY"],
       "prompt": "I want unemployment rate by U.S. state for a choropleth map, plus the state boundary shapes. Can FRED provide regional data and GeoJSON?",
       "expected_output": "Triggers FRED. Uses GeoFRED: get_regional_data(series_group=\"1220\", region_type=\"state\", ...) for the per-state unemployment values and get_shapes(\"state\") for the GeoJSON boundaries.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "GeoFRED"},
         {"type": "behavior", "value": "Uses get_regional_data with region_type=state and get_shapes for the mapping geometry."}
+      ]
+    },
+    {
+      "id": "keyless-unrate-dgs10-2024",
+      "prompt": "I don't have a FRED API key. For a 2024 macro chart I need the monthly U.S. unemployment rate and the 10-year Treasury yield averaged to monthly, January through December 2024, in one table.",
+      "expected_output": "Triggers FRED and uses the keyless CSV route without asking for a key: fredgraph.csv?id=UNRATE&cosd=2024-01-01&coed=2024-12-01 and id=DGS10 with fq=Monthly&fam=avg (or scripts/fred_keyless.py obs UNRATE DGS10 --frequency m --aggregation avg). Returns 12 monthly rows: unemployment around 3.7% in January rising to 4.1-4.2% in the second half; 10-year yield monthly averages 4.06 (Jan), 4.21 (Feb, Mar), 4.54 (Apr, the high), 4.48, 4.31, 4.25, 3.87, 3.72 (Sep, the low), 4.10, 4.36 and 4.39 (Dec).",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "4.54"},
+        {"type": "output_contains", "value": "3.72"},
+        {"type": "behavior", "value": "Fetches both series without an API key (keyless fredgraph.csv or fred_keyless.py) and reports the actual 2024 values: unemployment from about 3.7% in January to about 4.1% in December, and 10-year yield monthly averages including 4.06 (Jan), 4.54 (Apr), 3.72 (Sep) and 4.39 (Dec); it does not tell the user a key is required."}
+      ]
+    },
+    {
+      "id": "keyless-gdp-first-release",
+      "prompt": "No API key on this machine. For a real-time forecasting exercise, what was U.S. nominal GDP for 2019 Q4 as first published at the end of January 2020, and what does FRED show for that quarter today?",
+      "expected_output": "Triggers FRED and uses ALFRED keylessly: alfredgraph.csv?id=GDP&vintage_date=2020-01-30 (the advance estimate was published that day; the 2020-01-29 vintage still ends at 2019 Q3) gives $21,734.3 billion (SAAR) for 2019-10-01, while the current fredgraph.csv value is about $21,933.2 billion, a revision of about +$199 billion (+0.9%). Explains that using the vintage avoids look-ahead bias.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": ["21734", "21,734", "21.73"]},
+        {"type": "behavior", "value": "Uses an ALFRED vintage (vintage_date=2020-01-30 on the keyless CSV, or realtime_start/realtime_end with a key) and reports the first-published 2019 Q4 nominal GDP of about $21,734 billion versus about $21,933 billion in today's data, without claiming an API key is needed."}
+      ]
+    },
+    {
+      "id": "keyless-cpi-search",
+      "prompt": "I don't know the series IDs and I don't have an API key. Find FRED's monthly consumer price index series for the U.S. (headline and core) and give me their IDs and exact titles.",
+      "expected_output": "Triggers FRED and looks the IDs up instead of guessing, keylessly: FRED's site search (searchresults/?st=consumer+price+index&t=monthly, via scripts/fred_keyless.py search or WebFetch) or the series pages. Reports CPIAUCSL, Consumer Price Index for All Urban Consumers: All Items in U.S. City Average (headline), and CPILFESL, Consumer Price Index for All Urban Consumers: All Items Less Food and Energy in U.S. City Average (core), both monthly and seasonally adjusted (index 1982-1984=100); may add the not-seasonally-adjusted variants.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "CPILFESL"},
+        {"type": "behavior", "value": "Finds the series by an actual keyless search or page lookup and gives CPIAUCSL (All Items in U.S. City Average) and CPILFESL (All Items Less Food and Energy in U.S. City Average) with their titles, without requiring an API key."}
+      ]
+    },
+    {
+      "id": "keyless-state-unemployment-map",
+      "prompt": "Without an API key, build me a choropleth of U.S. state unemployment rates for August 2026 from FRED data.",
+      "expected_output": "Triggers FRED. Explains that GeoFRED's regional-data and shapes endpoints need the optional key, so it pulls the 51 per-state series {ST}UR (ALUR ... WYUR plus DCUR) from fredgraph.csv for 2026-08-01 (scripts/fred_keyless.py states UR --date 2026-08-01) and draws the map with plotly locationmode='USA-states' (no shape file needed) or Census cartographic boundary shapes, citing FRED/BLS LAUS as the source.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": ["CAUR", "TXUR", "NYUR", "DCUR", "ALUR", "{ST}UR", "<ST>UR", "[ST]UR"]},
+        {"type": "behavior", "value": "Retrieves the per-state unemployment series for August 2026 for all 50 states plus DC without a key (per-state {ST}UR series via the keyless CSV) and maps them, naming GeoFRED only as the optional-key alternative."}
       ]
     },
     {

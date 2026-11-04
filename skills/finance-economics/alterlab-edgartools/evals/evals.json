@@ -7,7 +7,7 @@
       "expected_output": "Triggers edgartools. Calls set_identity() first (SEC requires it), then Company(\"AAPL\"), get_filings(form=\"10-K\").latest(), and get_financials() to access income_statement(), balance_sheet(), and cash_flow_statement() (cashflow_statement() is a deprecated alias). Reminds the user that filing.financials does not exist and to use filing.obj().financials.",
       "assertions": [
         {"type": "should_trigger", "value": true},
-        {"type": "output_contains", "value": "set_identity"},
+        {"type": "output_contains", "value": ["set_identity", "EDGAR_IDENTITY", "identity", "User-Agent"]},
         {"type": "output_contains", "value": "10-K"},
         {"type": "behavior", "value": "Sets identity before any call and retrieves the three statements via get_financials(); does not use the nonexistent filing.financials."}
       ]

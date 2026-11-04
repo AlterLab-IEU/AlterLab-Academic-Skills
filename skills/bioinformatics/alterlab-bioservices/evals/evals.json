@@ -14,10 +14,12 @@
     {
       "id": "compound-cross-reference",
       "prompt": "Find the KEGG compound ID for Geldanamycin and cross-reference it to its ChEBI identifier so I can pull the chemical structure later.",
-      "expected_output": "Invokes alterlab-bioservices. Uses KEGG.find('compound', 'Geldanamycin') to get cpd:C11222, then KEGG.conv('chebi', 'compound') to map KEGG -> ChEBI. Notes that there is no direct bioservices KEGG -> ChEMBL convenience method and that a ChEMBL ID would require a separate route. Multi-database compound cross-referencing is in scope.",
+      "expected_output": "Invokes alterlab-bioservices. Resolves Geldanamycin to KEGG compound cpd:C11222 and cross-references it to ChEBI:5292. The documented bioservices KEGG().find/.conv path currently crashes (bioservices validates the db name against the KEGG organism list, but rest.kegg.jp/list/organism now returns HTTP 400), so either path is acceptable: using the KEGG().find/.conv API, or — equivalently and correctly — calling the KEGG REST endpoints directly (rest.kegg.jp/find/compound/Geldanamycin and rest.kegg.jp/conv/chebi/cpd:C11222). Notes that there is no direct bioservices KEGG -> ChEMBL convenience method and that a ChEMBL ID would require a separate route.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "ChEBI" }
+        { "type": "output_contains", "value": "ChEBI" },
+        { "type": "output_contains", "value": "C11222" },
+        { "type": "output_contains", "value": ["CHEBI:5292", "ChEBI:5292", "chebi:5292", "5292"] }
       ]
     },
     {

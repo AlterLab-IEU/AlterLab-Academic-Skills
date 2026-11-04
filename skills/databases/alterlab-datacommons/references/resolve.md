@@ -99,6 +99,11 @@ response = client.resolve.fetch_dcid_by_coordinates(
 candidates = response.to_dict()["entities"][0].get("candidates", [])
 ```
 
+Without a key this v2 lookup returns no candidates for many points, this one included
+(checked 2026-11-04), and every keyless answer seen left out the city. `scripts/query_datacommons.py resolve --coords`
+also asks the keyless v1 coordinate resolver (`POST /v1/recon/resolve/coordinate`), which
+returns every place containing the point.
+
 ## Response Structure
 
 All methods return a `ResolveResponse` object containing:

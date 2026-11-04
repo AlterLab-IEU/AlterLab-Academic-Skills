@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash WebFetch WebSearch
 compatibility: Orchestrates alterlab-deep-research, alterlab-paper-writer, and alterlab-paper-reviewer; uses built-in Claude tools only; no external API key or account required
 metadata:
   skill-author: AlterLab
-  version: "2.7.1"
-  last_updated: "2026-09-23"
+  version: "2.7.2"
+  last_updated: "2026-11-02"
   depends_on: "alterlab-deep-research, alterlab-paper-writer, alterlab-paper-reviewer"
 ---
 
@@ -90,6 +90,8 @@ I received reviewer comments, help me revise
 | **4.5** | **FINAL INTEGRITY** | **`integrity_verification_agent`** | **final-check** | **Final verification report (must achieve 100% pass to proceed)** |
 | 5 | FINALIZE | `alterlab-paper-writer` | format-convert | Final Paper (default MD + DOCX; ask about LaTeX; confirm correctness; PDF) |
 | **6** | **PROCESS SUMMARY** | **orchestrator** | **auto** | **Paper creation process record MD + LaTeX to PDF (bilingual)** |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-deep-research`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ---
 

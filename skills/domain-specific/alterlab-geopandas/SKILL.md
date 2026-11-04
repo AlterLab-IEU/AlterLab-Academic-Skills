@@ -2,7 +2,7 @@
 name: alterlab-geopandas
 description: Reads, writes, and analyzes geospatial vector data with the GeoPandas Python library (shapefiles, GeoJSON, GeoPackage), with PostGIS support and integration with matplotlib, folium, and cartopy. Use for spatial analysis and geometric operations — buffer analysis, spatial joins and overlays between datasets, dissolving boundaries, clipping, calculating areas and distances, reprojecting coordinate systems, choropleth mapping, or converting between vector file formats. This is for tabular vector data; for raster/satellite/DEM work, spectral indices (NDVI), or spatial ML on earth observation prefer the geomaster skill. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Runs locally via `uv run python`; requires the geopandas Python package.
 metadata:
     skill-author: AlterLab
@@ -26,18 +26,27 @@ Use this skill when the user wants to:
 
 | Scenario | Use Instead |
 |----------|-------------|
+| Georeferencing a scanned historical map (ground control points in QGIS) and overlaying it to study change over time — historical GIS for humanities research. The whole request goes there, overlay included | `alterlab-digital-humanities` |
 | Raster, satellite imagery, DEMs, spectral indices, STAC/COG, or EO machine learning | `alterlab-geomaster` |
 | Network/graph analysis of relationships with no geometry (centrality, communities) | `alterlab-networkx` |
 | Genomic interval overlaps (BED files) — "spatial" joins along a chromosome | `alterlab-gtars` |
 | Celestial coordinates, FITS/WCS sky positions | `alterlab-astropy` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-geomaster`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Installation
 
+Run install-free — one `uv run` command, no virtualenv or `uv pip install` step (pin the
+interpreter: uv's default Python here can be 3.9). Add each optional package below with
+another `--with`:
+
 ```bash
-uv pip install geopandas   # 1.x (current 1.1.x as of 2026-09); shapely 2 + pyogrio
+uv run --python ">=3.11" --with geopandas python your_script.py   # 1.x (1.2.0 as of 2026-10); shapely 2 + pyogrio
+uv run --python ">=3.11" --with geopandas --with matplotlib --with mapclassify --with folium python map.py
 ```
 
-GeoPandas 1.x requires shapely ≥ 2 and reads/writes through **pyogrio** by default
+For a persistent environment, the `uv pip install ...` lines below work inside an activated
+virtualenv. GeoPandas 1.x requires shapely ≥ 2 and reads/writes through **pyogrio** by default
 (fiona is optional). Removed or deprecated in the 1.x line: `sjoin(op=...)` (use
 `predicate=`), `unary_union` (use `union_all()`), and the bundled `geopandas.datasets`
 files (use the `geodatasets` package).

@@ -3,30 +3,41 @@
   "evals": [
     {
       "id": "cross-section-question",
+      "files": ["fixtures/retrieval_quiz_trial.pdf"],
       "prompt": "Here's a single research paper as a PDF. Does the analysis described in the methods actually match what they claim in the discussion? Check across the whole document.",
       "expected_output": "Invokes alterlab-pdf-explore: parses the PDF once into a section index, then compares the methods and discussion sections, citing the page/section for each point so the answer is verifiable.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "section" },
-        { "type": "behavior", "value": "Answers a question that spans multiple sections of one PDF, with page/section citations." }
+        { "type": "behavior", "value": "Answers a question that spans multiple sections of one PDF, with page/section citations." },
+        { "type": "behavior", "value": "Finds that the Discussion's 'significant' gain of almost five points is the per-protocol sensitivity result (4.8 points, p = .004, n = 247), while the pre-registered intention-to-treat primary analysis the Methods specify found 2.1 points with p = 0.098, not significant." },
+        { "type": "behavior", "value": "Finds that the Discussion's 'significantly reduced statistics anxiety' (p = 0.031) fails the Bonferroni-adjusted alpha of 0.0167 that the Methods set for the three secondary outcomes." },
+        { "type": "behavior", "value": "Finds that the Discussion's 'individually randomised' contradicts the Methods' cluster randomisation of 12 course sections, and that its recommendation to target weaker students rests on the Table 2 subgroup analysis the Methods say was not pre-specified." }
       ]
     },
     {
       "id": "extract-every-instance",
+      "files": ["fixtures/retrieval_quiz_trial.pdf"],
       "prompt": "In this one paper's PDF, find every reported p-value and the sample size next to each one — I don't want to miss any.",
       "expected_output": "Invokes alterlab-pdf-explore for extract-every-instance: scans the full parsed text and returns a located list (page + context) of every p-value and its associated sample size, not just the first hit.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "every" }
+        { "type": "output_contains", "value": "every" },
+        { "type": "output_contains", "value": ".046" },
+        { "type": "output_contains", "value": ".071" },
+        { "type": "output_contains", "value": ".84" },
+        { "type": "behavior", "value": "Lists all 11 p-value occurrences with the sample size next to each: the abstract's p = .004 (n = 247, split across a line break), p = 0.098 (n = 418), p = .004 (n = 247), p = 0.21 (n = 405), p = 0.031 (n = 377), p = 0.27 (n = 418), Table 2's 0.012 (n = 141) and 0.84 (n = 250), the Figure 3 caption's P < 0.001 (n = 209), Appendix A's p = 0.071 (n = 391) and Appendix B's p = 0.046 (n = 409)." }
       ]
     },
     {
       "id": "read-values-off-figure",
+      "files": ["fixtures/retrieval_quiz_trial.pdf"],
       "prompt": "Read the approximate values for each bar in Figure 3 of this PDF for me.",
       "expected_output": "Invokes alterlab-pdf-explore to locate the figure region and estimate the series values from the chart, explicitly noting the read-off values are approximate and should be confirmed against underlying data.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Reads approximate values from a figure and flags them as approximate." }
+        { "type": "behavior", "value": "Reads approximate values from a figure and flags them as approximate." },
+        { "type": "behavior", "value": "Reads Figure 3's five bars (Weeks 1-2 to Weeks 9-10, quizzes submitted %) as about 88, 79, 68, 61 and 52, each within roughly 3 percentage points." }
       ]
     },
     {

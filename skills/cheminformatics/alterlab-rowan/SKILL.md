@@ -1,20 +1,35 @@
 ---
 name: alterlab-rowan
-description: Drives the Rowan cloud quantum-chemistry platform via its Python API for computational chemistry — pKa prediction, geometry optimization, conformer searching, molecular property calculations, protein-ligand docking (AutoDock Vina), and AI protein cofolding (Chai-1, Boltz-1/2), with cloud compute and no local setup. Use when running DFT or semiempirical methods, neural network potentials (AIMNet2), molecular property or protein-ligand binding predictions, or automated computational chemistry pipelines. Part of the AlterLab Academic Skills suite.
+description: Builds and validates Rowan computational-chemistry jobs with the rowan-python API and previews the chemistry locally with no account — constructs 3D molecules and job payloads (pKa, geometry optimization, conformers, docking, AI cofolding), validates every submission's arguments offline, and runs a local RDKit/xTB preview (MMFF/GFN2-xTB geometry and conformer energies) so you see a first answer before spending credits. Submitting the job to Rowan's cloud runs on their servers, consumes credits, and sends the structure off-site — an optional step with the user's own ROWAN_API_KEY. Use when setting up or validating a Rowan workflow, running NNP/xTB/DFT or docking/cofolding jobs, or previewing molecular properties locally. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Requires a Rowan account and API key (ROWAN_API_KEY); jobs run on Rowan's cloud and consume credits, and submitted structures are sent to Rowan's servers. rowan-python >= 3.2, Python >= 3.12."
+compatibility: "No API key required to build 3D molecules, assemble and validate Rowan job payloads offline (rowan-python >= 3.2, Python >= 3.12), and run a local RDKit/tblite (GFN2-xTB) preview. Optional: the user's own ROWAN_API_KEY to submit jobs, which run on Rowan's cloud, consume credits, and send the submitted structure to Rowan's servers."
 metadata:
     skill-author: AlterLab
-    version: "1.2.0"
-    last_updated: "2026-09-23"
+    version: "1.3.0"
+    last_updated: "2026-10-22"
+    credentials: "optional: ROWAN_API_KEY (a Rowan account key — adds submitting workflows to Rowan's cloud; jobs consume credits and the submitted structure is sent to Rowan's servers)"
 ---
 
 # Rowan: Cloud-Based Quantum Chemistry Platform
 
 ## Overview
 
-Rowan is a cloud-based computational chemistry platform that provides programmatic access to quantum chemistry workflows through a Python API. It enables automation of complex molecular simulations without requiring local computational resources or expertise in multiple quantum chemistry packages.
+Rowan is a cloud-based computational chemistry platform with a Python API for pKa, geometry optimization, conformers, docking and AI cofolding. Setting up a job, validating its payload, and previewing the chemistry locally need no account; only submitting the job uses the user's key, credits and servers.
+
+## Keyless Path (default — no Rowan account)
+
+1. **Build the molecule and the job payload offline.** `rowan.Molecule.from_smiles("...")` generates a 3D structure with no key, and every `submit_*_workflow(...)` validates its arguments *before* the network call, so the payload is checked keyless. Verified 2026-10-22 (rowan-python 3.2.2):
+   - a bare SMILES to a geometry workflow raises `ValueError: This workflow requires a 3D structure, not a SMILES string` — caught offline, so build `Molecule.from_smiles(...)` first.
+   - `pocket` must be two 3-vectors `[[cx,cy,cz],[sx,sy,sz]]`; a dict raises a pydantic `ValidationError` at construction.
+   - cofolding `model` is the `CofoldingModel` enum (`chai_1r`, `boltz_1`, `boltz_2` default, `boltz_2_1`, `openfold_3`, `decaf_boltz`, `esmfold_2`).
+   Only after the arguments pass does the call reach `No API key provided` — i.e. everything up to submission is keyless.
+2. **Preview the chemistry locally** so the user gets a first answer without spending credits, using light local packages (no CUDA/DFT installs):
+   - conformers + relative energies with RDKit (`EmbedMultipleConfs` + `MMFFOptimizeMoleculeConfs`);
+   - a GFN2-xTB geometry optimization with `tblite` + `ase` (`uv run --python ">=3.11" --with tblite --with ase --with rdkit python ...`; manylinux wheel, no heavy install);
+   - pKa/property ballparks from RDKit descriptors or cited literature values, clearly labelled as an estimate, not Rowan's method.
+   State plainly that the local preview (MMFF/GFN2-xTB) is an approximation and Rowan's NNP/DFT result will differ.
+3. **Hand over submission.** Give the exact `submit_*_workflow(...)` call with a `max_credits=` cap, and note it needs `ROWAN_API_KEY`, consumes credits, and sends the structure to Rowan. If the key is unset, stop at the validated payload plus the local preview — never fabricate a Rowan result.
 
 **Key Capabilities:**
 - Molecular property prediction (pKa, redox potential, solubility, ADMET-Tox)
@@ -47,6 +62,8 @@ Use this skill when the user wants to:
 | Running Boltz-2 or Chai-1 locally on your own GPU | `alterlab-boltz` or `alterlab-chai` |
 | Local conformers, descriptors, or RDKit force-field minimization | `alterlab-rdkit` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-molecular-dynamics`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Installation and Authentication
 
 ### Installation
@@ -59,9 +76,9 @@ uv pip install "rowan-python>=3.2"
 
 Installing `rowan-python` also pulls in `stjames` (molecule/result models) and `rdkit`.
 
-### Authentication
+### Authentication (optional — only to submit jobs)
 
-Generate an API key at [labs.rowansci.com/account/api-keys](https://labs.rowansci.com/account/api-keys).
+Building and validating payloads and the local preview need no key. To submit a job, generate an API key at [labs.rowansci.com/account/api-keys](https://labs.rowansci.com/account/api-keys).
 
 **Option 1: Direct assignment**
 ```python

@@ -6,6 +6,237 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [4.0.0] — 2026-11-04
+
+**Why a major version.** These changes alter what existing users, scripts and installs get back:
+
+- **Keys are optional.** Every skill does what it claims with no external API key, account or
+  licence; a credential only adds something and is declared in `metadata.credentials`, and
+  `scripts/check_keyless.py` fails the suite on a regression. A keyed backend asked for without
+  its key exits with a message instead of answering from another backend
+  (`alterlab-remote-compute` still requires an explicit `--backend`, so a cluster script is
+  never run locally by omission).
+- **No contact address by default.** User-Agents and `mailto` parameters no longer carry a
+  maintainer email; set `ALTERLAB_CONTACT_EMAIL` or pass `--mailto` to send one.
+- **Skills hand off instead of answering.** When a request matches a routing row, the skill
+  names the better sibling by id and stops.
+- **Statuses, counts and exit codes changed meaning.** `claim_faithfulness.py` never returns
+  `VERIFIED`; `verify_citations.py` reports `PARTIAL` and exits `3` when entries go
+  unprocessed; workflows return `status: complete | partial | blocked` and count only completed
+  or validated work (`claims_checked`, `major_concerns`, `flow.screened`);
+  `run_evals.py --behavioral` exits `0`/`1`/`2`/`3`; helper scripts exit `2` on invalid input.
+- **A different archive for the Claude app.** `alterlab-<domain>-<version>.zip` is a
+  skills-directory bundle, not a claude.ai upload; upload `skill-<name>-<version>.zip`.
+  Installs need `python3` and add the skills a selected skill depends on (`--no-deps` to skip).
+- **A skill and two MCP servers were removed.** `alterlab-openalex` is gone (241 skills), and
+  the `alterlab-core` and `alterlab-databases` plugins no longer bundle the `openalex` and
+  `zotero` MCP servers or prompt for their settings (see *Removed*).
+
+A reliability repair: incomplete, failed, or weakly supported work can no longer appear
+successfully verified. No skills were added; one was removed (see *Removed*). Prompted by an
+external audit; every reported defect was reproduced before it was fixed.
+
+### Live behavioral evaluation
+
+Every skill's eval cases were answered once with the skill and once without it, through the
+Claude Code CLI login with no API key, from 2026-10-15 to 2026-11-04. Method, per-domain
+results and limits: `docs/behavioral-results.md`.
+
+- 241 of 241 skills, 1,598 cases: 1,532 graded, 50 not runnable here (they need a key,
+  connector, host or program the runner lacks), 16 infrastructure errors or refusals.
+- With the skill, 1,380 of 1,532 graded cases passed (90.1%); without it, 804 of the
+  same cases (52.5%). The skill turned a bare FAIL into a PASS on 571 cases and the reverse
+  on 2. The skilled answer faces more checks than the bare one, grading reads only the final
+  message, and each case ran once.
+- On the 1,525 cases with both a first and a final run, skilled PASS went from 1,109 to 1,325
+  (fixes to skills, evals and the harness in between; not a controlled comparison).
+- Every case the skill made worse was read by hand, twice. The first pass fixed missing
+  routing rows (eleven), two timeouts that were skill defects and the alpha-vantage contact
+  prompt. The second pass took the 27 still left: hand-off scope in seven skills, how answers
+  report their method in eleven, script and instruction defects (datacommons, scientific-slides,
+  matchms, pdb, scvi-tools) and one unregistered DOI in a pubmed eval. 25 of the 27 now
+  pass with the skill, and the skill hurts on 2 cases suite-wide.
+- `alterlab-openalex`'s cases are not counted (the skill was removed), and every skill that
+  used OpenAlex was rewritten and re-run.
+
+### Changed — behavior that can affect existing users
+
+- **Keyless-first, enforced.** Every skill does what it claims with no external API key,
+  account or licence: Claude's own tools (WebSearch, WebFetch, Read), keyless public APIs, local
+  libraries and simulators, and Claude's own reasoning instead of a second paid LLM. A credential
+  only *adds* something (the user's own account or data, a higher rate limit, a paid service the
+  user asks for by name) and is declared as `metadata.credentials: "optional: NAME (what it
+  adds)"`. 55 skills were rewritten or re-declared for this, among them perplexity, parallel-web,
+  research-lookup, bgpt-search, pyzotero, generate-image, infographics, scientific-schematics,
+  paper-2-web, fred, alpha-vantage, denario, datacommons, uspto, brenda, cosmic, drugbank,
+  pymatgen, hypogenic, modal, remote-compute and the seven lab-platform skills.
+  `scripts/check_keyless.py` and `tests/test_keyless.py` fail the suite on any regression. A
+  keyed backend that the user asks for and whose key is missing exits with a clear message; it
+  never answers silently from another backend.
+- **No maintainer email in requests.** The suite no longer sends a hard-coded contact address in
+  User-Agents or `mailto` parameters (citation verifier, MCP connectors, DergiPark, TR Dizin, YÖK
+  Akademik). A contact address is opt-in via `ALTERLAB_CONTACT_EMAIL` or `--mailto`.
+- **Hand-off rule on all 241 skills.** When a request matches a routing row, the skill names the
+  better sibling by id in its first line and stops, instead of answering anyway.
+- **Behavioral eval confinement.** Answer arms run in a private mount namespace that hides the
+  checkout and every worktree, with a private temp root holding only their own workspace, fresh
+  scratch dirs, hidden installed plugins and skills, Write/Edit scoped to the workspace, a
+  sanitised environment and a tripwire that blocks the run if the checkout changes. Background
+  jobs an arm leaves behind are killed when its call ends (the runner is a child subreaper).
+- **Behavioral evals** (`scripts/run_evals.py --behavioral`) exit `0` only when every selected
+  case produced a verdict and passed; `1` failed, `2` blocked (nothing graded), `3` partial.
+  The nightly CI job is gone (it graded 0 of 224 and 0 of 214 cases while showing success,
+  because its API key secret was empty); behavioral grading is manual, normally run locally in
+  Claude Code. Both arms now run in isolated temp directories with `--safe-mode
+  --disable-slash-commands --strict-mcp-config`, so this repo's CLAUDE.md and installed plugins
+  no longer prime the baseline. Results are written to `eval-results/` as JSON.
+- **`claim_faithfulness.py` never returns `VERIFIED`.** Heuristic support is
+  `LEXICAL_MATCH_REQUIRES_REVIEW`; llm-tier support is `MODEL_JUDGED_SUPPORT_REQUIRES_REVIEW`;
+  every result has `counts_as_verified: false`, `evidence_scope`, `method`, `requires_review`
+  and `fallback_reason`. Guards abstain on wrong figures, reversed or unmatched comparisons,
+  population mismatches, and tentative or associational evidence, and veto a model's support.
+- **`verify_citations.py` 1.2.0** (`alterlab-citation-verifier` 1.2.0): a new brace-aware
+  BibTeX parser (single-line entries, indented closing braces, nested and quoted values,
+  `@string`, `@type(...)`, mixed BibTeX + free-form input) with input accounting — every
+  detected entry is parsed, rejected (line, key, reason) or unsupported. A run that leaves
+  entries unprocessed is `PARTIAL` and exits `3`; it can no longer report PASS.
+- **Workflows** (`alterlab-workflows`, and the maintainer `/skill-freshness-audit`) return
+  `status: complete | partial | blocked`, `status_reasons`, and a per-stage `coverage` account
+  (requested / dispatched / completed / failed / unresolved / retried). A report path is
+  returned only after the file is read back. Meaning changes: citation-audit `claims_checked`
+  counts returned verdicts (not dispatched claims) and a flag needs two *completed* re-checks
+  to count; review-panel `major_concerns` lists validated concerns only, with unchecked ones in
+  `unverified`; screening `flow.screened` counts resolved records only, with failed ones kept
+  as `unresolved`. "Independent" wording is now "separate": same-model agents are not
+  independent verification.
+- **Packaging:** `scripts/build_bundles.py` is the single packaging path, used by
+  `install.sh`, `release.yml`, and `check_claudeai_compat.py --package`. Installs need
+  `python3` and add the skills a selected skill depends on (`--no-deps` to skip). The six
+  skills that cite shared handoff files carry byte-identical copies in `<skill>/shared/`.
+  Paths in skills are skill-relative; agents and commands use `${CLAUDE_PLUGIN_ROOT}`.
+  `alterlab-<domain>-<version>.zip` archives are skills-directory bundles, **not** claude.ai
+  uploads; upload `skill-<name>-<version>.zip` instead (frontmatter sanitized, shared files and
+  notices included, companions listed in the release notes and `release-manifest.json`).
+  Every installed or packaged skill carries `LICENSE`, `NOTICE`, and `THIRD_PARTY_NOTICES.md`.
+- **Helper scripts** (`sample_size.py`, `omega.py`, `icr.py`, `tesvik_score.py`,
+  `score_docentlik.py`) reject invalid or non-finite input with a message and exit `2`
+  instead of printing impossible numbers (e.g. `n = -1024` for `p = 1.2`) or a traceback.
+  Outputs for valid inputs are unchanged.
+
+### Added
+
+- Eval runner: a `requires` field (`env:`/`cmd:`/`net:`/`mcp:`; unmet cases are "not runnable
+  here", counted apart and never FAIL), `output_contains` lists of alternatives, directory
+  fixtures, `--collect-only`, `--wait-on-limit`, `--regrade`, a substance judge with
+  `--calibrate-judge` (8 hand-labelled pairs), `--case`, `denied_tools` in run records, and the
+  answering endpoint on record. `scripts/eval_sweep.sh` (parallel sweeps with claim locks; a list
+  line may carry per-skill arguments), `scripts/defect_scan.py` (missing inputs, denied tools,
+  crashed scripts, blocked hosts) and `docs/local-eval-runbook.md` (defect sweeps on a local
+  model, never reported as Claude results).
+- Eval fixtures for the cases that named input they did not ship (synthetic or clearly
+  fictional data, real checkable identifiers for live lookups), with stricter assertions naming
+  the facts an answer must find. Fixtures are excluded from every release archive.
+- `scripts/run_benchmark.py` and `benchmarks/`: a five-task live benchmark (citation
+  integrity, manuscript review, systematic-review screening, analysis checking, doçentlik
+  pre-screening) with synthetic fixtures, anchored expected answers, deterministic scoring of
+  false approvals, false accusations, and abstentions, and a skilled-vs-bare comparison.
+  Results: `docs/benchmark-results.md`.
+- `docs/behavioral-results.md`: the live evaluation of every skill, skilled vs bare, per domain,
+  with the cases that could not run here, a hand triage of every case the skill made worse, and
+  the known limits.
+- `benchmarks/harness-canary/`: a test-only skill proving the live harness tells PASS from
+  FAIL and delivers bundled files to the skilled arm.
+- Tests: fake-CLI behavioral-runner tests, adversarial claim-faithfulness fixtures, 184 BibTeX
+  parser tests, workflow fault injection (null, throw, missing/duplicate/unknown IDs, partial
+  output, failed report), packaging and isolated-install tests, helper input-domain tests.
+- `docs/CATALOG.md` (the per-domain skill tables, moved out of the README).
+
+### Removed
+
+- **`alterlab-openalex`** (databases), so the suite has 241 skills and the databases domain 38.
+  OpenAlex now meters keyless use: requests without a key share a $0.10/day budget per IP
+  address, and searches and filtered lists fail with HTTP 429 once it is spent, so real use
+  needs an OpenAlex account. The suite must work without logging in to a third-party service.
+  OpenAlex is removed from the other skills' scripts, instructions, evals and workflows as well.
+  Replacements, all keyless: `alterlab-citation-verifier` resolves references against
+  Crossref / Semantic Scholar / Europe PMC / arXiv, with Open Library for books (plus doi.org
+  and the Retraction Watch flag via Crossref);
+  `alterlab-citation-graph` builds citation graphs from OpenCitations + Semantic Scholar;
+  `alterlab-research-lookup` handles scholarly search and metadata. Routing rows that named
+  `alterlab-openalex` now name research-lookup, citation-graph, pubmed, arxiv or
+  citation-verifier.
+- **The `openalex` and `zotero` MCP servers** bundled with `alterlab-core` and
+  `alterlab-databases`, and their `userConfig` fields (`openalex_api_key`, `zotero_library_id`,
+  `zotero_library_type`, `zotero_api_key`), so installing a plugin no longer prompts for a
+  credential. The keyless `crossref` server stays. Zotero stays supported through
+  `alterlab-pyzotero`'s keyless path: Zotero desktop's local API (`localhost:23119`) and
+  exported .bib / CSL-JSON files.
+
+### Fixed — skills and scripts (found by the live sweep)
+
+- research-lookup `--force-backend parallel` quietly answered from Perplexity without the key.
+- citation-mgmt `format_bibtex.py` found no entries in a messy `.bib` (now brace-aware, dedupes
+  by key, DOI or title+year).
+- generate-image lost a paid image when the output folder did not exist; pdf-explore's p-value
+  pattern missed `P <`; plotly, seaborn, eda, neurokit2, pyhealth, geo, chembl and others
+  documented installs their `allowed-tools` blocked (now install-free `uv run --with` recipes).
+- clinical-decision's validator crashed on gene names and its survival script printed a survival
+  probability as the median's confidence interval; iso13485's gap analyser counted a quality
+  policy as the Quality Manual; pydicom's anonymiser left identifiers nested in sequences and its
+  windowing skipped the rescale; treatment-plans' style file printed "Diabetes Treatment Plan /
+  23-year-old" on every plan.
+- fda's client retried HTTP 429 forever; gene-db's batch lookup returned POLK for POLQ (alias
+  match); gtex returned 250 of 655 sQTLs (no paging); reactome overwrote a `.tsv` input with its
+  results; alphafold-db downloads failed with curl's default User-Agent; bioservices' KEGG
+  `find`/`conv` crash on today's KEGG (REST fallback documented); zinc-db decoded ZINC-22 tranche
+  letters wrongly.
+- Eval errors corrected against primary sources: a rubric that tied NM_000059 to BRCA1 (it is
+  BRCA2), an ENA accession that does not exist, SB3 callback wiring that raises, a dask z-score
+  that holds the array in memory, a Levene pre-test the skill advises against, windowing applied
+  to raw stored values.
+- timesfm's `compatibility` exceeded the 500-character spec limit; remote-compute keeps
+  `--backend` required so a cluster script is never run locally by omission.
+- Eval runner: arms' background jobs outlived the run and starved later arms; parallel runs
+  finishing in the same second could overwrite each other's results file; Anthropic's own API
+  host was labelled as a non-Claude endpoint; the CLI's newer acceptable-use refusal ("can't
+  help with this … legal/aup") was scored INFRA_ERROR instead of REFUSED; saved results kept
+  e-mail addresses that answers echoed from the login context (now `[email redacted]`, reserved
+  example domains kept).
+- Routing gaps that made the skilled answer worse than the bare model on near-miss requests:
+  deep-research (thesis supervision → thesis-supervisor), jaspar (protein-protein interaction
+  networks → string-db), literature-review (DOI → BibTeX → citation-mgmt; manuscript prose →
+  scientific-writing), scientific-slides (manuscript prose → scientific-writing) and uspto
+  (compound look-ups → pubchem); then aeon (it wrote its own Navier-Stokes solver instead of
+  naming fluidsim), datacommons (clinical trials → clinicaltrials; bibliometrics →
+  research-lookup), histolab (single-cell .h5ad → scanpy), primekg (one molecule's SMILES and
+  descriptors → rdkit) and tiledbvcf (differential expression → pydeseq2).
+- chembl's broad activity queries (EGFR IC50 ≤ 100 nM is 10,665 records) timed out iterating
+  the client 20 records per request; the skill now counts first and pages the REST API at
+  `limit=1000`. biorxiv's `--author` scanned a year of bioRxiv (about 1,400 requests) and timed
+  out; it now asks Europe PMC's server-side author filter (seconds), with the scan kept as
+  `--author-source scan`.
+- Services that need a login in practice (found by a probe of every host on a default path):
+  Semantic Scholar's shared keyless search pool is exhausted in practice, so it is best-effort
+  in citation-verifier and research-lookup, and a reference with no DOI can be TF on Crossref
+  plus Europe PMC, arXiv or Open Library; geomaster's only ERA5 route was the Copernicus CDS
+  (an account), now Google's public ARCO-ERA5 Zarr store read anonymously; pyhealth assumed
+  credentialed MIMIC-IV, now the open MIMIC-IV / eICU demos by default; alpha-vantage's
+  fundamentals needed a contact e-mail for www.sec.gov, now contact-free efts.sec.gov and
+  data.sec.gov.
+- citation-verifier checked a bibliography's heading line and intro paragraph as references;
+  once TF no longer waited on Semantic Scholar they would have been reported as fabricated. Text
+  that is not a reference is now skipped and counted apart, and a thin free-form entry can be
+  unverified at most.
+
+### Fixed — documentation
+
+- README and README.tr-TR rewritten (1,151 → ~200 lines): they state what has and has not been
+  checked, drop the "instant expertise" / "expert-level" / "every reference" claims and the
+  incorrect claude.ai bundle claims, correct the citation version (2.1.0 → 3.0.1), and explain
+  the per-skill licenses (201 MIT; 40 others, including 4 non-commercial CC-BY-NC-4.0 and 7
+  GPL/LGPL). PROVENANCE.md counts (180/13 → 242/18) and the catalog site's copy are corrected.
+
+
 ## [3.0.1] — 2026-09-23
 
 A patch release so installed plugins pick up a routing fix: Claude Code refreshes a plugin only
@@ -712,6 +943,7 @@ with day-one executable evals on every new skill (coverage holds at **209 / 209*
 
 - Initial public release of the AlterLab Academic Skills collection.
 
+[4.0.0]: https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases/tag/v4.0.0
 [2.1.0]: https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases/tag/v2.1.0
 [2.0.0]: https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases/tag/v2.0.0
 [1.2.0]: https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases/tag/v1.2.0

@@ -5,7 +5,7 @@
 ### Long-Form Data (preferred)
 Each variable is a column, each observation is a row ("tidy" format) — works with all seaborn functions, easy to remap variables to visual properties, supports arbitrary complexity.
 
-```python
+```text
 # Long-form structure
    subject  condition  measurement
 0        1    control         10.5
@@ -17,7 +17,7 @@ Each variable is a column, each observation is a row ("tidy" format) — works w
 ### Wide-Form Data
 Variables spread across columns — useful for simple time series, correlation matrices, heatmaps, and quick array plots.
 
-```python
+```text
 # Wide-form structure
    control  treatment
 0     10.5       12.3

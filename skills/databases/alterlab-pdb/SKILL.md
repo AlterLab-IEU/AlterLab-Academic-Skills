@@ -2,12 +2,12 @@
 name: alterlab-pdb
 description: Access the RCSB Protein Data Bank (PDB) for EXPERIMENTALLY determined 3D structures (X-ray, cryo-EM, NMR) of proteins and nucleic acids — searching by text, sequence, or structure similarity and downloading coordinates in PDB/mmCIF format with metadata. Use when retrieving a structure by PDB ID, running sequence or structure similarity searches, or obtaining experimental coordinates for structural biology and drug discovery; for AI-PREDICTED structures of proteins lacking experimental data prefer alterlab-alphafold-db, and for protein sequences, annotations, or accession ID mapping prefer alterlab-uniprot instead. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
 compatibility: Keyless RCSB PDB Search API v2, Data API (REST v1 + GraphQL), and file downloads (no authentication required); Python examples use rcsb-api >= 1.7 (current 1.7.3 as of 2026-09)
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.3"
+    last_updated: "2026-11-04"
 ---
 
 # PDB Database
@@ -22,9 +22,18 @@ RCSB PDB is the worldwide repository for 3D structural data of biological macrom
 
 ```bash
 python scripts/query_pdb.py search hemoglobin --rows 25     # full-text search (entry IDs)
+python scripts/query_pdb.py similar 4HHB --assembly 1       # 3D shape search (or --chain A)
 python scripts/query_pdb.py entry 4HHB                      # entry metadata
 python scripts/query_pdb.py download 4HHB --format cif      # download coordinates
 ```
+
+`similar` sends the same query as rcsb-api's `StructSimilarityQuery` and prints it with the
+hits (2026-11-04: 4HHB assembly 1 → 1,408 entries either way).
+
+**Say how it was retrieved.** End every answer with a short "How this was retrieved" line: the
+query a reader can re-run (the `rcsbapi` call such as `StructSimilarityQuery(entry_id="4HHB",
+assembly_id="1")`, or the Search API JSON / `query_pdb.py` command) with its key parameters,
+the `total_count`, and the retrieval date. Give the query itself, not a temporary script path.
 
 ## When to Use This Skill
 
@@ -44,6 +53,8 @@ This skill should be used when:
 | Domain/family classification of a protein | `alterlab-interpro` |
 | Predicting a new complex or co-folding structure | `alterlab-boltz` |
 | Docking a ligand into a structure | `alterlab-diffdock` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-alphafold-db`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 
@@ -96,7 +107,9 @@ from rcsbapi.search import StructSimilarityQuery
 
 # structure_search_type is "entry_id" (default), "file_url", or "file_upload";
 # pass assembly_id or chain_id to pick what is compared ("entry"/"chain"/"assembly"
-# are not valid search types and return HTTP 400)
+# are not valid search types and return HTTP 400). Embeddings-based since rcsb-api 1.6:
+# hits above ptmscore_cutoff (predicted TM-score, default 0.8); similarity_type "local"
+# (default) or "global"; the old BioZernike `operator` is deprecated.
 query = StructSimilarityQuery(
     entry_id="4HHB",   # Hemoglobin
     assembly_id="1",   # or chain_id="A"
@@ -288,12 +301,15 @@ for pdb_id, info in results.items():
 
 ## Python Package Installation
 
-Install the official RCSB PDB Python API client (`rcsb-api`, current major version
-1.x; examples here target `>=1.7`):
+Use the official RCSB PDB Python API client (`rcsb-api`, current major version
+1.x; examples here target `>=1.7`) without an install step — uv resolves it for the run:
 
 ```bash
-uv pip install "rcsb-api>=1.7"
+uv run --with "rcsb-api>=1.7" python search.py
 ```
+
+(Checked 2026-10-23: resolves to rcsb-api 1.7.3; a `SeqSimilarityQuery` for the KRAS4B
+G-domain at identity 0.9 / e-value 0.1 returned 814 entries, the same as the raw Search API.)
 
 The `rcsb-api` package provides unified access to both Search and Data APIs through
 the `rcsbapi.search` and `rcsbapi.data` modules. (The older `rcsbsearchapi` package

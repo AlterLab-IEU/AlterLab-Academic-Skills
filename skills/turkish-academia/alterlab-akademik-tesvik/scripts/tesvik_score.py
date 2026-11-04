@@ -59,6 +59,16 @@ each activity supply:
 
 So a TYPE's puanı = headline x Σ(oran x count), capped at the headline (8/3).
 
+INPUT VALIDATION. The input must be a JSON list of objects. `oran` must be a
+finite number >= 0: every Tablo 4 cell and every k/p/r coefficient
+(../references/tablo4.md) is non-negative, so a negative oran cannot come from
+the table. No per-activity upper bound is imposed — rows such as "15 x ay"
+legitimately exceed 1; the MADDE 8/3 ceilings cap each type. `count` must be a
+non-negative integer. Numeric strings ("0.48", "12") are accepted as before;
+booleans, null, non-numeric strings, NaN and ±Infinity are rejected (the CLI
+prints the reason on stderr and exits 2; score() raises ValueError). An unknown
+`type` or a missing `oran` stays a warning, as documented.
+
 This script reports the score and the gate verdict. It does NOT compute the TRY
 payout (that depends on the current memur aylık katsayısı, which changes every
 six months and is intentionally NOT hardcoded — see references).
@@ -72,6 +82,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
+import numbers
 import sys
 from dataclasses import dataclass, field
 
@@ -129,19 +141,62 @@ class Report:
     warnings: list[str] = field(default_factory=list)
 
 
-def _activity_oran(act: dict) -> float:
+_WHY_NON_NEGATIVE = {
+    "oran": "every Tablo 4 oran and every k/p/r coefficient is non-negative "
+            "(references/tablo4.md)",
+    "count": "count is the number of identical repeated activities",
+}
+
+
+def _number(value: object, field_name: str, where: str) -> float:
+    """Parse a numeric input field as a finite float >= 0, or raise ValueError."""
+    if isinstance(value, bool) or value is None:
+        raise ValueError(f"{where}: '{field_name}' must be a number, got {json.dumps(value)}")
+    if isinstance(value, str):
+        try:
+            x = float(value.strip())
+        except ValueError:
+            raise ValueError(f"{where}: '{field_name}' must be a number, got {value!r}") from None
+    elif isinstance(value, numbers.Real):
+        try:
+            x = float(value)
+        except OverflowError:
+            raise ValueError(f"{where}: '{field_name}' is too large: {value!r}") from None
+    else:
+        raise ValueError(f"{where}: '{field_name}' must be a number, got {value!r}")
+    if not math.isfinite(x):
+        raise ValueError(f"{where}: '{field_name}' must be finite, got {value!r}")
+    if x < 0:
+        raise ValueError(f"{where}: '{field_name}' must be >= 0, got {value!r} — "
+                         + _WHY_NON_NEGATIVE.get(field_name, "negative values are not meaningful"))
+    return x
+
+
+def _activity_oran(act: dict, where: str = "activity") -> float:
     """Per-activity oran x count. `oran` is the regulation row value expressed
-    as a fraction of the type headline (see module docstring)."""
-    oran = float(act.get("oran", 0))
-    count = float(act.get("count", 1))
+    as a fraction of the type headline (see module docstring). Raises
+    ValueError for a negative / non-finite / non-numeric oran or a count that is
+    not a non-negative integer."""
+    oran = _number(act.get("oran", 0), "oran", where)
+    count = _number(act.get("count", 1), "count", where)
+    if not count.is_integer():
+        raise ValueError(f"{where}: 'count' must be a whole number of identical repeated "
+                         f"activities, got {act.get('count')!r}")
     return oran * count
 
 
 def score(activities: list[dict]) -> Report:
+    """Score a list of activity dicts. Raises ValueError on malformed input."""
+    if not isinstance(activities, (list, tuple)):
+        raise ValueError("activities must be a list of activity objects")
     warnings: list[str] = []
     by_type: dict[str, TypeResult] = {}
 
-    for act in activities:
+    for i, act in enumerate(activities, start=1):
+        if not isinstance(act, dict):
+            raise ValueError(f"activity #{i} must be a JSON object, got {act!r}")
+        where = f"activity #{i}" + (f" ({act['label']!r})" if act.get("label") else "")
+        o = _activity_oran(act, where)  # validate every activity's numbers up front
         raw_type = str(act.get("type", "")).strip()
         key = fold(raw_type)
         if key not in TYPE_HEADLINE:
@@ -159,7 +214,6 @@ def score(activities: list[dict]) -> Report:
         tr = by_type.setdefault(
             key, TypeResult(type=key, headline=TYPE_HEADLINE[key])
         )
-        o = _activity_oran(act)
         tr.oran_sum += o
         tr.activities.append({**act, "_oran_contrib": round(o, 6)})
 
@@ -260,23 +314,40 @@ def render_text(r: Report) -> str:
     return "\n".join(lines)
 
 
+def _reject_constant(name: str) -> float:
+    """json.loads hook: NaN / Infinity / -Infinity are not JSON (RFC 8259) and no score."""
+    raise ValueError(f"non-finite number literal {name!r} is not allowed")
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Akademik Teşvik score calculator.")
     ap.add_argument("input", help="Path to activities JSON, or '-' for stdin.")
     ap.add_argument("--json", action="store_true", help="Emit JSON instead of text.")
     args = ap.parse_args(argv)
 
-    raw = sys.stdin.read() if args.input == "-" else open(args.input, encoding="utf-8").read()
     try:
-        activities = json.loads(raw)
-    except json.JSONDecodeError as e:
+        if args.input == "-":
+            raw = sys.stdin.read()
+        else:
+            with open(args.input, encoding="utf-8") as fh:
+                raw = fh.read()
+    except (OSError, UnicodeDecodeError) as e:
+        print(f"error: cannot read input {args.input!r}: {e}", file=sys.stderr)
+        return 2
+    try:
+        activities = json.loads(raw, parse_constant=_reject_constant)
+    except ValueError as e:  # JSONDecodeError, a NaN/Infinity literal, an over-long int
         print(f"error: input is not valid JSON: {e}", file=sys.stderr)
         return 2
     if not isinstance(activities, list):
         print("error: input JSON must be a list of activity objects.", file=sys.stderr)
         return 2
 
-    rep = score(activities)
+    try:
+        rep = score(activities)
+    except ValueError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
     if args.json:
         print(json.dumps(report_to_dict(rep), ensure_ascii=False, indent=2))
     else:

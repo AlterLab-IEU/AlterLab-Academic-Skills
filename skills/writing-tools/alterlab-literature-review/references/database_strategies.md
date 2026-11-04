@@ -32,11 +32,12 @@ This document provides comprehensive guidance for searching multiple literature 
 - **Search format**: `cat:q-bio.QM AND title:"single cell"`
 
 #### Semantic Scholar
-- **Access**: Direct API (requires API key)
+- **Access**: Direct API, keyless (an optional API key gives a dedicated rate)
 - **Coverage**: 200M+ papers across all fields
 - **Best for**: Cross-disciplinary searches, citation graphs, paper recommendations
 - **Features**: Influential citations, paper summaries, related papers
-- **Rate limits**: 100 requests/5 minutes with API key
+- **Rate limits**: keyless requests share one pool with every other user and answer HTTP 429
+  when it is busy (back off and retry); an API key gives a dedicated 1 request/s
 
 #### Google Scholar
 - **Access**: Web scraping (use cautiously) or manual search
@@ -82,12 +83,19 @@ This document provides comprehensive guidance for searching multiple literature 
 
 ### Citation & Reference Management
 
-#### OpenAlex
-- **Access**: Direct API (free; a free API key from openalex.org/settings/api is recommended —
-  since February 2026 keyless calls share a small per-IP daily budget and can return HTTP 429)
-- **Coverage**: 250M+ works, comprehensive metadata
-- **Best for**: Citation analysis, author disambiguation, institutional research
-- **Features**: Open access, excellent for bibliometrics
+#### Crossref
+- **Access**: REST API (`api.crossref.org/works`), keyless; no account or contact address needed
+- **Coverage**: 188M+ DOI records across all disciplines
+- **Best for**: DOI metadata, citation counts (`is-referenced-by-count`), publication counts by
+  year (`facet=published:*`), ORCID and affiliation filters, retraction notices (Retraction Watch data)
+- **Limits**: abstracts, references, ORCID iDs and affiliations appear only where publishers
+  deposited them, so author- and institution-level searches are incomplete
+
+#### OpenCitations
+- **Access**: Index API v2 (`api.opencitations.net/index/v2`), keyless
+- **Coverage**: open DOI-to-DOI citation links aggregated from Crossref, DataCite, PubMed and
+  other open sources
+- **Best for**: Forward and backward citation chaining, citation counts per DOI
 
 #### Dimensions
 - **Access**: Free tier available
@@ -256,7 +264,7 @@ All searches must be documented for reproducibility:
 **Database-Specific Citation Features:**
 - **Google Scholar:** Sort by citation count, use "Cited by" feature
 - **Semantic Scholar:** "Highly Influential Citations" metric, citation velocity
-- **OpenAlex:** Citation counts, citation context analysis
+- **Crossref / OpenCitations:** Citation counts per DOI (`is-referenced-by-count`; `/index/v2/citation-count/doi:<doi>`) and citing-work lists
 - **PubMed:** Use "Cited by" in PMC, check citation counts via Google Scholar
 
 **Journal-quality filtering (search syntax):**
@@ -292,7 +300,7 @@ source:Nature source:Science source:Cell
 #### Forward Citation Search
 Find papers that cite a key paper:
 - Use Google Scholar "Cited by" feature
-- Use OpenAlex or Semantic Scholar APIs
+- Use the Semantic Scholar or OpenCitations APIs (both keyless), or `alterlab-citation-graph`
 - Identifies newer research building on seminal work
 - **Tip:** Sort by citation count to find the most influential follow-up work
 

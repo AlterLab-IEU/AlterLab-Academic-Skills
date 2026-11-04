@@ -2,12 +2,12 @@
 name: alterlab-preregistration-discipline
 description: "Enforces pre-registration discipline with the Iron Law NO DATA ANALYSIS WITHOUT A PRE-REGISTERED ANALYSIS PLAN FIRST, a spirit-vs-letter line, an Excuse-vs-Reality rationalization table, and a Red-Flags-STOP list (HARKing, optional stopping, post-hoc covariates, outlier-dropping, test-shopping). Runs a PLAN/COLLECT/CONFIRM/EXPLORE workflow that freezes hypotheses, tests, exclusions, and stopping rules before data, then forces unplanned findings to be labeled exploratory (their p-values lose confirmatory status, per COS confirmatory/exploratory model). Orchestrates, not replaces, alterlab-open-science (OSF/AsPredicted registration), alterlab-statistical-analysis (test selection, assumptions), and alterlab-scientific-thinking (bias grading). Use when analyzing data without a frozen plan, switching the primary outcome or adding covariates after seeing results, weighing early stopping, dropping outliers post-hoc, pre-registering a study, or rationalizing deviation. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Judgment/discipline skill; the optional helper runs locally via `uv run python` (stdlib only). Defers all registration mechanics and statistics to the sibling skills it orchestrates.
 metadata:
   skill-author: AlterLab
-  version: "1.0.1"
-  last_updated: "2026-09-23"
+  version: "1.0.2"
+  last_updated: "2026-11-04"
   depends_on: "alterlab-open-science, alterlab-statistical-analysis, alterlab-scientific-thinking"
 ---
 
@@ -72,6 +72,10 @@ everything mechanical away. Route adjacent requests as follows:
 | Choosing among candidate tests for a borderline distribution before any peeking | `alterlab-test-selection-guard` | Locking the test choice is its own guard; this skill assumes the test is already in the frozen plan. |
 | Writing a TÜBİTAK / grant proposal's methods section | `alterlab-tubitak-proposal` / `alterlab-research-grants` | Proposal authoring, not pre-registration enforcement (`alterlab-grant-reporting` is post-award reporting). |
 | Research ethics approval / KVKK / data-management compliance | `alterlab-tr-research-ethics` / `alterlab-kvkk-dmp` | Ethics & data governance, distinct from analysis-plan freezing. |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-open-science`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+In scope here means a request to freeze or check a plan before data, or to judge an analysis run without a plan, a peek, or a change made after results; a plan the user only mentions ("my settled plan", "for my pre-registered plan") is context, so a hand-off adds none of this skill's checks — no freeze checklist, decision-rule template or confirmatory/exploratory verdict.
 
 **REQUIRED BACKGROUND** (this skill orchestrates, it does not reimplement):
 `alterlab-open-science` for the registration artifact, `alterlab-statistical-analysis`
@@ -186,7 +190,7 @@ You can run a quick structured self-audit of a plan-vs-actual story with the opt
 helper:
 
 ```bash
-uv run python skills/methodology/alterlab-preregistration-discipline/scripts/prereg_check.py \
+uv run python scripts/prereg_check.py \
     --plan plan.json --actual actual.json
 ```
 

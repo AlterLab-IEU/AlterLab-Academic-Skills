@@ -1,6 +1,8 @@
 # Infographic Types Reference Guide
 
 This reference provides extended templates, examples, and prompt patterns for each infographic type.
+The commands print the design brief for a preset; on the keyless path Claude lays the infographic out
+as SVG from these templates and renders it (`--backend ai` generates with the optional image model).
 
 ---
 

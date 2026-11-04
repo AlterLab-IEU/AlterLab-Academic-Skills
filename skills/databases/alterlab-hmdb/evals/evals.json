@@ -4,10 +4,12 @@
     {
       "id": "metabolite-id-lookup",
       "prompt": "I have the identifier HMDB0000001. Look it up in the Human Metabolome Database and give me its chemical formula, molecular weight, SMILES, and which biofluids it's normally found in.",
-      "expected_output": "Invokes alterlab-hmdb: retrieves the HMDB entry for HMDB0000001 and reports chemical properties (formula, molecular weight, SMILES/InChI) plus specimen/biofluid occurrence from HMDB's metabolite fields.",
+      "expected_output": "Invokes alterlab-hmdb: retrieves the HMDB entry for HMDB0000001 and reports chemical properties (formula, molecular weight, SMILES/InChI) plus specimen/biofluid occurrence from HMDB's metabolite fields (when hmdb.ca blocks scripted access with its Cloudflare challenge, from HMDB's mirrors: PubChem's RegistryID cross-reference and HMDB-sourced annotations, MarkerDB's concentration records), saying which values come from where. HMDB0000001 is 1-methyl-L-histidine, C7H11N3O2, 169.18 g/mol, with measured normal concentrations in blood (and urine).",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "HMDB" }
+        { "type": "output_contains", "value": "HMDB" },
+        { "type": "output_contains", "value": "C7H11N3O2" },
+        { "type": "behavior", "value": "Gives formula, molecular weight and SMILES for 1-methylhistidine and names at least blood as a biofluid with a measured normal concentration, citing the source of each value, without presenting memory as HMDB data." }
       ]
     },
     {
@@ -22,19 +24,23 @@
     {
       "id": "biomarker-disease-association",
       "prompt": "Which metabolites in HMDB are reported as biomarkers for type 2 diabetes, and what are their normal vs abnormal concentration ranges in serum?",
-      "expected_output": "Invokes alterlab-hmdb: searches HMDB by disease association to find metabolites flagged as biomarkers for the disease and reports normal/abnormal concentration ranges in the relevant biofluid (serum).",
+      "expected_output": "Invokes alterlab-hmdb: searches HMDB by disease association to find metabolites flagged as biomarkers for the disease and reports normal/abnormal concentration ranges in the relevant biofluid (serum). When hmdb.ca blocks scripted access, MarkerDB's condition card (the Wishart lab's HMDB-derived biomarker database) supplies the same records; HMDB/MarkerDB report serum and plasma together as Blood.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "biomarker" }
+        { "type": "output_contains", "value": "biomarker" },
+        { "type": "behavior", "value": "Lists type 2 diabetes biomarker metabolites with database-reported disease vs normal blood concentrations (e.g. D-glucose about 6300 vs 3900 uM, 1,5-anhydroglucitol about 62 vs 150 uM, 3-hydroxybutyric acid about 1400 vs 77 uM) with their source and references, rather than ranges recalled from memory." }
       ]
     },
     {
       "id": "structure-search",
+      "files": ["fixtures/unknown_compound.smi"],
       "prompt": "I have a SMILES string for a compound around 180 Da. Run a structure/molecular-weight search in HMDB to see if it matches a known human metabolite.",
-      "expected_output": "Invokes alterlab-hmdb: uses HMDB ChemQuery structure/substructure search (SMILES/InChI) combined with a molecular-weight filter to find matching human metabolites.",
+      "expected_output": "Invokes alterlab-hmdb: uses HMDB ChemQuery structure/substructure search (SMILES/InChI) combined with a molecular-weight filter to find matching human metabolites (when hmdb.ca blocks scripted access, an exact-structure match through PubChem's HMDB cross-references plus the same-formula isomers that carry HMDB accessions). The attached SMILES is paraxanthine, HMDB0001860 (C7H8N4O2, monoisotopic 180.0647).",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Uses HMDB ChemQuery structure or molecular-weight search to identify a human metabolite from a SMILES/structure." }
+        { "type": "behavior", "value": "Uses HMDB ChemQuery structure or molecular-weight search to identify a human metabolite from a SMILES/structure (or, when hmdb.ca blocks scripted access, an exact-structure match through HMDB's PubChem cross-references)." },
+        { "type": "output_contains", "value": "HMDB0001860" },
+        { "type": "behavior", "value": "Identifies the attached SMILES as paraxanthine (HMDB0001860) and warns that isomers of the same formula C7H8N4O2, such as theophylline (HMDB0001889) and theobromine (HMDB0002825), share its mass, so the match rests on the structure, not the ~180 Da mass." }
       ]
     },
     {

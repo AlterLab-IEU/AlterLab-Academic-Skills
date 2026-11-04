@@ -21,11 +21,14 @@
     },
     {
       "id": "polypharmacology-profile",
+      "files": ["fixtures/kinase_inhibitor.smi"],
       "prompt": "Here's a kinase inhibitor SMILES. I want to know all the protein targets it has measured binding data against in BindingDB and at what affinities, to assess its polypharmacology.",
       "expected_output": "Invokes alterlab-bindingdb. Runs a structural-similarity search by SMILES (getTargetByCompound) or matches the ligand to find every target it binds, returning measured Ki/Kd/IC50 across targets to build a polypharmacology / selectivity profile.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Returns multiple protein targets with measured affinities for the queried compound (polypharmacology)." }
+        { "type": "behavior", "value": "Returns multiple protein targets with measured affinities for the queried compound (polypharmacology)." },
+        { "type": "output_contains", "value": ["ABL1", "Abl"] },
+        { "type": "behavior", "value": "Queries BindingDB with the SMILES in the attached file (dasatinib) and reports a multi-target profile from the returned records, e.g. ABL1 (Kd about 0.016 nM), LCK (about 0.2 nM), ephrin receptors and PDGFRB, with '>'-qualified values treated as weak or non-binding rather than as potencies." }
       ]
     },
     {

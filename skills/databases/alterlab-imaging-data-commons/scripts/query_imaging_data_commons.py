@@ -5,8 +5,9 @@ NCI Imaging Data Commons (IDC) query tool.
 IDC's public programmatic interface is the `idc-index` Python package, which
 ships a local mini-index queryable with SQL (no auth, no network for queries).
 This tool wraps that package: run arbitrary SQL, list collections, or report
-the IDC data version. Install with: uv pip install --upgrade idc-index
-(>= 0.12.5; earlier releases pin pandas<=2.2.4 and clash with pandas 3)
+the IDC data version. Run install-free:
+    uv run --with "idc-index>=0.13.4" python query_imaging_data_commons.py version
+(earlier releases than 0.12.5 pin pandas<=2.2.4 and clash with pandas 3)
 
 Package: https://github.com/ImagingDataCommons/idc-index
 Docs:    https://idc-index.readthedocs.io/
@@ -23,8 +24,9 @@ def _client():
         from idc_index import IDCClient
     except ImportError:
         sys.stderr.write(
-            "idc-index is not installed. Install it with:\n"
-            "    uv pip install --upgrade idc-index\n"
+            "idc-index is not installed in this interpreter. Run install-free with:\n"
+            "    uv run --with \"idc-index>=0.13.4\" python "
+            "scripts/query_imaging_data_commons.py ...\n"
         )
         raise SystemExit(2)
     return IDCClient()

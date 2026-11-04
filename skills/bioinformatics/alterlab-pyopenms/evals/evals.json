@@ -3,12 +3,13 @@
   "evals": [
     {
       "id": "load-mzml-inspect-spectra",
+      "files": ["fixtures/run.mzML"],
       "prompt": "I have a raw LC-MS/MS run in mzML. Give me Python to load it, report how many spectra and chromatograms it has, and print the MS level and retention time of the first spectrum.",
-      "expected_output": "Triggers the pyOpenMS skill. Should import pyopenms, create an MSExperiment, load with MzMLFile().load('...', exp), then use getNrSpectra()/getNrChromatograms() and getSpectrum(0).getMSLevel()/getRT() and get_peaks() to inspect the data.",
+      "expected_output": "Triggers the pyOpenMS skill. Should import pyopenms, create an MSExperiment, load fixtures/run.mzML with MzMLFile().load('...', exp), then use getNrSpectra()/getNrChromatograms() and getSpectrum(0).getMSLevel()/getRT() to inspect the data. For this fixture the correct report is 8 spectra, 1 chromatogram, and the first spectrum is MS level 1.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "MSExperiment"},
-        {"type": "behavior", "value": "Loads the mzML via MzMLFile into an MSExperiment and reports spectrum/chromatogram counts and MS level / retention time."}
+        {"type": "behavior", "value": "Loads the mzML via MzMLFile into an MSExperiment and reports the spectrum/chromatogram counts (8 spectra, 1 chromatogram) and the first spectrum's MS level (1) and retention time."}
       ]
     },
     {

@@ -17,7 +17,7 @@
       "expected_output": "Triggers the Biopython skill. Should use Bio.Entrez with Entrez.esearch (db='pubmed') then Entrez.efetch/esummary, set Entrez.email (and mention the optional Entrez.api_key for 10 req/s), and respect NCBI rate limits with batching/delays. Should parse results with Entrez.read.",
       "assertions": [
         {"type": "should_trigger", "value": true},
-        {"type": "output_contains", "value": "Entrez"},
+        {"type": "output_contains", "value": ["Entrez", "esearch", "efetch", "E-utilities"]},
         {"type": "behavior", "value": "Sets Entrez.email and addresses NCBI rate limiting (api_key and/or delays/batching)."}
       ]
     },

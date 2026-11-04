@@ -1,0 +1,12 @@
+CC(=O)O acetic_acid
+O=C(O)c1ccccc1 benzoic_acid
+CC(=O)Oc1ccccc1C(=O)O aspirin
+CC(C)Cc1ccc(C(C)C(=O)O)cc1 ibuprofen
+O=C(O)CCC(=O)O succinic_acid
+COC(C)=O methyl_acetate
+CC(N)=O acetamide
+CCO ethanol
+O=Cc1ccccc1 benzaldehyde
+Cc1ccccc1 toluene
+O=C([O-])c1ccccc1.[Na+] sodium_benzoate
+NCC(=O)O glycine

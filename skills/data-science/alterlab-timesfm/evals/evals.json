@@ -3,11 +3,13 @@
   "evals": [
     {
       "id": "single-series-forecast",
+      "files": ["fixtures/weekly_demand.csv"],
       "prompt": "I have weekly_demand.csv with about two years of weekly demand. Forecast the next 52 weeks with prediction intervals — I don't want to train anything, just get a forecast fast.",
       "expected_output": "Invokes alterlab-timesfm: runs the mandatory preflight check_system.py first, loads TimesFM 2.5 (google/timesfm-2.5-200m-pytorch) via from_pretrained, calls model.compile() with a ForecastConfig (normalize_inputs=True, use_continuous_quantile_head=True, fix_quantile_crossing=True), passes a list of 1-D arrays to model.forecast(horizon=52), and extracts the point forecast plus 80% prediction interval (q index 1 and 9).",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Runs the system preflight check before loading, uses zero-shot TimesFM 2.5 with no training, and returns point forecasts plus calibrated prediction intervals." }
+        { "type": "behavior", "value": "Runs the system preflight check before loading, uses zero-shot TimesFM 2.5 with no training, and returns point forecasts plus calibrated prediction intervals." },
+        { "type": "behavior", "value": "Forecasts the attached weekly_demand.csv itself (104 weekly units_sold values, weeks of 2024-10-07 to 2026-09-28) 52 steps ahead, covering the weeks of 2026-10-05 through 2027-09-27, and reports the forecast with its q10-q90 (80%) interval instead of asking for the file." }
       ]
     },
     {
@@ -30,11 +32,14 @@
     },
     {
       "id": "anomaly-via-prediction-intervals",
+      "files": ["fixtures/sensor_readings.csv"],
       "prompt": "Using my sensor time series, flag the readings that are statistically unusual relative to what the model expects — I want warning and critical severity levels.",
       "expected_output": "Invokes alterlab-timesfm: forecasts with quantile prediction intervals and flags values outside the 60% PI (q20/q80, indices 2/8) as Warning and outside the 80% PI (q10/q90, indices 1/9) as Critical, noting TimesFM has no built-in anomaly detector but the calibrated quantiles serve as the interval test (detrend before any context Z-scoring).",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Uses the quantile prediction intervals (60% PI for warning, 80% PI for critical) to assign severity rather than claiming a built-in anomaly detector." }
+        { "type": "behavior", "value": "Uses the quantile prediction intervals (60% PI for warning, 80% PI for critical) to assign severity rather than claiming a built-in anomaly detector." },
+        { "type": "output_contains", "value": ["2026-05-13 03:00", "2026-05-13T03:00", "05-13 03:00", "May 13", "13 May"] },
+        { "type": "behavior", "value": "Runs on the attached hourly cold-room series (336 readings, 2026-05-04 to 2026-05-17) and flags its three clearly abnormal readings as critical: 2026-05-08 15:00 (9.74 C) and 16:00 (9.07 C), against a normal level near 4-4.5 C, and 2026-05-13 03:00 (0.90 C); it does not mark the ordinary daytime warming as critical." }
       ]
     },
     {

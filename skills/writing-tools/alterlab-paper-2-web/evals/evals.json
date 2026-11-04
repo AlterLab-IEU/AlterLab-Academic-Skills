@@ -4,7 +4,7 @@
     {
       "id": "paper2web-homepage",
       "prompt": "I just put my paper on arXiv. Can you turn the LaTeX source into an interactive, explorable project homepage I can host on GitHub Pages?",
-      "expected_output": "Invokes alterlab-paper-2-web in the Paper2Web path: runs the Paper2All pipeline (pipeline_all.py with --model-choice 1) on the LaTeX source to produce a layout-aware, responsive interactive homepage with interactive figures/tables/citations and navigation, outputs index.html/styles.css/assets, and notes GitHub Pages as a deployment target.",
+      "expected_output": "Invokes alterlab-paper-2-web in the Paper2Web path on its keyless route: reads the LaTeX source, writes a fact sheet (exact title, authors, affiliations, arXiv id, abstract, key numbers with their table/figure), builds a responsive static homepage from assets/website_template (index.html + style.css + assets/ with the paper's own figures, real alt text, navigation, BibTeX citation block), runs scripts/check_site.py until it reports zero errors, and notes GitHub Pages as the deployment target. Asks for any link the paper does not contain instead of inventing it; mentions the Paper2All pipeline only as an optional, keyed alternative.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "Paper2Web" }
@@ -13,7 +13,7 @@
     {
       "id": "paper2video-abstract",
       "prompt": "I want a narrated presentation video — slides with voiceover and synced cursor highlights — generated from my paper for a journal video abstract. Talking-head optional.",
-      "expected_output": "Invokes alterlab-paper-2-web in the Paper2Video path: uses the video pipeline (pipeline_light.py in the separate p2v env) to auto-generate slides from the paper structure, natural speech narration, synchronized cursor movements/highlights, with optional Hallo2 talking-head via pipeline.py (noting GPU requirement), producing final_video.mp4 plus slides/audio/subtitles.",
+      "expected_output": "Invokes alterlab-paper-2-web in the Paper2Video path: keyless, it builds slides from the paper's structure (via alterlab-scientific-slides or Beamer), writes a spoken script of about 150 words per minute for a 3-5 minute video abstract, voices it with local Piper text-to-speech or the author's own recording, and assembles an MP4 with a caption track and .srt via scripts/assemble_video.py (ffmpeg). States that synchronized cursor highlights and the optional Hallo2 talking-head come from the optional Paper2Video pipeline (pipeline_light.py / pipeline.py, model API key, NVIDIA GPU for the talking head) rather than the keyless route.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "Paper2Video" }
@@ -22,7 +22,7 @@
     {
       "id": "paper2poster-from-paper",
       "prompt": "Generate a print-ready 60x40 inch conference poster directly from my PDF paper, with a QR code linking to the paper and our lab logo.",
-      "expected_output": "Invokes alterlab-paper-2-web in the Paper2Poster path: runs pipeline_all.py with --model-choice 2 and custom --poster-width-inches/--poster-height-inches (60x40), produces a high-resolution (300+ DPI) print-ready poster_final.pdf/png with professional layout. May note that the QR code and lab-logo branding are not first-class documented flags and could need manual addition.",
+      "expected_output": "Invokes alterlab-paper-2-web in the Paper2Poster path on its keyless route: reads the PDF, extracts its figures (scripts/extract_assets.py, cropping vector figures), fills assets/poster_template.tex (tikzposter) with \\geometry{paperwidth=60in, paperheight=40in}, the paper's motivation, method, key results, take-home and limitations, a \\qrcode pointing to the paper's DOI or URL, and the lab logo from figures/logo.png (asking for the logo file and link if not provided), compiles with pdflatex to a vector print-ready PDF, and previews it to check readability and overflow.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "Paper2Poster" }
@@ -31,16 +31,27 @@
     {
       "id": "full-promo-package",
       "prompt": "My paper got accepted at a conference. I want the complete promotional package — website, poster, and presentation video — all generated from the same LaTeX source.",
-      "expected_output": "Invokes alterlab-paper-2-web to generate the full package: pipeline_all.py without --model-choice (or run per-component) for the website and poster, plus the separate video pipeline (pipeline_light.py in the p2v env). Organizes outputs per component (website/, poster/, video/), and may advise the priority order (website fastest, then poster, then video) for a tight deadline.",
+      "expected_output": "Invokes alterlab-paper-2-web to generate the full package from one LaTeX source and one fact sheet, keyless: the website (template + check_site.py), the poster (tikzposter template, pdflatex) and the narrated video (slides + script + local TTS or the author's voice, assembled with assemble_video.py), plus the promotion kit. Organizes outputs per component (website/, poster/, video/), and may advise the priority order (website first, then poster, then video) for a tight deadline. The Paper2All pipeline is mentioned only as an optional keyed route.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Generates all three Paper2All components (website, poster, and video) from one source rather than just one." }
+        { "type": "behavior", "value": "Generates all three components (Paper2Web website, Paper2Poster poster, and Paper2Video video) from one source rather than just one." }
+      ]
+    },
+    {
+      "id": "homepage-from-latex-keyless",
+      "files": ["fixtures/seagrass_paper"],
+      "prompt": "Our preprint's LaTeX source is in seagrass_paper/. Build the project homepage for it (static, GitHub Pages) with the key results up front.",
+      "expected_output": "Invokes alterlab-paper-2-web in the Paper2Web path, keyless: reads seagrass_paper/main.tex and builds a static site (index.html + style.css + the study_design.png figure with descriptive alt text) titled 'eDNA Metabarcoding Detects Seagrass Decline Two Years Before Satellite Surveys', listing Deniz Kaya and Mira Lindqvist with their affiliations (Halcyon Marine Genomics Lab, Aegean Institute of Marine Science; University of Gothenburg) and the equal-contribution note, the arXiv id 2609.01234, and the key results verbatim: 42 sites, 1,176 samples, eDNA decline preceding satellite-detected loss by a median 2.1 years (IQR 1.4-2.8), AUC 0.91 vs 0.68 for temperature only, 11 of 14 declining sites flagged first; it includes the stated limitations and the ENA accession PRJEB99999. Because the paper says no code repository is released, it adds no Code button or invented repository link. Runs scripts/check_site.py (zero errors) and gives GitHub Pages deployment steps. No API key is involved.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "0.91" },
+        { "type": "behavior", "value": "Builds the site from the attached source with the paper's exact title, both authors, and the key results verbatim (median lead time 2.1 years, AUC 0.91 vs 0.68), and does not invent a code repository link." }
       ]
     },
     {
       "id": "near-miss-latex-posters",
       "prompt": "I want to hand-build a conference poster in LaTeX myself using beamerposter — give me the template and help me lay out the columns and figures. I'm not converting a finished paper through an automated pipeline.",
-      "expected_output": "Does NOT invoke this skill; defers to alterlab-latex-posters. The user wants to author a LaTeX poster by hand with beamerposter and manual layout control, not run the automated Paper2All Paper2Poster pipeline that transforms an existing paper.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-latex-posters. The user wants to author a LaTeX poster by hand with beamerposter and manual layout control, not have this skill convert an existing paper into a poster (Paper2Poster).",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-latex-posters" }
@@ -49,7 +60,7 @@
     {
       "id": "near-miss-scientific-slides",
       "prompt": "I need to build a 15-slide conference talk deck from scratch about my project — well-designed slides I can present live and edit, not an auto-narrated video.",
-      "expected_output": "Does NOT invoke this skill; defers to alterlab-scientific-slides. The user wants an editable presentation slide deck authored for live delivery, not a Paper2Video auto-narrated presentation video generated from a paper.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-scientific-slides. The user wants an editable presentation slide deck authored for live delivery, not a Paper2Video narrated presentation video generated from a paper.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "scientific-slides" }

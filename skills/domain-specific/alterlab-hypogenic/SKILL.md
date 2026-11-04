@@ -1,12 +1,13 @@
 ---
 name: alterlab-hypogenic
-description: Runs automated LLM-driven hypothesis generation and testing on tabular datasets with HypoGeniC, combining literature insights with data-driven testing. Use when systematically exploring hypotheses about patterns in empirical data (for example deception detection or content analysis). For manual hypothesis formulation use alterlab-hypothesis-gen; for open-ended creative ideation use alterlab-scientific-brainstorm. Part of the AlterLab Academic Skills suite.
+description: Runs LLM-driven hypothesis generation and testing on labelled datasets with the HypoGeniC method — Claude generates, scores, and refines hypotheses in the conversation (keyless), or drives the HypoGeniC package with an LLM key. Combines literature insights with data-driven testing. Use when systematically exploring hypotheses about patterns in empirical data (for example deception detection or content analysis). For manual hypothesis formulation use alterlab-hypothesis-gen; for open-ended creative ideation use alterlab-scientific-brainstorm. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(uv:*) Bash(python:*) Bash(hypogenic_generation:*) Bash(hypogenic_inference:*) Bash(git clone:*)
-compatibility: Requires the hypogenic Python package plus an LLM provider API key (e.g. OPENAI_API_KEY) for hypothesis generation. Runs via `uv run python`.
+compatibility: "No API key required: Claude runs the HypoGeniC loop itself in the conversation — propose keyword-rule hypotheses from a labelled training split, score them on a held-out split with the deterministic `scripts/score_hypotheses.py` (stdlib only), refine, and report accuracy. The `hypogenic` package driven by an LLM provider key (e.g. OPENAI_API_KEY) is an optional scaled-up alternative, installed in its own env via `uv pip install hypogenic`."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    credentials: "optional: OPENAI_API_KEY (or another LLM provider / ANTHROPIC_API_KEY) — drives the hypogenic package's automated generation at scale; Claude runs the loop keyless in-conversation without it"
+    version: "1.2.0"
     last_updated: "2026-09-23"
 ---
 
@@ -16,9 +17,54 @@ metadata:
 
 Hypogenic provides automated hypothesis generation and testing using large language models to accelerate scientific discovery. The framework supports three approaches: HypoGeniC (data-driven hypothesis generation), HypoRefine (synergistic literature and data integration), and Union methods (mechanistic combination of literature and data-driven hypotheses).
 
-## Quick Start
+## Keyless by default: Claude runs the HypoGeniC loop
 
-Get started with Hypogenic in minutes:
+**The large language model that HypoGeniC needs is Claude — so the whole loop runs in this
+conversation with no package and no API key.** The deterministic scoring is a bundled
+stdlib script; Claude does the generate/refine reasoning. This is the default path; the
+`hypogenic` package (below) is an optional scaled-up alternative.
+
+The loop (the HypoGeniC method, data-driven):
+
+1. **Generate.** Claude reads the *labelled training split* and proposes candidate
+   hypotheses, each written as a **checkable keyword rule** — e.g. "texts containing any of
+   {furthermore, moreover, additionally, consequently} are AI-generated". Record them in a
+   small JSON bank (`scripts/score_hypotheses.py --emit-template` prints the shape).
+2. **Score.** Run the bundled, LLM-free scorer on a **held-out split**:
+   ```bash
+   python scripts/score_hypotheses.py \
+     --data your_labelled_data.jsonl --hypotheses bank.json --split test
+   ```
+   It reports each hypothesis's held-out accuracy, the best single hypothesis, the
+   first-match *bank* accuracy, and the examples the bank misclassifies. Pure stdlib, fully
+   reproducible — no model call.
+3. **Refine.** Claude reads the scores and the misclassified examples, drops or edits weak
+   hypotheses, and adds new ones aimed at the errors; re-score. Repeat until held-out
+   accuracy plateaus (HypoGeniC's iterative refinement, done keyless).
+4. **Report.** Hand back the final hypothesis bank and its held-out accuracy, with the
+   evidence (per-hypothesis and bank numbers from the scorer).
+
+A worked example ships as a fixture: `evals/fixtures/ai_vs_human_texts.jsonl` (24 labelled
+human-vs-AI texts, train/test split). On its test split the connector hypothesis scores
+0.875 and a two-hypothesis bank reaches 1.000 — verified with the scorer, so the loop is
+checkable end to end without any credential.
+
+**For your own data**, give the scorer a `.jsonl`/`.csv` with `text`, `label`, and `split`
+columns (or pass `--text-field`/`--label-field`/`--split-field`). When features are not
+keyword-expressible, Claude can still apply each natural-language hypothesis to each
+held-out example to emit a predicted label, then compute accuracy the same deterministic
+way.
+
+## Scaled-up option: the hypogenic package
+
+The upstream `hypogenic` package automates the same loop against an LLM provider and adds
+HypoRefine (literature) and Union methods. It needs its own environment and an LLM provider
+API key, and is worth it mainly for large banks, HypoRefine's PDF/literature integration, or
+heavy batch inference. Everything below documents that optional package.
+
+## Quick Start (optional package)
+
+Get started with the hypogenic package in minutes:
 
 ```bash
 # Install into its own environment: hypogenic 0.3.5 pins numpy~=1.26, pandas~=2.1,
@@ -68,6 +114,8 @@ Use this skill when working on:
 | Open-ended ideation or research-gap brainstorming with no dataset yet | `alterlab-scientific-brainstorm` |
 | Topic models, dictionaries, or supervised classifiers over text as social-science measurement | `alterlab-text-as-data` |
 | Testing one pre-specified hypothesis with a conventional statistical test | `alterlab-statistical-analysis` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-hypothesis-gen`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Key Features
 
@@ -380,6 +428,19 @@ git clone https://github.com/ChicagoHAI/Hypothesis-agent-datasets.git ./data
 For contributions or questions, visit the GitHub repository and check the issues page.
 
 ## Local Resources
+
+### scripts/
+
+- `score_hypotheses.py` — the deterministic, LLM-free scorer for the keyless loop. Applies
+  keyword-rule hypotheses to a labelled split and reports per-hypothesis and first-match
+  bank accuracy plus the misclassified examples. `--emit-template` prints a hypotheses-JSON
+  skeleton. Stdlib only.
+
+### evals/fixtures/
+
+- `ai_vs_human_texts.jsonl` — 24 labelled human-vs-AI texts (train/test split) for the
+  worked keyless example; the connector hypothesis scores 0.875 and a two-hypothesis bank
+  1.000 on its test split.
 
 ### references/
 

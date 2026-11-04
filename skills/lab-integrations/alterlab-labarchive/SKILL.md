@@ -1,20 +1,29 @@
 ---
 name: alterlab-labarchive
-description: Integrates the LabArchives electronic lab notebook (ELN) via its REST API — access notebooks, manage entries and attachments, back up notebooks, and bridge to Protocols.io, Jupyter, and REDCap. Use when automating LabArchives ELN workflows, programmatically reading/writing notebook entries or attachments, backing up a LabArchives notebook, or syncing it with Protocols.io, Jupyter, or REDCap. Part of the AlterLab Academic Skills suite.
+description: Writes and validates LabArchives ELN integration code and analyses exported notebooks with no account — reviews labapi/labarchives-py usage, drafts entry HTML and upload plans, and audits a LabArchives notebook export (folder tree or backup) offline for structure and provenance gaps with scripts/analyze_export.py. Reading or writing a live notebook (entries, attachments, backups) and the Protocols.io/Jupyter/REDCap bridges run against the user's own LabArchives account with their keys. Use when automating LabArchives ELN workflows, checking integration code, auditing an exported notebook, programmatically reading/writing entries or attachments, backing up a notebook, or syncing it with Protocols.io, Jupyter, or REDCap. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
-compatibility: Requires a LabArchives account with API access (institutional access key ID + password, plus the user's LA App authentication token). Python clients - labapi (PyPI, current 1.2.0, Python >=3.10) or the git-only labarchives-py wrapper used by the bundled scripts.
+allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*) Bash(python3:*)
+compatibility: "No API key required to write/review the integration, draft entry content, and audit an exported notebook offline (scripts/analyze_export.py, stdlib-only). Optional: the user's own LabArchives API access (institutional access key ID + password and their LA App authentication token) for live notebook reads/writes via labapi (PyPI, current 1.2.0, Python >=3.10) or the git-only labarchives-py wrapper the bundled scripts use."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.2.0"
+    last_updated: "2026-10-22"
+    credentials: "optional: LABARCHIVES_ACCESS_PASSWORD and LA_APP_TOKEN (the institutional access password and the user's LA App authentication token — together they add live reads/writes/backups of the user's own notebooks; the access key ID and user email are identifiers, not secrets); LABARCHIVES_USER_PASSWORD is a deprecated alias for the LA App token"
 ---
 
 # LabArchives Integration
 
 ## Overview
 
-LabArchives is an electronic lab notebook platform for research documentation and data management. Its REST API (XML responses, HMAC-signed requests) exposes notebooks, the page tree, entries, attachments, and backups.
+LabArchives is an electronic lab notebook platform for research documentation and data management. Its REST API (XML responses, HMAC-signed requests) exposes notebooks, the page tree, entries, attachments, and backups. The core job here needs no account: write and review the integration, draft entry content, and audit a notebook the user has exported. Only live notebook access uses their credentials.
+
+## Keyless Path (default — no LabArchives account)
+
+1. **Write and review the integration code** against the real clients — `labapi` (maintained; `uv run --with "labapi[dotenv]" python ...`) or the git-only `labarchives-py` the bundled scripts use. Check method names rather than guessing: in labapi 1.2.0 (verified 2026-10-22) a notebook has `.export(dest, source="auto"|"walk"|"backup")` and `.backup(dest, include_attachments=, as_json=)`, entries are created with `page.entries.create(TextEntry, html)` / `create(AttachmentEntry, Attachment.from_file(...))`, and the client reads `API_URL`/`ACCESS_KEYID`/`ACCESS_PWD` from the environment.
+2. **Know the signing before you run it.** Requests are signed `sig = b64(HMAC(access_password, akid + method + expires))`, `expires` in epoch-ms. The two clients differ on the hash — `labapi` uses **HMAC-SHA512**, the git `labarchives-py` wrapper uses **HMAC-SHA1** — so the signature must be tested against the tenant, not assumed; match the client to what your institution's API expects.
+3. **Audit an exported notebook offline.** `labapi`'s `notebook.export(dest)` writes a folder mirror (`<order>_<name>/` directories holding `NN_text.html`, `NN_text.txt`, `NN_<filename>`). `python3 scripts/analyze_export.py <dir>` walks that tree (or any same-shape export/backup) with no credentials and reports pages, text vs attachment entries, word counts, attachment types, and **provenance gaps** — pages that hold raw-data attachments with no text entry describing them.
+4. **Draft entry content and upload plans offline** — the rich-text HTML for `add_entry`, the caption/provenance note for an attachment, the page-tree layout — ready to push once the user supplies credentials.
+5. **Hand over the live step.** The bundled scripts (`notebook_operations.py`, `entry_operations.py`) read `config.yaml` and exit non-zero with a clear message if it is absent; they run only against the user's own notebook. Without credentials, stop at the validated code and the offline audit — never invent notebook contents.
 
 ## When to Use This Skill
 
@@ -35,6 +44,8 @@ This skill should be used when:
 | Designing REDCap instruments/data dictionaries or CDISC mapping | `alterlab-redcap-cdisc` |
 | Choosing a data repository (Zenodo, Dryad, OSF) or FAIR data-sharing plan | `alterlab-open-science` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-benchling`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Core Capabilities
 
 ### 1. Clients and Authentication
@@ -46,7 +57,7 @@ Two Python clients exist; pick by task:
 | **labapi** (NIMH DSST; PyPI, current 1.2.0, Python >=3.10) | `uv pip install "labapi[dotenv]"` | Recommended for new work: signing, XML parsing, page-tree navigation, text entries, attachments, backups |
 | **labarchives-py** (`labarchivespy` import; git-only) | `uv pip install "git+https://github.com/mcmero/labarchives-py"` | Minimal signed **GET** wrapper (`make_call`); used by the bundled scripts |
 
-**Prerequisites:**
+**Prerequisites (only for live notebook access; the keyless path above needs none):**
 - API access enabled for your institution (Enterprise license); the access key ID and password come from your LabArchives administrator or support@labarchives.com
 - The user's email plus the **LA App authentication** token (LabArchives → click your name, top-right → "LA App authentication"). The token is the `password` for `users/user_access_info`, not your login password.
 
@@ -195,9 +206,10 @@ For additional support, contact LabArchives at support@labarchives.com.
 
 ### scripts/
 
+- `analyze_export.py`: **keyless** — audit an exported notebook tree (or backup) offline for structure and provenance gaps; no credentials
 - `setup_config.py`: interactive configuration file generator (hidden secret prompts, mode 600)
-- `notebook_operations.py`: list notebooks and back them up (single or all)
-- `entry_operations.py`: add text entries and upload attachments to a page
+- `notebook_operations.py`: list notebooks and back them up (single or all) — needs `config.yaml`
+- `entry_operations.py`: add text entries and upload attachments to a page — needs `config.yaml`
 
 ### references/
 

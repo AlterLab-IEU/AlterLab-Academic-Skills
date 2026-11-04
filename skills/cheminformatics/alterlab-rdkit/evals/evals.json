@@ -13,12 +13,14 @@
     },
     {
       "id": "substructure-search",
-      "prompt": "I have a set of molecules and want to filter for those containing a carboxylic acid substructure using a SMARTS pattern in RDKit.",
-      "expected_output": "Invokes alterlab-rdkit: builds a SMARTS query (e.g. via Chem.MolFromSmarts), runs HasSubstructMatch over the molecule set, and returns the matching molecules — fine-grained substructure filtering.",
+      "files": ["fixtures/molecules.smi"],
+      "prompt": "I have a set of molecules in fixtures/molecules.smi and want to filter for those containing a carboxylic acid substructure using a SMARTS pattern in RDKit.",
+      "expected_output": "Invokes alterlab-rdkit: builds a SMARTS query (e.g. via Chem.MolFromSmarts for a carboxylic acid such as [CX3](=O)[OX2H1]), runs HasSubstructMatch / GetSubstructMatches over the molecule set, and returns the matching molecules — fine-grained substructure filtering. On the attached set it flags acetic acid, benzoic acid, aspirin, ibuprofen, succinic acid (two groups) and glycine as carboxylic acids, and correctly leaves out the ester (methyl acetate), amide (acetamide), alcohol (ethanol), aldehyde (benzaldehyde) and toluene.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "substructure" },
-        { "type": "behavior", "value": "Performs SMARTS-based substructure matching with RDKit to filter molecules." }
+        { "type": "output_contains", "value": ["substructure", "GetSubstructMatch", "HasSubstructMatch", "MolFromSmarts"] },
+        { "type": "behavior", "value": "Performs SMARTS-based substructure matching with RDKit to filter molecules." },
+        { "type": "behavior", "value": "On the attached molecules.smi, identifies acetic acid, benzoic acid, aspirin, ibuprofen, succinic acid and glycine as carboxylic acids while excluding the ester (methyl acetate), amide (acetamide) and benzaldehyde." }
       ]
     },
     {

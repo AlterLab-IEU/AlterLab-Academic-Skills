@@ -23,12 +23,15 @@
     },
     {
       "id": "batch-gene-lookup",
+      "files": ["fixtures/screen_hits_panel.txt"],
       "prompt": "I have a panel of about 40 gene symbols from a screen. Annotate them all with their Gene IDs and basic metadata in one pass, human.",
       "expected_output": "Triggers NCBI Gene. Uses scripts/batch_gene_lookup.py (e.g. --file gene_list.txt --organism human or --ids ...) to process the panel efficiently, handling rate limiting automatically (10 req/s with API key). Recommends validating symbols before batch processing and including an NCBI API key for higher rate limits. Produces an annotation table for the gene list.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "batch_gene_lookup" },
-        { "type": "behavior", "value": "Uses batch_gene_lookup.py for the multi-gene panel and notes automatic rate limiting / API-key benefit." }
+        { "type": "behavior", "value": "Uses batch_gene_lookup.py for the multi-gene panel and notes automatic rate limiting / API-key benefit." },
+        { "type": "output_contains", "value": "10721" },
+        { "type": "behavior", "value": "Annotates all 40 symbols in fixtures/screen_hits_panel.txt with human Gene IDs, flags the three outdated symbols with their current names (MRE11A -> MRE11, Gene ID 4361; FAM175A -> ABRAXAS1, 84142; KIAA0101 -> PCLAF, 9768), and gives POLQ as Gene ID 10721 rather than POLK (51426), whose alias is POLQ (NCBI Gene, 2026-10-23)." }
       ]
     },
     {

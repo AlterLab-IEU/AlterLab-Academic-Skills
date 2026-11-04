@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import urllib.parse
 from typing import Any
@@ -51,11 +52,9 @@ ORDERS = (
     "orderCitationCount-DESC",
 )
 PAGE_SIZE = 10  # server-side page size; the server ignores a client limit param
-DEFAULT_MAILTO = "alterlab.ieu@gmail.com"
-USER_AGENT = (
-    "alterlab-trdizin/1.0.1 (https://github.com/AlterLab-IEU/"
-    "AlterLab-Academic-Skills; mailto:{mailto})"
-)
+# Contact address for the polite User-Agent: --mailto or ALTERLAB_CONTACT_EMAIL; none by default.
+DEFAULT_MAILTO = os.environ.get("ALTERLAB_CONTACT_EMAIL", "").strip()
+USER_AGENT = "alterlab-trdizin/1.0.1 (https://github.com/AlterLab-IEU/AlterLab-Academic-Skills{contact})"
 HTTP_TIMEOUT = 25
 
 
@@ -64,7 +63,8 @@ class NetworkUnavailable(RuntimeError):
 
 
 def _http_get(url: str, mailto: str) -> dict[str, Any]:
-    headers = {"User-Agent": USER_AGENT.format(mailto=mailto), "Accept": "application/json"}
+    headers = {"User-Agent": USER_AGENT.format(contact=f"; mailto:{mailto}" if mailto else ""),
+               "Accept": "application/json"}
     try:
         import requests  # type: ignore
 

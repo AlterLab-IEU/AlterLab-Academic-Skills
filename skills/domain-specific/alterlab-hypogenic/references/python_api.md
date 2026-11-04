@@ -2,7 +2,7 @@
 
 Programmatic control of HypoGeniC generation and inference — the real init/update loop and inference registry, verified against the library's `examples/` scripts.
 
-For programmatic control, copy and adapt the scripts under `examples/`. The library is **not** a one-call fluent API — generation runs as an explicit init/update loop over the algorithm classes, and inference runs through the inference registry. The real building blocks (verified against `examples/generation.py` and `examples/inference.py`):
+For programmatic control, copy and adapt the scripts in the `examples/` folder of the HypoGeniC library's own repository; they are not bundled with this skill. The library is **not** a one-call fluent API — generation runs as an explicit init/update loop over the algorithm classes, and inference runs through the inference registry. The real building blocks (verified against `examples/generation.py` and `examples/inference.py`):
 
 ```python
 from hypogenic.tasks import BaseTask

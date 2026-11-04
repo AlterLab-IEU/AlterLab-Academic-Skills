@@ -3,11 +3,14 @@
   "evals": [
     {
       "id": "scan-n-glyc-sequons",
+      "files": ["fixtures/igg1_fc.fasta"],
       "prompt": "Here is the IgG1 Fc sequence. Scan it for all canonical N-glycosylation sequons and tell me their positions and whether each is an N-X-S or N-X-T site.",
-      "expected_output": "Invokes alterlab-glycoengineering. Scans for the N-X-[S/T] sequon where X != Proline (e.g. find_n_glycosylation_sequons), reports 1-based positions, the motif triplet, surrounding context, and classifies each as NXS vs NXT. Identifying the canonical N297 sequon in the Fc is expected.",
+      "expected_output": "Invokes alterlab-glycoengineering. Scans the Fc sequence in fixtures/igg1_fc.fasta for the N-X-[S/T] sequon where X != Proline (e.g. find_n_glycosylation_sequons), reports 1-based positions, the motif triplet, surrounding context, and classifies each as NXS vs NXT. This Fc has exactly one sequon — the canonical N297 NST (an N-X-T site); it must be found and no spurious extra sequons invented.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "N-X-" }
+        { "type": "output_contains", "value": "N-X-" },
+        { "type": "output_contains", "value": ["NST", "N-S-T"] },
+        { "type": "behavior", "value": "Finds the single canonical NST (N-X-T) sequon in the Fc and classifies it as N-X-T, without inventing additional sequons." }
       ]
     },
     {
@@ -52,7 +55,7 @@
       "expected_output": "Does NOT invoke this skill; defers to alterlab-bioservices. The ask is multi-database identifier mapping and pathway cross-referencing, not glycosylation analysis. Although glycoengineering can query GlyGen for a protein's glycosylation, generic cross-database ID mapping across KEGG/Reactome belongs to bioservices.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
-        { "type": "output_contains", "value": "alterlab-bioservices" }
+        { "type": "output_contains", "value": ["alterlab-bioservices", "alterlab-uniprot"] }
       ]
     },
     {

@@ -42,7 +42,7 @@ constant in the few canonical spots below (and bump the date) — every consumer
 import os
 
 # AlterLab model convention — default reviewed 2026-09-23; override via ALTERLAB_MODEL.
-# See skills/core/shared/model_env.md before changing the default.
+# See shared/model_env.md (the ALTERLAB_MODEL convention) before changing the default.
 DEFAULT_MODEL = "claude-opus-5-5"
 
 
@@ -129,13 +129,17 @@ thinking, and asking it to reproduce its internal reasoning can be declined
 
 ## Who references this
 
-- **`scripts/run_evals.py --behavioral`** — the LLM judge that grades `expected_output`
-  shells to the `claude` CLI with `alterlab_model()`. See `docs/evals.md`.
-- **`skills/core/alterlab-citation-verifier/scripts/claim_faithfulness.py`** — the optional
+The canonical copy lives in the source repository's core `shared/` folder; each skill that
+cites it ships a byte-identical copy at `shared/model_env.md` inside its own folder,
+so the citation resolves wherever the skill is installed.
+
+- **The repository's behavioral eval judge** (`run_evals.py --behavioral`) — the LLM judge that
+  grades `expected_output` shells to the `claude` CLI with `alterlab_model()`.
+- **The `alterlab-citation-verifier` skill's `claim_faithfulness.py`** — the optional
   LLM-judge tier shells to `claude --model "$(alterlab_model)"`.
-- **`skills/research-tools/alterlab-pdf-extract/scripts/extract_to_table.py`** and
-  **`skills/document-tools/alterlab-markitdown/scripts/convert_with_ai.py`** — reach Claude
-  through OpenRouter with `openrouter_slug(alterlab_model())`.
+- **`alterlab-pdf-extract`'s `extract_to_table.py`** and **`alterlab-markitdown`'s
+  `convert_with_ai.py`** — reach Claude through OpenRouter with
+  `openrouter_slug(alterlab_model())`.
 - **Any new helper script or agent** that needs a model ID — use this convention from day
   one; do not introduce a new bare literal.
 

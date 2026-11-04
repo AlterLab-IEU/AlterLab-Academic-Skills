@@ -1,6 +1,11 @@
 # Authentication & Setup
 
-## Credentials
+No credential is needed for the user's own library: use **Local Mode** below (Zotero 7+
+desktop running) or read an exported `.bib` / CSL JSON / RIS file with
+`scripts/zotero_export.py`. The zotero.org credentials in this section are optional — for a
+library on another machine, group libraries, or web writes.
+
+## Credentials (optional Web API)
 
 Obtain from https://www.zotero.org/settings/keys:
 

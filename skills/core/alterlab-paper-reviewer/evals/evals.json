@@ -4,7 +4,7 @@
     {
       "id": "full-review-manuscript",
       "prompt": "Here is my manuscript on declining birth rates and management strategies of private universities in Turkey. Can you do a full peer review of it before I submit?",
-      "expected_output": "Invokes alterlab-paper-reviewer in full mode: runs Phase 0 field analysis, presents a 5-reviewer configuration card (EIC + 3 peer reviewers + Devil's Advocate) for confirmation, then produces 5 independent review reports plus an Editorial Decision Letter and prioritized Revision Roadmap.",
+      "expected_output": "Invokes alterlab-paper-reviewer in full mode: runs Phase 0 field analysis, presents a 5-reviewer configuration card (EIC + 3 peer reviewers + Devil's Advocate) for confirmation, then produces 5 independent review reports plus an Editorial Decision Letter and prioritized Revision Roadmap. On the attached manuscript the reviews must catch its core flaw: it correlates live births and first-year fill rates in the same calendar year (r = .99 over n = 9 years), although students entering university in 2016–2024 were born about 18 years earlier (c. 1998–2006), so the post-2016 birth decline cannot have caused the 2016–2024 fall in fill rates; two trending series also correlate spuriously. The causal conclusion and the policy that all foundation universities must merge or specialise rest on that and on 12 managers from Istanbul recruited through the first author's network. Because this is a CRITICAL Devil's Advocate finding, the decision cannot be Accept.",
       "assertions": [
         {
           "type": "should_trigger",
@@ -17,13 +17,20 @@
         {
           "type": "output_contains",
           "value": "Revision Roadmap"
+        },
+        {
+          "type": "behavior",
+          "value": "Works from the attached manuscript and catches that births and fill rates are compared in the same year although 2016–2024 entrants were born about 18 years earlier, so the recent birth decline cannot explain the fall and the 'has caused' conclusion is unsupported; also flags that an interview sample of Istanbul managers only, recruited through the first author's network, cannot support conclusions about every foundation university in Turkey. The decision is not Accept."
         }
+      ],
+      "files": [
+        "fixtures/manuscript_birth_rates_foundation_universities.md"
       ]
     },
     {
       "id": "methodology-focus",
       "prompt": "I don't need a whole review, just help me check the methodology and statistical validity of this study's sampling and analysis.",
-      "expected_output": "Invokes alterlab-paper-reviewer in methodology-focus mode: activates field_analyst plus methodology_reviewer only, producing an in-depth methodology review covering research design, sampling strategy, statistical validity, effect sizes, and reproducibility.",
+      "expected_output": "Invokes alterlab-paper-reviewer in methodology-focus mode: activates field_analyst plus methodology_reviewer only, producing an in-depth methodology review covering research design, sampling strategy, statistical validity, effect sizes, and reproducibility. On the attached study it finds, among others: t(240) cannot come from 97 + 115 = 212 respondents (df is at most 210; the reported means and SDs give Welch t ≈ 2.29 on about 208 df); 12 uncorrected subgroup t-tests whose single p = .048 is reported as a finding; a 14.6% self-selected response with 31 partial surveys deleted; an unvalidated adapted scale with no reliability reported; no effect sizes or confidence intervals; and causal language ('increases', 'causes') from a cross-sectional survey.",
       "assertions": [
         {
           "type": "should_trigger",
@@ -32,13 +39,20 @@
         {
           "type": "behavior",
           "value": "Runs only the field_analyst and methodology_reviewer agents (not the full panel) and assesses sampling, statistical validity, effect sizes, and reproducibility."
+        },
+        {
+          "type": "behavior",
+          "value": "Works from the attached study and flags that t(240) is impossible with 97 + 115 = 212 respondents, that the lone p = .048 among 12 uncorrected subgroup tests is presented as a finding, and that no effect sizes or confidence intervals are reported."
         }
+      ],
+      "files": [
+        "fixtures/study_remote_work_survey.md"
       ]
     },
     {
       "id": "re-review-verification",
       "prompt": "I revised my paper based on the previous round's comments and attached my response-to-reviewers. Can you do a verification review to confirm the revisions actually addressed each comment?",
-      "expected_output": "Invokes alterlab-paper-reviewer in re-review mode: builds a checklist from the original Revision Roadmap, EIC checks each item with FULLY_ADDRESSED / PARTIALLY_ADDRESSED / NOT_ADDRESSED / MADE_WORSE status, scans for new issues introduced during revision, and issues a new Decision.",
+      "expected_output": "Invokes alterlab-paper-reviewer in re-review mode: builds a checklist from the original Revision Roadmap, EIC checks each item with FULLY_ADDRESSED / PARTIALLY_ADDRESSED / NOT_ADDRESSED / MADE_WORSE status, scans for new issues introduced during revision, and issues a new Decision. On the attached round-1 Revision Roadmap, response letter and revised manuscript: R1 (reliability/validity) is FULLY_ADDRESSED (α = .89 and a CFA in Section 2.2); R2 (causal language) is NOT_ADDRESSED — the response says the causal language was revised throughout, but the abstract still says mentoring 'increases' retention intention and the Discussion says the programme 'causes' it; R3 (effect sizes) is PARTIALLY_ADDRESSED — Table 2 now has Cohen's d with a 95% CI, Table 3 still has none, although the response says both tables were done. A new issue was introduced: Section 2.1 says all 412 respondents were retained after multiple imputation, while the abstract and Table 2 still report N = 368. With a Priority 1 item not FULLY_ADDRESSED the new decision cannot be Accept.",
       "assertions": [
         {
           "type": "should_trigger",
@@ -51,13 +65,20 @@
         {
           "type": "output_contains",
           "value": "FULLY_ADDRESSED"
+        },
+        {
+          "type": "behavior",
+          "value": "Checks the response letter against the revised text: rates the causal-language item NOT_ADDRESSED because the abstract and Discussion still claim mentoring increases or causes retention, rates the effect-size item PARTIALLY_ADDRESSED because Table 3 still lacks effect sizes and CIs, flags the new 412-versus-368 sample-size inconsistency, and does not return Accept."
         }
+      ],
+      "files": [
+        "fixtures/rereview"
       ]
     },
     {
       "id": "devils-advocate-critique",
       "prompt": "Critique this paper hard - I want someone to attack the core argument, find the logical fallacies, and tell me the strongest counter-argument against my thesis.",
-      "expected_output": "Invokes alterlab-paper-reviewer (full review including the Devil's Advocate reviewer): surfaces the strongest counter-argument, detects cherry-picking, confirmation bias, overgeneralization, and logic-chain gaps, and flags any CRITICAL findings that block an Accept decision.",
+      "expected_output": "Invokes alterlab-paper-reviewer (full review including the Devil's Advocate reviewer): surfaces the strongest counter-argument, detects cherry-picking, confirmation bias, overgeneralization, and logic-chain gaps, and flags any CRITICAL findings that block an Accept decision. On the attached manuscript the strongest counter-argument targets its causal chain: the 2016–2024 entrants were born before the birth decline began, the same-year correlation of two trending series proves nothing, and rival explanations (tuition against inflation, placement and quota policy, new places in the system) are not examined.",
       "assertions": [
         {
           "type": "should_trigger",
@@ -66,13 +87,20 @@
         {
           "type": "behavior",
           "value": "Engages the Devil's Advocate reviewer to produce the strongest counter-argument and detect logical fallacies; any CRITICAL finding blocks an Accept decision."
+        },
+        {
+          "type": "behavior",
+          "value": "The strongest counter-argument, taken from the attached manuscript, attacks the causal claim — the cohort-timing problem (entrants born about 18 years before entry) or the spurious same-year correlation of two trends — and names at least one rival explanation the paper ignores."
         }
+      ],
+      "files": [
+        "fixtures/manuscript_birth_rates_foundation_universities.md"
       ]
     },
     {
       "id": "guided-socratic-review",
       "prompt": "Walk me through the problems in my paper using a guided approach so I understand them myself rather than just getting a list of fixes.",
-      "expected_output": "Invokes alterlab-paper-reviewer in guided mode: runs the reviews internally then enters Socratic dialogue, opening with strengths, progressively revealing methodology, domain, perspective, and Devil's Advocate issues through questions, and ending with a structured Revision Roadmap.",
+      "expected_output": "Invokes alterlab-paper-reviewer in guided mode: runs the reviews internally then enters Socratic dialogue, opening with strengths, progressively revealing methodology, domain, perspective, and Devil's Advocate issues through questions over the following turns, and ending with a structured Revision Roadmap. This case is one reply, so it shows the opening turn: one or two strengths drawn from the attached manuscript, then its most critical structural issue put as a question (the same-year comparison of births and fill rates, although 2016–2024 entrants were born about 18 years earlier), without listing the other issues, and a statement that the dialogue ends with a structured Revision Roadmap (which the author can ask for at once).",
       "assertions": [
         {
           "type": "should_trigger",
@@ -80,8 +108,15 @@
         },
         {
           "type": "behavior",
-          "value": "Enters a Socratic dialogue that opens with strengths and reveals issues through questions rather than dumping a fix list, ending with a structured Revision Roadmap."
+          "value": "Enters a Socratic dialogue that opens with strengths and reveals issues through questions rather than dumping a fix list, and states that it will end with a structured Revision Roadmap (in this one-reply case the roadmap closes the dialogue later; it is not given in the opening turn)."
+        },
+        {
+          "type": "behavior",
+          "value": "The opening turn names a strength of the attached manuscript and raises its critical flaw — births and fill rates compared in the same year although entrants were born about 18 years earlier — as a question to the author, not as a verdict, and does not list the remaining issues."
         }
+      ],
+      "files": [
+        "fixtures/manuscript_birth_rates_foundation_universities.md"
       ]
     },
     {

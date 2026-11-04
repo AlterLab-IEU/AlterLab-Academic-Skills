@@ -2,12 +2,13 @@
 name: alterlab-pyhealth
 description: Develops, tests, and validates clinical machine learning models with the PyHealth 2.x healthcare AI toolkit. Use when working with electronic health records (EHR), clinical prediction tasks (mortality, readmission, length of stay, drug recommendation), medical coding systems (ICD, NDC, ATC, CCS), physiological signals (EEG, ECG), healthcare datasets (MIMIC-III/IV, eICU, OMOP), or implementing deep learning models for healthcare (RETAIN, SafeDrug, GAMENet, Transformer, GAT/GCN). Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
-compatibility: "Self-contained — runs under `uv run python` with PyHealth >= 2.0.2 (Python 3.12-3.13) in its own environment; no API key required. MIMIC-III/IV and eICU data need the user's own PhysioNet credentialed access."
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
+compatibility: No API key required. Runs install-free with `uv run --python 3.13 --with "pyhealth>=2.0.2,<2.1" python script.py` (PyHealth 2.0.x needs Python 3.12-3.13; see Installation for the CPU-only torch index). Default data is open — the PhysioNet MIMIC-IV, eICU-CRD and MIMIC-III demos and PyHealth's synthetic MIMIC-III. Full MIMIC/eICU is optional (the user's own credentialed copy).
 metadata:
     skill-author: AlterLab
-    version: "1.2.0"
-    last_updated: "2026-09-23"
+    credentials: "optional: PhysioNet credentialed access — human-subjects training plus a signed data use agreement, used through the user's own download of full MIMIC-III/IV or eICU (adds the complete cohorts; the open demos and PyHealth's synthetic MIMIC-III need none)"
+    version: "1.2.1"
+    last_updated: "2026-11-02"
 ---
 
 # PyHealth: Healthcare AI Toolkit
@@ -16,7 +17,7 @@ metadata:
 
 PyHealth is a Python library for healthcare AI that provides datasets, task definitions, models, trainers, and medical-code utilities for clinical machine learning. Use this skill when developing healthcare prediction models, processing clinical data, working with medical coding systems, or validating models before any clinical use.
 
-> **Version gotcha (read first).** This skill targets **PyHealth 2.x** (current release 2.0.2, Sept 2026). The 2.0 rewrite changed the API in ways most tutorials and pre-2025 snippets get wrong:
+> **Version gotcha (read first).** This skill targets **PyHealth 2.x**, verified against 2.0.2 (Sept 2026; 2.1.0 followed on 2026-10-17 and is not yet checked here). The 2.0 rewrite changed the API in ways most tutorials and pre-2025 snippets get wrong:
 > - **Tasks are classes you instantiate**, e.g. `MortalityPredictionMIMIC4()`, `DrugRecommendationMIMIC3()` — not the old snake-case `mortality_prediction_mimic4_fn` functions. Pass the instance to `dataset.set_task(task)`.
 > - **Datasets take an explicit table list.** Single-source loaders use `root=` + `tables=[...]` (`MIMIC3Dataset`, `MIMIC4EHRDataset`, `eICUDataset`, `OMOPDataset`); the multimodal `MIMIC4Dataset` uses `ehr_root=` + `ehr_tables=[...]` (plus optional `note_root`/`cxr_root`).
 > - **Models take only the `SampleDataset` plus hyperparameters**, e.g. `Transformer(dataset=samples, embedding_dim=128)`. Feature keys, label key, and mode are read from the task's `input_schema` / `output_schema`; the 1.x `feature_keys=` / `label_key=` / `mode=` arguments raise `TypeError`.
@@ -47,6 +48,8 @@ Invoke this skill when:
 | Biomarker-stratified cohort report with GRADE-graded treatment recommendations | `alterlab-clinical-decision` |
 | General tabular ML on non-EHR data (scikit-learn pipelines) | `alterlab-scikit-learn` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-neurokit2`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Core Capabilities
 
 PyHealth operates through a modular 5-stage pipeline:
@@ -59,6 +62,35 @@ PyHealth operates through a modular 5-stage pipeline:
 
 PyHealth 2.x uses a **polars-backed** data layer and caches task samples, which keeps large EHR tables memory-efficient.
 
+## Data Without Credentials (Default)
+
+Full MIMIC-III/IV and eICU need the user's own PhysioNet credentialed access (training plus a
+signed data use agreement). These open sets load with the same loaders and need no login —
+checked 2026-11-02 against PyHealth 2.0.2's own table configs (every configured file, column
+and join present):
+
+| Data | `root=` | Loader |
+|------|---------|--------|
+| MIMIC-IV Clinical Database Demo 2.2 (100 patients, ODbL) | local copy of `https://physionet.org/files/mimic-iv-demo/2.2/` | `MIMIC4EHRDataset` |
+| eICU-CRD Demo 2.0.1 (2,520 unit stays, ODbL) | local copy of `https://physionet.org/files/eicu-crd-demo/2.0.1/` | `eICUDataset` |
+| MIMIC-III Demo 1.4 (100 patients, ODbL) | local copy of `https://physionet.org/files/mimiciii-demo/1.4/` | `MIMIC3Dataset` |
+| PyHealth synthetic MIMIC-III (~50k synthetic patients) | `https://storage.googleapis.com/pyhealth/Synthetic_MIMIC-III/` | `MIMIC3Dataset` |
+
+```bash
+# The six MIMIC-IV demo tables the Quick Start reads (≈0.7 MB; no account)
+mkdir -p mimic-iv-demo/2.2/hosp mimic-iv-demo/2.2/icu
+for f in hosp/patients hosp/admissions hosp/diagnoses_icd hosp/procedures_icd hosp/prescriptions icu/icustays; do
+  curl -fsS -o "mimic-iv-demo/2.2/$f.csv.gz" "https://physionet.org/files/mimic-iv-demo/2.2/$f.csv.gz"
+done
+```
+
+On the demo, `MortalityPredictionMIMIC4` yields about 108 samples with 10 deaths: enough to run
+every step end to end, far too few for a reportable AUPRC. When a request names full MIMIC-IV
+or eICU and no local copy is given, say that the full data needs the user's own credentialed
+access. Then either run the identical pipeline on the demo and label the numbers as a demo
+smoke test, or give ready-to-run code with `root=` pointing at their copy. Never present demo
+metrics as MIMIC-IV results.
+
 ## Quick Start Workflow
 
 ```python
@@ -69,7 +101,7 @@ from pyhealth.trainer import Trainer
 
 # 1. Load dataset (declare the tables the task needs) and set the task (a class instance)
 dataset = MIMIC4EHRDataset(
-    root="/path/to/mimic-iv/2.2",
+    root="mimic-iv-demo/2.2",  # open demo; or your credentialed copy, e.g. /data/mimic-iv/2.2
     tables=["diagnoses_icd", "procedures_icd", "prescriptions"],
 )
 sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
@@ -114,16 +146,24 @@ Read the reference file that matches the step you are on:
 
 ## Installation
 
+No install step: `uv run` builds a cached environment per run, so PyHealth's pins never touch
+another project.
+
 ```bash
-uv venv --python 3.13 .venv-pyhealth      # PyHealth 2.0.2 supports Python 3.12-3.13
-source .venv-pyhealth/bin/activate
-uv pip install "pyhealth>=2.0.2"
+uv run --python 3.13 --with "pyhealth>=2.0.2,<2.1" python train.py
+# CPU-only machine: take torch from the CPU index (otherwise the multi-GB CUDA wheel set is pulled)
+uv run --python 3.13 --with "pyhealth>=2.0.2,<2.1" \
+    --index https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match python train.py
 ```
+
+`--index-strategy unsafe-best-match` is needed with the CPU index: that index also carries an
+old urllib3 (1.26.13), and uv's default first-index rule then cannot satisfy PyHealth's
+`urllib3>=2.5`.
 
 **Requirements (PyHealth 2.0.2):**
 - Python **3.12 or 3.13** (`>=3.12,<3.14`) — if your default interpreter is 3.14, create the environment with `--python 3.13`.
 - PyTorch, polars, pandas, scikit-learn, and transformers are installed as pinned dependencies — keep PyHealth in its own environment so these pins don't collide with other projects.
-- A `2.1` alpha line exists on PyPI; stay on the 2.0.x releases unless you need an alpha-only feature.
+- PyHealth 2.1.0 was released on 2026-10-17. The signatures in this skill were verified against 2.0.2, hence the `<2.1` pin; check the 2.1 changelog before lifting it.
 
 ## Common Use Cases
 
@@ -243,7 +283,7 @@ uv pip install "pyhealth>=2.0.2"
 - **Large datasets**: Deep learning models require sufficient data (thousands of patients)
 - **Data quality**: Missing data and coding errors impact performance
 - **Temporal consistency**: Ensure train/test split respects temporal ordering when needed
-- **Access**: MIMIC and eICU require PhysioNet credentialing and a data use agreement; never copy restricted records into prompts, notebooks, or repositories that the agreement does not cover
+- **Access**: full MIMIC and eICU require PhysioNet credentialing and a data use agreement (the demos above are open); never copy restricted records into prompts, notebooks, or repositories that the agreement does not cover
 
 ### Clinical Validation
 

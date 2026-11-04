@@ -115,6 +115,8 @@ python scripts/pdf_to_images.py presentation.pdf output/presentation --dpi 150
 
 ### Method 2: Using PowerPoint Thumbnail Script
 
+> **Dependency.** "The PPTX skill" here is Anthropic's `pptx` skill, installed separately; it is not part of this suite. Its scripts (`thumbnail.py`, `inventory.py`, `rearrange.py`, `replace.py`) and `html2pptx.md` live in that skill's folder, not in this one. If it is not installed, export the deck to PDF (`soffice --headless --convert-to pdf deck.pptx`) and review it with this skill's own `scripts/pdf_to_images.py`.
+
 For PowerPoint presentations, use the pptx skill's thumbnail tool:
 
 ```bash

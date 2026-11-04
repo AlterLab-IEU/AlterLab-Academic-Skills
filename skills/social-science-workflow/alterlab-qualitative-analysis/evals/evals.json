@@ -3,12 +3,14 @@
   "evals": [
     {
       "id": "two-coder-icr",
+      "files": ["fixtures/icr_coding.csv"],
       "prompt": "Two RAs coded 30 interviews with my codebook. Compute the intercoder reliability and tell me whether it's acceptable.",
       "expected_output": "Invokes alterlab-qualitative-analysis: computes Krippendorff's alpha (with a 95% CI, e.g. via the bundled stdlib calculator or R irrCAC) and interprets it against the .80 / .667 thresholds; treats this as codebook/content-analytic coding where a coefficient applies.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "Krippendorff" },
-        { "type": "behavior", "value": "Computes Krippendorff's alpha with a CI and applies the standard reliability thresholds." }
+        { "type": "behavior", "value": "Computes Krippendorff's alpha with a CI and applies the standard reliability thresholds." },
+        { "type": "output_contains", "value": ".76" }
       ]
     },
     {

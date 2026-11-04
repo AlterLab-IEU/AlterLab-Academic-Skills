@@ -3,7 +3,7 @@ name: alterlab-pytorch-lightning
 description: Scalable deep-learning training with PyTorch Lightning — organize PyTorch code into LightningModules, configure Trainers for multi-GPU/TPU, build data pipelines and callbacks, log to W&B or TensorBoard, and run distributed training (DDP, FSDP, DeepSpeed). Use when structuring PyTorch training loops, scaling neural-network training across GPUs/TPUs, or adding checkpointing, logging, and distributed strategies. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the `lightning` package (>= 2.5; current 2.6 as of 2026-09, imported as `import lightning as L`) and torch (multi-GPU/TPU optional, W&B token optional for logging).
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "lightning>=2.5" python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires the `lightning` package (>= 2.5; current 2.6 as of 2026-09, imported as `import lightning as L`) and torch (multi-GPU/TPU optional, W&B token optional for logging).
 metadata:
     skill-author: AlterLab
     version: "1.1.0"
@@ -17,7 +17,8 @@ metadata:
 PyTorch Lightning is a deep learning framework that organizes PyTorch code to eliminate boilerplate while maintaining full flexibility. Automate training workflows, multi-device orchestration, and implement best practices for neural network training and scaling across multiple GPUs/TPUs.
 
 ```bash
-uv pip install lightning   # provides `import lightning as L` and `lightning.pytorch.*`
+uv run --python ">=3.12" --with "lightning>=2.5" python train.py   # no install step; `import lightning as L` and `lightning.pytorch.*`
+# torch already importable (`python -c "import torch, lightning"`)? run with plain `python`. CPU-only machine: add --index https://download.pytorch.org/whl/cpu (no CUDA wheels)
 ```
 
 All code in this skill uses the unified `lightning` package. The separately published `pytorch-lightning` package installs the older `pytorch_lightning` namespace instead; do not mix the two namespaces in one project, because their classes are distinct (e.g. `lightning.Trainer.fit` rejects a `pytorch_lightning.LightningModule` with a `TypeError`).
@@ -40,6 +41,8 @@ This skill should be used when:
 | Designing graph neural network layers or loading graph datasets (GCN, GAT, message passing) | `alterlab-torch-geometric` |
 | Reinforcement-learning agents trained on environments (PPO, SAC, DQN) | `alterlab-stable-baselines3` |
 | Classical ML on tabular data (random forests, gradient boosting, linear models) | `alterlab-scikit-learn` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-transformers`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 

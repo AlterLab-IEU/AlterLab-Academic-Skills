@@ -1,0 +1,6 @@
+# SYNTHETIC FIXTURE — created for benchmarking; not real data or real persons.
+teaching_method,outcome,n_students
+flipped,pass,11
+flipped,fail,1
+lecture,pass,5
+lecture,fail,5

@@ -1,0 +1,254 @@
+{
+  "id": "docentlik",
+  "title": "Doçentlik (ÜAK) minimum-condition check for synthetic candidate dossiers",
+  "domain": "Turkish academic promotion / ÜAK doçentlik application criteria (2026 Mart, TABLO 9 Mühendislik and TABLO 11 Sosyal)",
+  "skill_dir": "skills/turkish-academia/alterlab-docentlik-eligibility",
+  "allowed_tools": [
+    "Read",
+    "Glob",
+    "Grep"
+  ],
+  "label_semantics": {
+    "approve": [
+      "ELIGIBLE"
+    ],
+    "abstain": [
+      "CANNOT_DETERMINE"
+    ],
+    "false_approval_name": "ineligible candidate or unmet condition passed as eligible",
+    "false_accusation_name": "eligible candidate or met condition flagged as not eligible"
+  },
+  "cases": [
+    {
+      "id": "candidate-a-sosyal-meets-all",
+      "kind": "standard",
+      "prompt": "Doçentlik başvurusu için ön dosyamı hazırladım (ekte: profile_A_sosyal.md). Sosyal, Beşeri ve İdari Bilimler temel alanından, İktisat bilim alanında başvuracağım. Bölüm komisyonumuz dizin bilgilerini, tarihleri ve yazar listelerini belgelerle kontrol etti. ÜAK'ın yayımlanmış en güncel kriterlerine (2026 Mart) göre asgari başvuru şartlarını sağlıyor muyum, puanım kaç? Bir meslektaşım ulusal makale şartını uluslararası yayınlarımla da karşılayabileceğimi söyledi; bu da doğru mu?",
+      "files": [
+        "fixtures/profile_A_sosyal.md"
+      ],
+      "labels": [
+        "ELIGIBLE",
+        "NOT_ELIGIBLE",
+        "CANNOT_DETERMINE"
+      ],
+      "items": [
+        {
+          "id": "A1",
+          "question": "Overall: taking the dossier's stated facts as verified, does Candidate A meet ALL of the minimum application conditions (asgari başvuru şartları) of ÜAK's 2026 Mart TABLO 11 (Sosyal, Beşeri ve İdari Bilimler)? This asks only about the published minimum conditions, not about the jury's later evaluation of scientific merit.",
+          "expected": "ELIGIBLE",
+          "accept": [
+            "ELIGIBLE"
+          ],
+          "anchor": "Every TABLO 11 minimum is met (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L199-L210; skills/turkish-academia/alterlab-docentlik-eligibility/references/uak_criteria.md L62, L79-L80, L93): total 126 >= 100 and post-doctorate 117 >= 90 (items A2, A3); item 1 >= 10 post-doc points from 1a-1d = 40 (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L204); item 2 primary route met (item A4; L205); item 3 >= 1 thesis-derived publication = T1 (profile L25; skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L29-L30); item 4 two post-doctorate chapters in books whose chapters are all within İktisat (profile L27-L29; skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L207); item 5 >= 5 post-doctorate citation points = 10 after cap (profile L32); item 8 >= 5 = 6 (profile L41); item 9 >= 2 = 2 (profile L44). The item-13 communication rule applies only to Görsel İletişim Tasarımı, İletişim Çalışmaları, Reklamcılık, Sinema and Halkla İlişkiler (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L210), not İktisat; 'farklı dergilerde' is satisfied by five distinct journals (profile L17-L22); no Q4 articles, so the S.S.S. Q20 predatory-journal rule cannot remove any item (profile L8; skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L42-L44); relevance to the bilim alanı and index status at publication date are stated as verified (profile L5-L7). Cross-checked AFTER the hand computation with skills/turkish-academia/alterlab-docentlik-eligibility/scripts/score_docentlik.py (v2.2.0): verdict PRESCREEN_PASS_VERIFY_REMAINING, total 126.0, post-doc 117.0, all modelled checks pass; the remaining manual items were each verified by hand above. Note: the skill itself never emits 'ELIGIBLE' by design; with every condition documented, CANNOT_DETERMINE would be an over-abstention here."
+        },
+        {
+          "id": "A2",
+          "kind": "number",
+          "question": "Candidate A's total ÜAK points under TABLO 11 (all items, including pre-doctorate work and item 3), after applying the table's author-share rule and item caps.",
+          "expected": 126.0,
+          "tolerance": 0.5,
+          "anchor": "Hand computation from profile_A_sosyal.md with the TABLO 11 equal-split rule ('Çok yazarlı yayınlarda puan yazarlar arasında eşit olarak bölünür', skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L203; skills/turkish-academia/alterlab-docentlik-eligibility/references/scoring_rules.md L66-L71) and the 1a-2a point rows (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L56-L64): item 1 — M1 Q2 20/2 = 10 (L11), M2 Q3 15/1 = 15 (L12), M3 ESCI 10/2 = 5 (L13), M4 Scopus 10/1 = 10 (L14), M0 Scopus 10/2 = 5, pre-doctorate (L15) -> 45; item 2 — U1-U3 single-author TR Dizin 3 x 10 = 30, U4-U5 two-author 2 x 5 = 10 (L18-L22) -> 40; item 3 — T1 thesis-derived TR Dizin article 3d = 8, two authors -> 4 (L25; cap 20, skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L208); item 4 — K1 BKCI chapter 4b = 10 + K2 other chapter 4d = 3 (L28-L29) -> 13 (4c+4d = 3 <= 5; item cap 20); item 5 — 6 citations from SSCI/Scopus journals x 3 (5a) = 18 (L32) -> capped at 10 (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L208; citations are not divided by author count, S.S.S. Q27, skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L47); item 6 — one completed master's thesis = 3 (L35); item 7 — completed BAP project as PI, 7d = 3 (L38); item 8 — two single-author non-CPCI congress papers, 8b 2 x 3 = 6 (L41; cap 10); item 9 — teaching in four different semesters = 2 (L44; skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L31-L33, L81). Total = 45 + 40 + 4 + 13 + 10 + 3 + 3 + 6 + 2 = 126. Cross-checked AFTER the hand computation with skills/turkish-academia/alterlab-docentlik-eligibility/scripts/score_docentlik.py (v2.2.0): total_points = 126.0 (identical)."
+        },
+        {
+          "id": "A3",
+          "kind": "number",
+          "question": "Candidate A's post-doctorate points counted toward the 90-point requirement (pre-doctorate work and item-3 points excluded).",
+          "expected": 117.0,
+          "tolerance": 0.5,
+          "anchor": "Post-doctorate points exclude pre-doctorate work (S.S.S. Q29: counts in its category but not toward the 90; skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L47-L48; skills/turkish-academia/alterlab-docentlik-eligibility/references/scoring_rules.md L117-L123) and all item-3 points ('“3. Lisansüstü Tezlerden Üretilmiş Yayın” başlığından alınan puanlar hariç', skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L202). 126 - 5 (M0, 2017, before the 14 Sept 2018 doctorate, profile L4, L15) - 4 (T1, item 3) = 117. Every other item is dated after the doctorate (profile L11-L14, L18-L22, L27-L44). Cross-checked AFTER the hand computation with skills/turkish-academia/alterlab-docentlik-eligibility/scripts/score_docentlik.py (v2.2.0): post_doc_points = 117.0 (identical)."
+        },
+        {
+          "id": "A4",
+          "question": "Condition check — item 2 national-article minimum, primary route: after the doctorate, at least five TR Dizin (2a) publications, three of them single-author, published in different journals. (ELIGIBLE = this condition is met; NOT_ELIGIBLE = it is not met; CANNOT_DETERMINE = the dossier does not contain enough information to decide.)",
+          "expected": "ELIGIBLE",
+          "accept": [
+            "ELIGIBLE"
+          ],
+          "anchor": "Rule: 'doktora ünvanının alınmasından sonra, a bendinden üçü tek yazarlı olmak üzere farklı dergilerde yayımlanmış en az beş yayın zorunludur' (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L205; skills/turkish-academia/alterlab-docentlik-eligibility/references/uak_criteria.md L62). profile_A_sosyal.md L17-L22: U1-U5 are five post-doctorate (2019-2024, doctorate 14 Sept 2018, L4) TR Dizin articles in five different journals (Dergi-A ... Dergi-E); U1, U2, U3 are single-author. 5 >= 5, 3 single-author >= 3, different journals — met under any reading of 'farklı dergilerde'. Cross-checked AFTER the hand computation with skills/turkish-academia/alterlab-docentlik-eligibility/scripts/score_docentlik.py (v2.2.0): national_articles primary route pass (5 / 5, 3 / 3); the different-journals condition is checked by hand from L17-L22."
+        },
+        {
+          "id": "A5",
+          "question": "Condition check — item 2 ALTERNATIVE route (for candidates who cannot meet the national-article minimum): at least three publications from item 1a or 1b, one of them single-author. Would Candidate A's international articles satisfy this alternative route on their own? (ELIGIBLE = this condition is met; NOT_ELIGIBLE = it is not met; CANNOT_DETERMINE = the dossier does not contain enough information to decide.)",
+          "expected": "NOT_ELIGIBLE",
+          "accept": [
+            "NOT_ELIGIBLE"
+          ],
+          "anchor": "Rule: 'Ulusal makale asgari koşulunu sağlayamayan adaylar, 1. maddenin a veya b bentlerinden biri tek yazarlı olmak üzere en az üç yayın yapmak zorundadırlar' (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L205); Sosyal's alternative names only 1a and 1b — ESCI/Scopus (1c) do not count (skills/turkish-academia/alterlab-docentlik-eligibility/references/scoring_rules.md L174-L178). profile_A_sosyal.md: 1a/1b publications are M1 (SSCI Q2, L11) and M2 (SSCI Q3, single-author, L12) only; M3 (ESCI, L13), M4 and M0 (Scopus, L14-L15) are 1c. 2 < 3, so the alternative route is not met (the colleague's suggestion is wrong), although the primary route is (item A4). Cross-checked AFTER the hand computation with skills/turkish-academia/alterlab-docentlik-eligibility/scripts/score_docentlik.py (v2.2.0): alternative route pass = false, value 2, threshold 3."
+        },
+        {
+          "id": "A6",
+          "question": "Condition check — item 4 book requirement: after the doctorate, at least one book, or two book chapters in books all of whose chapters relate to the applicant's bilim alanı. (ELIGIBLE = this condition is met; NOT_ELIGIBLE = it is not met; CANNOT_DETERMINE = the dossier does not contain enough information to decide.)",
+          "expected": "ELIGIBLE",
+          "accept": [
+            "ELIGIBLE"
+          ],
+          "anchor": "Rule: 'doktora ünvanının alınmasından sonra, en az bir kitap veya yayınlanan kitabın tüm bölümleri başvurulan doçentlik bilim alanı ile ilgili olmak şartıyla iki kitap bölümü yayımlamış olmak zorunludur' (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L207; skills/turkish-academia/alterlab-docentlik-eligibility/references/uak_criteria.md L93 'sosyal: >= 1 book or 2 chapters'). profile_A_sosyal.md L27-L29: two single-author chapters (2021, 2024 — after the doctorate), and both edited books are entirely on economics (L27). Met. (Not modelled by the scorer — listed among its unmodelled_minimums; verified by hand.)"
+        },
+        {
+          "id": "A7",
+          "question": "Condition check — item 1 minimum: after the doctorate, at least 10 points from items 1a, 1b, 1c or 1d. (ELIGIBLE = this condition is met; NOT_ELIGIBLE = it is not met; CANNOT_DETERMINE = the dossier does not contain enough information to decide.)",
+          "expected": "ELIGIBLE",
+          "accept": [
+            "ELIGIBLE"
+          ],
+          "anchor": "Rule: 'doktora ünvanının alınmasından sonra, a, b, c veya d bentlerinden en az 10 puan almak zorunludur' (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L204). Post-doctorate 1a-1d points (profile_A_sosyal.md L11-L14, equal split): 10 + 15 + 5 + 10 = 40 >= 10 (M0 is pre-doctorate and excluded). Cross-checked AFTER the hand computation with skills/turkish-academia/alterlab-docentlik-eligibility/scripts/score_docentlik.py (v2.2.0): intl_points_a_to_d_ge_10 pass, value 40.0."
+        }
+      ]
+    },
+    {
+      "id": "candidate-b-muhendislik-first-author-trap",
+      "kind": "difficult-negative",
+      "prompt": "Mühendislik temel alanından (Makine Mühendisliği) doçentliğe başvurmayı düşünüyorum; ön dosyam ekte (profile_B_muhendislik.md). Toplam puanımın 130'un üzerinde olduğunu hesapladım. Q1 ve Q2 makalelerimin çoğunda birinci yazarım, dolayısıyla başlıca yazar şartını da sağladığımı düşünüyorum. ÜAK'ın 2026 Mart kriterlerine göre başvuru şartlarını sağlıyor muyum?",
+      "files": [
+        "fixtures/profile_B_muhendislik.md"
+      ],
+      "labels": [
+        "ELIGIBLE",
+        "NOT_ELIGIBLE",
+        "CANNOT_DETERMINE"
+      ],
+      "items": [
+        {
+          "id": "B1",
+          "question": "Overall: taking the dossier's stated facts as verified, does Candidate B meet ALL of the minimum application conditions (asgari başvuru şartları) of ÜAK's 2026 Mart TABLO 9 (Mühendislik)?",
+          "expected": "NOT_ELIGIBLE",
+          "accept": [
+            "NOT_ELIGIBLE"
+          ],
+          "anchor": "One mandatory condition fails definitively: item 1 requires başlıca yazar status on at least one post-doctorate 1a article in a Q1-Q3 journal (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L180), and none of Candidate B's Q1-Q3 articles qualifies (item B5). All point totals pass (items B2-B4), which is the trap: a high total does not compensate for a failed mandatory condition (skills/turkish-academia/alterlab-docentlik-eligibility/references/uak_criteria.md L60, L120-L137: every modelled check must pass). Cross-checked AFTER the hand computation with skills/turkish-academia/alterlab-docentlik-eligibility/scripts/score_docentlik.py (v2.2.0): verdict FAIL_MODELLED_CHECK, check lead_q1_q3_articles_ge_1 = false (value 0, threshold 1), all other modelled checks pass. An ELIGIBLE answer here is a false approval."
+        },
+        {
+          "id": "B2",
+          "kind": "number",
+          "question": "Candidate B's total ÜAK points under TABLO 9 (all items, including item 3), after applying the table's başlıca-yazar author-share rule and item caps.",
+          "expected": 132.67,
+          "tolerance": 0.5,
+          "anchor": "Hand computation from profile_B_muhendislik.md under TABLO 9. Başlıca yazar in Mühendislik is only (a) the author of a single-author article or (b) the advisor on an article written with their own graduate student(s) — first authorship does not qualify (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L179; skills/turkish-academia/alterlab-docentlik-eligibility/references/uak_criteria.md L60, L72-L73; S.S.S. Q19). M1-M6 have no single author and no graduate student (profile L18-L19), so no author on them is başlıca yazar and 'Başlıca yazarın belirtilmediği iki veya daha fazla yazarlı makalelerde toplam puan yazarlar arasında eşit olarak bölünür' applies (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L178; skills/turkish-academia/alterlab-docentlik-eligibility/references/scoring_rules.md L97-L102): M1 Q1 30/4 = 7.5; M2 Q2 20/3 = 6.667; M3 Q2 20/2 = 10; M4 Q1 30/3 = 10; M5 Q3 15/2 = 7.5; M6 Q1 30/5 = 6 (profile L10-L15). M7 Q4, candidate is the sole advisor of the co-author (L16) -> başlıca, two authors -> 0.8 x 10 = 8 (the journal charges no APC, L19-L20, so the S.S.S. Q20 predatory-journal rule does not apply); M8 ESCI single author 10 (L17). Item 1 = 65.667. Item 2: U1 TR Dizin with own student, 0.8 x 10 = 8; U2 single 10 (L23-L24) -> 18. Item 3: T1 thesis-derived SCIE article 3a = 20, two authors (candidate + advisor) -> 10 under either share rule (advisor 0.8 / other author 0.5, or equal 1/2) (L27). Item 5: 9 SCIE citations x 3 = 27 -> capped at 10 (L30; skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L184). Item 6: 2 x 3 = 6 (L33). Item 7: TÜBİTAK 1001 researcher 10 + BAP PI 3 = 13 (L36-L37; cap 30). Item 8: two CPCI papers 8a = 5 each, two authors each -> 2 x 2.5 = 5, plus one single-author non-CPCI paper 8b = 3 -> 8 (L40-L41; papers divided equally, S.S.S. Q33; cap 10). Item 9: 2 (L44). Total = 65.667 + 18 + 10 + 10 + 6 + 13 + 8 + 2 = 132.667; post-doctorate = 132.667 - 10 (item 3) = 122.667. Cross-checked AFTER the hand computation with skills/turkish-academia/alterlab-docentlik-eligibility/scripts/score_docentlik.py (v2.2.0) with has_lead=false on M1-M6 (the textual 'no başlıca yazar' case): total_points = 132.7, post_doc_points = 122.7 (identical). Note: if instead the candidate's first-author claims are passed to the scorer (lead_basis='first'), it rejects them as non-lead but keeps has_lead=true, giving the lower 0.5/(N-1) shares and a total of 128.5; that conservative default is not the TABLO text for articles with no başlıca yazar, so the textual 132.67 is kept as ground truth (both totals exceed 100, so no label depends on it)."
+        },
+        {
+          "id": "B3",
+          "question": "Condition check — total of at least 100 points. (ELIGIBLE = this condition is met; NOT_ELIGIBLE = it is not met; CANNOT_DETERMINE = the dossier does not contain enough information to decide.)",
+          "expected": "ELIGIBLE",
+          "accept": [
+            "ELIGIBLE"
+          ],
+          "anchor": "Total = 132.67 >= 100 (item B2; rule 'asgari yüz (100) puan', skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L177). Robust to the share reading: even with the scorer's most conservative non-lead shares the total is 128.5 (and 123.75 if every M1-M6 share were 0.5/(N-1) or 0.5 for two authors). Cross-checked AFTER the hand computation with skills/turkish-academia/alterlab-docentlik-eligibility/scripts/score_docentlik.py (v2.2.0): total_ge_100 pass."
+        },
+        {
+          "id": "B4",
+          "question": "Condition check — at least 90 points from work after the doctorate, excluding item-3 (thesis-derived) points. (ELIGIBLE = this condition is met; NOT_ELIGIBLE = it is not met; CANNOT_DETERMINE = the dossier does not contain enough information to decide.)",
+          "expected": "ELIGIBLE",
+          "accept": [
+            "ELIGIBLE"
+          ],
+          "anchor": "132.67 - 10 (T1, item 3, profile_B_muhendislik.md L27) = 122.67 >= 90; every other item is dated after the 21 June 2019 doctorate (profile L4, L9-L44). Rule: skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L177. Cross-checked AFTER the hand computation with skills/turkish-academia/alterlab-docentlik-eligibility/scripts/score_docentlik.py (v2.2.0): post_doc_ge_90 pass, 122.7."
+        },
+        {
+          "id": "B5",
+          "question": "Condition check — item 1: başlıca yazar (lead author, as TABLO 9 defines it) on at least one post-doctorate article from item 1a published in a Q1, Q2 or Q3 journal. (ELIGIBLE = this condition is met; NOT_ELIGIBLE = it is not met; CANNOT_DETERMINE = the dossier does not contain enough information to decide.)",
+          "expected": "NOT_ELIGIBLE",
+          "accept": [
+            "NOT_ELIGIBLE"
+          ],
+          "anchor": "Rule: 'a bendinden Q1, Q2 veya Q3 dergilerde yayımlanmış makalelerden en az birinde başlıca yazar olmak kaydıyla 40 puan almak zorunludur' (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L180). TABLO 9 Tanımlar: başlıca yazar = '(a) Tek yazarlı makale (b) Danışmanlığını yaptığı lisansüstü öğrenci(ler) ile birlikte yazılmış makale' — first authorship is not listed (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L179; skills/turkish-academia/alterlab-docentlik-eligibility/references/uak_criteria.md L72-L73; skills/turkish-academia/alterlab-docentlik-eligibility/references/scoring_rules.md L98-L102; S.S.S. Q19, skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L41). profile_B_muhendislik.md: the Q1-Q3 articles M1-M6 (L10-L15) are multi-author with only faculty co-authors and no students (L18-L19), so the candidate's first authorship on M1, M2, M3 and M5 does not make him/her başlıca yazar. The candidate IS başlıca yazar on M7 (own student, L16) — but M7 is Q4 — and on M8 (single author, L17) — but M8 is ESCI (1c). No reading of the ambiguous 40-point clause (skills/turkish-academia/alterlab-docentlik-eligibility/references/scoring_rules.md L161-L172) removes the başlıca-yazar requirement. Not met. Cross-checked AFTER the hand computation with skills/turkish-academia/alterlab-docentlik-eligibility/scripts/score_docentlik.py (v2.2.0): lead_q1_q3_articles_ge_1 = false."
+        },
+        {
+          "id": "B6",
+          "question": "Condition check — item 2: after the doctorate, at least 10 points from TR Dizin (2a) articles. (ELIGIBLE = this condition is met; NOT_ELIGIBLE = it is not met; CANNOT_DETERMINE = the dossier does not contain enough information to decide.)",
+          "expected": "ELIGIBLE",
+          "accept": [
+            "ELIGIBLE"
+          ],
+          "anchor": "Rule: 'doktora ünvanının alınmasından sonra, a bendinden en az 10 puan almak zorunludur' (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L181). profile_B_muhendislik.md L23-L24: U1 (with own master's student -> başlıca, 0.8 x 10 = 8) + U2 (single author, 10) = 18 >= 10. Cross-checked AFTER the hand computation with skills/turkish-academia/alterlab-docentlik-eligibility/scripts/score_docentlik.py (v2.2.0): trdizin_points_ge_10 pass, 18.0."
+        },
+        {
+          "id": "B7",
+          "question": "Condition check — item 8: after the doctorate, at least 5 points from scientific meetings. (ELIGIBLE = this condition is met; NOT_ELIGIBLE = it is not met; CANNOT_DETERMINE = the dossier does not contain enough information to decide.)",
+          "expected": "ELIGIBLE",
+          "accept": [
+            "ELIGIBLE"
+          ],
+          "anchor": "Rule: 'doktora ünvanının alınmasından sonra yapılmış çalışmalardan en az 5 puan almak zorunludur' (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L183; skills/turkish-academia/alterlab-docentlik-eligibility/references/uak_criteria.md L79-L80). profile_B_muhendislik.md L40-L41: two CPCI papers (8a = 5) with two authors each -> 2.5 + 2.5, plus one single-author non-CPCI paper (8b = 3) = 8 >= 5 (oral-paper points divided equally, S.S.S. Q33, skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L48; values skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L80-L81). Not modelled by the scorer (manual minimum); verified by hand."
+        }
+      ]
+    },
+    {
+      "id": "candidate-c-muhendislik-missing-roles-and-index",
+      "kind": "incomplete-input",
+      "prompt": "Elektrik-Elektronik Mühendisliği bilim alanından doçentlik başvurusu yapmak istiyorum; ön dosyam ekte (profile_C_muhendislik.md). Q1 ve Q2 makalelerimin çoğunu laboratuvarımızdaki lisansüstü öğrencilerle birlikte yazdım. ÜAK'ın 2026 Mart kriterlerine göre başvuru şartlarını sağlıyor muyum?",
+      "files": [
+        "fixtures/profile_C_muhendislik.md"
+      ],
+      "labels": [
+        "ELIGIBLE",
+        "NOT_ELIGIBLE",
+        "CANNOT_DETERMINE"
+      ],
+      "items": [
+        {
+          "id": "C1",
+          "question": "Overall: on the information in the dossier, does Candidate C meet ALL of the minimum application conditions (asgari başvuru şartları) of ÜAK's 2026 Mart TABLO 9 (Mühendislik)?",
+          "expected": "CANNOT_DETERMINE",
+          "accept": [
+            "CANNOT_DETERMINE"
+          ],
+          "anchor": "No condition fails definitively — total, post-doctorate points, thesis-derived publication (T1, L22), citations (>= 5, L25), meetings (7.5, L35) and teaching (2, L38) are all met (items C2, C3, C7) — but two decisive conditions depend on facts the dossier does not state: the başlıca-yazar condition (item C4: whether the candidate was the thesis advisor of S1-S5) and the TR Dizin condition (item C5: index status of U1-U2). Cross-checked AFTER the hand computation with skills/turkish-academia/alterlab-docentlik-eligibility/scripts/score_docentlik.py (v2.2.0) under the two extreme readings: worst case FAIL_MODELLED_CHECK (lead 0, TR Dizin 0), best case PRESCREEN_PASS_VERIFY_REMAINING (lead 4, TR Dizin 15). The input therefore cannot decide eligibility; NOT_ELIGIBLE would be a false accusation and ELIGIBLE a false approval."
+        },
+        {
+          "id": "C2",
+          "question": "Condition check — total of at least 100 points. (ELIGIBLE = this condition is met; NOT_ELIGIBLE = it is not met; CANNOT_DETERMINE = the dossier does not contain enough information to decide.)",
+          "expected": "ELIGIBLE",
+          "accept": [
+            "ELIGIBLE"
+          ],
+          "anchor": "Worst case under every possible reading of profile_C_muhendislik.md: candidate never başlıca yazar and the students' advisor taken to be a co-author wherever possible (M1 30 x 0.5/2 = 7.5, M2 20 x 0.5/2 = 5, M3 30 x 0.5/3 = 5, M4 two authors without a başlıca yazar 20/2 = 10, M5 single ESCI 10, M6 even at the lowest share 15 x 0.5/4 = 1.875 -> item 1 >= 39.375; skills/turkish-academia/alterlab-docentlik-eligibility/references/scoring_rules.md L73-L89 share table) and U1/U2 scoring 0 (L18-L19). Other items are fully specified: item 3 T1 20 x 1/2 = 10 (L22); item 5 12 x 3 = 36 -> cap 10 (L25); item 6 3 + 3 + 5 = 11 -> cap 10 (L28; skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L184); item 7 TÜBİTAK 1001 PI 15 + Horizon 2020 researcher 10 = 25 (L31-L32; cap 30); item 8 three two-author CPCI papers 3 x 2.5 = 7.5 (L35); item 9 = 2 (L38). Worst-case total = 39.375 + 0 + 10 + 10 + 10 + 25 + 7.5 + 2 = 103.875; worst-case post-doctorate = 103.875 - 10 (item 3) = 93.875 (every listed item is after the 10 March 2017 doctorate, L4). 103.875 >= 100, so the total condition is met whatever the unknown roles and index statuses turn out to be (best case 148.5). Cross-checked AFTER the hand computation with skills/turkish-academia/alterlab-docentlik-eligibility/scripts/score_docentlik.py (v2.2.0): worst case (national articles dropped) total 103.9; worst case with U1-U2 as other peer-reviewed (2b) 109.9; best case 148.5 — all pass."
+        },
+        {
+          "id": "C3",
+          "question": "Condition check — at least 90 points from work after the doctorate, excluding item-3 (thesis-derived) points. (ELIGIBLE = this condition is met; NOT_ELIGIBLE = it is not met; CANNOT_DETERMINE = the dossier does not contain enough information to decide.)",
+          "expected": "ELIGIBLE",
+          "accept": [
+            "ELIGIBLE"
+          ],
+          "anchor": "Worst case under every possible reading of profile_C_muhendislik.md: candidate never başlıca yazar and the students' advisor taken to be a co-author wherever possible (M1 30 x 0.5/2 = 7.5, M2 20 x 0.5/2 = 5, M3 30 x 0.5/3 = 5, M4 two authors without a başlıca yazar 20/2 = 10, M5 single ESCI 10, M6 even at the lowest share 15 x 0.5/4 = 1.875 -> item 1 >= 39.375; skills/turkish-academia/alterlab-docentlik-eligibility/references/scoring_rules.md L73-L89 share table) and U1/U2 scoring 0 (L18-L19). Other items are fully specified: item 3 T1 20 x 1/2 = 10 (L22); item 5 12 x 3 = 36 -> cap 10 (L25); item 6 3 + 3 + 5 = 11 -> cap 10 (L28; skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L184); item 7 TÜBİTAK 1001 PI 15 + Horizon 2020 researcher 10 = 25 (L31-L32; cap 30); item 8 three two-author CPCI papers 3 x 2.5 = 7.5 (L35); item 9 = 2 (L38). Worst-case total = 39.375 + 0 + 10 + 10 + 10 + 25 + 7.5 + 2 = 103.875; worst-case post-doctorate = 103.875 - 10 (item 3) = 93.875 (every listed item is after the 10 March 2017 doctorate, L4). 93.875 >= 90 (rule skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L177). Cross-checked AFTER the hand computation with skills/turkish-academia/alterlab-docentlik-eligibility/scripts/score_docentlik.py (v2.2.0): worst-case post_doc_points 93.9 (99.9 with U1-U2 as 2b; best case 138.5) — all pass."
+        },
+        {
+          "id": "C4",
+          "question": "Condition check — item 1: başlıca yazar (lead author, as TABLO 9 defines it) on at least one post-doctorate article from item 1a published in a Q1, Q2 or Q3 journal. (ELIGIBLE = this condition is met; NOT_ELIGIBLE = it is not met; CANNOT_DETERMINE = the dossier does not contain enough information to decide.)",
+          "expected": "CANNOT_DETERMINE",
+          "accept": [
+            "CANNOT_DETERMINE"
+          ],
+          "anchor": "TABLO 9 Tanımlar: başlıca yazar = single author, or 'Danışmanlığını yaptığı lisansüstü öğrenci(ler) ile birlikte yazılmış makale' (the advisor of the student co-authors); first authorship alone does not qualify (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L179; skills/turkish-academia/alterlab-docentlik-eligibility/references/uak_criteria.md L72-L73; S.S.S. Q19). profile_C_muhendislik.md L10-L13: M1, M2, M4 (Q1/Q2, candidate first author) and M3 (Q1) include graduate students described only as 'laboratuvarımızda çalışan' / 'lisansüstü öğrenciler' — the dossier never says whether the candidate was their danışman (the candidate supervised theses, L28, but the students are not identified). If the candidate advised S1, M1 alone satisfies the condition; if not, none of M1-M4 does. M5 (single author) is ESCI (L14) and M6 (Q3) has no student or single author (L15), so neither can settle it. Undeterminable from the input; the right response is to ask who supervised S1-S5."
+        },
+        {
+          "id": "C5",
+          "question": "Condition check — item 2: after the doctorate, at least 10 points from TR Dizin (2a) articles. (ELIGIBLE = this condition is met; NOT_ELIGIBLE = it is not met; CANNOT_DETERMINE = the dossier does not contain enough information to decide.)",
+          "expected": "CANNOT_DETERMINE",
+          "accept": [
+            "CANNOT_DETERMINE"
+          ],
+          "anchor": "Rule: 'a bendinden en az 10 puan' (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L181). profile_C_muhendislik.md L18-L19 describe U1 and U2 only as 'ulusal hakemli dergi (DergiPark üzerinden yayımlanıyor)'; DergiPark hosting is not TR Dizin indexing (S.S.S. Q21, skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L44-L45), and index status must be resolved, not guessed (skills/turkish-academia/alterlab-docentlik-eligibility/references/scoring_rules.md L199-L204; SKILL.md L192-L193 'Do not guess a tier'). If both are TR Dizin: U1 10 + U2 10/2 = 15 >= 10 (met); if neither is: 0 (not met). Undeterminable from the input."
+        },
+        {
+          "id": "C6",
+          "question": "Does the single-author ESCI article M5, by itself, satisfy the item-1 requirement of being başlıca yazar on a post-doctorate article from item 1a in a Q1, Q2 or Q3 journal? (ELIGIBLE = this condition is met; NOT_ELIGIBLE = it is not met; CANNOT_DETERMINE = the dossier does not contain enough information to decide.)",
+          "expected": "NOT_ELIGIBLE",
+          "accept": [
+            "NOT_ELIGIBLE"
+          ],
+          "anchor": "profile_C_muhendislik.md L14: M5 is single-author (so the candidate is başlıca yazar) but ESCI-indexed, which is item 1c (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L58), not item 1a SCIE/SSCI Q1-Q3 (skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L56, L180). The article cannot satisfy the requirement by itself — determinable even though the overall item-1 condition (C4) is not."
+        },
+        {
+          "id": "C7",
+          "question": "Condition check — item 8: after the doctorate, at least 5 points from scientific meetings. (ELIGIBLE = this condition is met; NOT_ELIGIBLE = it is not met; CANNOT_DETERMINE = the dossier does not contain enough information to decide.)",
+          "expected": "ELIGIBLE",
+          "accept": [
+            "ELIGIBLE"
+          ],
+          "anchor": "profile_C_muhendislik.md L35: three CPCI-published international conference papers (8a = 5 each, skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L80), two authors each, dated 2018-2023 (after the 10 March 2017 doctorate, L4) -> 3 x 2.5 = 7.5 >= 5 (oral papers divided equally, S.S.S. Q33, skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L48; minimum skills/turkish-academia/alterlab-docentlik-eligibility/references/field_tables.md L183; cap 10, L184). Not modelled by the scorer; verified by hand."
+        }
+      ]
+    }
+  ]
+}

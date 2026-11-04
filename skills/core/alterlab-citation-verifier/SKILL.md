@@ -1,13 +1,14 @@
 ---
 name: alterlab-citation-verifier
-description: "Verifies that every bibliography entry actually exists by cross-checking Crossref, OpenAlex, Semantic Scholar, and arXiv (no API key required) plus doi.org DOI registration, fuzzy-matching title and authors (difflib ratio >= 0.70), flagging retractions recorded by Crossref (including Retraction Watch data) or OpenAlex, and emitting per-entry JSON verdicts in the AlterLab citation-hallucination taxonomy (TF/PAC/IH/PH/SH); a companion script scores whether a cited abstract supports a claim (SH). Accepts BibTeX, DOI/arXiv lists, or pasted references, and reports unverified instead of passing anything it could not check. Use when the request mentions verify citations, check references, fabricated or hallucinated references, fake DOI, retraction check, bibliography audit, reference existence check, or whether a source supports a claim. For drafting a manuscript prefer alterlab-paper-writer; for dead hyperlinks prefer alterlab-link-health. Part of the AlterLab Academic Skills suite."
+description: "Verifies that every bibliography entry actually exists by cross-checking Crossref, Semantic Scholar, Europe PMC, and arXiv, with Open Library for books (no API key required), plus doi.org DOI registration, fuzzy-matching title and authors (difflib ratio >= 0.70), flagging retractions recorded by Crossref (including Retraction Watch data), and emitting per-entry JSON verdicts in the AlterLab citation-hallucination taxonomy (TF/PAC/IH/PH/SH); a companion script scores whether a cited abstract supports a claim (SH). Accepts BibTeX, DOI/arXiv lists, or pasted references, and reports unverified instead of passing anything it could not check. Use when the request mentions verify citations, check references, fabricated or hallucinated references, fake DOI, retraction check, bibliography audit, reference existence check, or whether a source supports a claim. For drafting a manuscript prefer alterlab-paper-writer; for dead hyperlinks prefer alterlab-link-health. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash WebSearch WebFetch
-compatibility: "No API key required — stdlib Python (`requests` optional) via `uv run python` against Crossref, OpenAlex, Semantic Scholar, arXiv, and the doi.org Handle API; optional OPENALEX_API_KEY / S2_API_KEY only raise rate limits; offline runs return 'unverified' verdicts"
+compatibility: "No API key required — stdlib Python (`requests` optional) via `uv run python` against Crossref, Semantic Scholar, Europe PMC, arXiv, Open Library and the doi.org Handle API; optional S2_API_KEY only raises Semantic Scholar's rate limit; offline runs return 'unverified' verdicts"
 metadata:
   skill-author: AlterLab
-  version: "1.1.0"
-  last_updated: "2026-09-23"
+  version: "1.2.5"
+  last_updated: "2026-11-02"
+  credentials: "optional: S2_API_KEY or SEMANTIC_SCHOLAR_API_KEY (raises Semantic Scholar's shared keyless rate limit: a dedicated 1 request/s; never needed for a verdict)"
   depends_on: "alterlab-research-pipeline (shares the integrity taxonomy), alterlab-deep-research"
 ---
 
@@ -59,9 +60,11 @@ explicitly if the network or a source was unavailable.
 | Full pre-/post-review integrity gate (citation context, data, originality) | `alterlab-research-pipeline` |
 | Holistic peer review of a manuscript with an editorial decision | `alterlab-paper-reviewer` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-paper-writer`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 Grading source quality or predatory venues belongs to `alterlab-deep-research`
 (`source_verification_agent`). For a whole-manuscript audit in Claude Code where every
-flag should be re-checked by independent agents, offer the packaged
+flag should be re-checked by separate agents, offer the packaged
 `/alterlab-workflows:citation-audit` workflow (`alterlab-research-workflows`, roughly
 10–40 agents), which runs this skill's checks at scale.
 
@@ -75,9 +78,19 @@ For each bibliography entry the script:
    references, including one-reference-per-line pastes), extracting title, authors,
    year, venue, DOI, and arXiv ID. A full reference that merely contains a DOI stays
    free-form, so its title and authors are kept for the Identifier Hijacking check.
+   Every detected entry ends up parsed, **rejected** (malformed — with line, key, and
+   reason) or **unsupported**; see `input_accounting`. Mixed BibTeX + free-form/DOI
+   input is handled piecewise, and a broken entry cannot swallow the ones after it.
+   Text that is not a reference — a Markdown heading, an intro or prose paragraph,
+   a line with no year, no DOI/arXiv/ISBN/URL and no author name — is **skipped**
+   (`input_accounting.ignored_text`, reason "skipped: not a reference") and gets no
+   verdict. A year in running text ("compiled in 2019 for the review") does not make
+   prose a reference; a terse real one (`Smith J. 2019. Title. Journal 3:1-2.`) is checked.
 2. **Resolves identifiers** — looks up the cited DOI/arXiv ID directly when present,
    and asks the doi.org Handle API whether a DOI is registered with any agency.
-3. **Searches by title + first author + year** as a fallback across the sources.
+3. **Searches by title + first author + year** as a fallback across the sources
+   (Crossref `query.bibliographic`, Semantic Scholar, Europe PMC `TITLE:"…" AND AUTH:…`,
+   arXiv, and Open Library for entries with no identifier, which are mostly books).
 4. **Fuzzy-matches** the cited title (difflib `SequenceMatcher` ratio, default
    threshold **0.70**; a main title that is near-identical to a record stored
    without its subtitle also counts) and computes author-surname overlap. Among the
@@ -86,26 +99,28 @@ For each bibliography entry the script:
 5. **Flags retractions** on the matched work: Crossref `updated-by` / `update-to`
    notices of type retraction, withdrawal, or removal (from the publisher or, with
    `source: retraction-watch`, the Retraction Watch database that Crossref serves in
-   its REST API since 2025) and OpenAlex `is_retracted`. Expressions of concern get
-   a separate flag.
+   its REST API since 2025). Expressions of concern get a separate flag.
 6. **Emits a verdict** per entry mapped to the taxonomy below, with a
    `source_status` map showing which sources answered, plus a repo-level
    `summary.verdict` (PASS / PASS_WITH_CONDITIONS / FAIL / UNVERIFIED).
 
-### Sources (no key required; current as of 2026-09)
+### Sources (no key required; checked 2026-11-02)
 
 | Source | Endpoint | Used for | Access notes |
 |--------|----------|----------|--------------|
-| Crossref | `api.crossref.org/works` | DOI resolution, bibliographic search, retraction notices | `mailto` routes to the polite pool (10 req/s, 3 concurrent) |
-| OpenAlex | `api.openalex.org/works` | DOI lookup + title search, `is_retracted` | `mailto` is ignored since Feb 2026. DOI lookups are free; searches draw on a daily budget shared per IP without a key (a free key gives 10× — set `OPENALEX_API_KEY`) |
-| Semantic Scholar | `api.semanticscholar.org/graph/v1` | DOI/arXiv resolution, title search | Keyless pool is shared and often returns 429; `S2_API_KEY` gives a dedicated 1 req/s |
+| Crossref | `api.crossref.org/works` | DOI resolution, bibliographic search, retraction notices | Public pool: 5 req/s, one request in flight (the script spaces calls and backs off on 429); an opt-in `--mailto` routes to the polite pool (10 req/s) |
+| Semantic Scholar | `api.semanticscholar.org/graph/v1` | DOI/arXiv resolution, title search (best effort) | Keyless pool is shared. DOI/arXiv lookups mostly answer (backoff 2 + 4 + 8 s, then a 30 s pause); its **search** pool is usually spent from busy networks, so search gets one retry and a 5-minute pause. Either way it is recorded as *not checked*, never "not found", and no verdict depends on it. `S2_API_KEY` gives a dedicated 1 req/s |
+| Europe PMC | `ebi.ac.uk/europepmc/webservices/rest/search` | DOI lookup, title phrase + first-author search | Keyless; life sciences first, but also many other journals and preprint servers |
 | arXiv | `export.arxiv.org/api/query` | arXiv ID resolution, preprint title search | ≥ 3 s between calls (the script throttles) |
+| Open Library | `openlibrary.org/search.json` | Books (entries with no DOI/arXiv ID): main title + first author; every edition's year is kept | Keyless; 1 s between calls |
 | doi.org Handle API | `doi.org/api/handles/<doi>` | Is the DOI registered with *any* agency (Crossref, DataCite, mEDRA…)? | Authoritative for DOI existence |
 
 Keys are optional, read from the environment, sent as headers, and never written
 to the report (the report only records whether one was present). A source that
 errors (rate limit, 5xx) is recorded in `source_status` and is never counted as
-evidence that a work does not exist.
+evidence that a work does not exist. One dropped connection is retried before a source
+is marked `offline`. OpenAlex is no longer queried: since 2026 its keyless searches draw on
+a small per-IP daily budget, so dependable use needed an account.
 
 This skill answers **"does the cited work exist, and does its identifier point
 to it?"** From API metadata alone it cannot establish Semantic Hallucination
@@ -125,7 +140,7 @@ SERIOUS / MEDIUM / MINOR scale used in the Integrity Report schema.
 | Code | Name | Severity | Script trigger |
 |------|------|----------|----------------|
 | `verified` | — (exists, matches) | NONE | Title ratio >= threshold AND author overlap OK AND year consistent in >=1 authoritative source |
-| `TF` | Total Fabrication | **SERIOUS** | Cited DOI is not registered at doi.org, or cited arXiv ID does not exist on arXiv, and no close title match exists; OR (no identifier) no record matches title + authors while Crossref and OpenAlex or Semantic Scholar answered |
+| `TF` | Total Fabrication | **SERIOUS** | Cited DOI is not registered at doi.org, or cited arXiv ID does not exist on arXiv, and no close title match exists; OR (no identifier) no record matches title + authors in Crossref plus at least one other index that actually answered (Semantic Scholar, Europe PMC, arXiv or Open Library); `detail` names the indexes that answered and those not checked. If only Crossref answered, or a free-form entry lacks a title plus an author or year, the entry is `unverified` |
 | `PAC` | Partial Attribute Corruption | MEDIUM | Entry found but >=1 metadata field disagrees (year, author overlap < 50%, a cited identifier that does not resolve to it, or a garbled title whose closest record shares the authors — possible mashup) |
 | `IH` | Identifier Hijacking | **SERIOUS** | Cited DOI/arXiv ID **resolved** (method=id) but the resolved record's title is unrelated (ratio < threshold) |
 | `PH` | Placeholder Hallucination | **SERIOUS** | Unresolved template/placeholder (`[CITATION NEEDED]`, `\cite{}`, `et al., YYYY`, `TODO`, `forthcoming`, `in press`) — caught pre-network |
@@ -133,7 +148,7 @@ SERIOUS / MEDIUM / MINOR scale used in the Integrity Report schema.
 | `unverified` | — (could not check) | MEDIUM | Offline, the sources needed for a decision errored, or a registered DOI that no index returned. **Never treated as passing.** |
 
 A `RETRACTED` flag is attached (and severity bumped to SERIOUS) whenever Crossref
-or OpenAlex marks the *matched* work as retracted, independent of the existence
+(publisher notice or Retraction Watch) marks the *matched* work as retracted, independent of the existence
 verdict; an unrelated closest hit never lends its flag to the cited entry.
 
 `TF` is a serious accusation, so the script only asserts it on authoritative
@@ -148,6 +163,9 @@ evidence. When the deciding sources were rate-limited or down, the entry is
 - **UNVERIFIED** — nothing SERIOUS was found but at least one entry could not be
   checked (e.g. an offline run or rate-limited sources). This is **not** a pass —
   re-run with network access or an API key, or resolve those entries manually.
+- **PARTIAL** — at least one detected entry was rejected, unsupported, or left
+  unprocessed (`status: partial`, exit code 3). Not a pass: fix the entries listed in
+  `input_accounting` and re-run. FAIL still takes precedence.
 
 ---
 
@@ -162,7 +180,7 @@ with `--format bibtex|doi|freeform` if detection is wrong.
 ### 2. Run the verifier
 
 ```bash
-uv run python skills/core/alterlab-citation-verifier/scripts/verify_citations.py \
+uv run python scripts/verify_citations.py \
     path/to/references.bib \
     --mailto <contact-email> \
     --threshold 0.70 \
@@ -170,12 +188,16 @@ uv run python skills/core/alterlab-citation-verifier/scripts/verify_citations.py
 ```
 
 - `path/to/references.bib` may also be `-` (stdin) or inline text.
+- `--mailto` is optional: the user's own contact email for Crossref's polite pool (or set
+  `ALTERLAB_CONTACT_EMAIL`). Without it no address is sent and Crossref's public pool answers.
+  Never fill in an address the user did not give.
 - `--threshold` tunes the fuzzy title-match ratio (0..1; default 0.70).
 - `--offline` skips the network and emits `unverified` verdicts deliberately.
 - Omit `--out` to print the JSON report to stdout.
-- Optional: `export OPENALEX_API_KEY=…` (free key from openalex.org/settings/api)
-  and/or `S2_API_KEY=…` before large bibliographies — keyless OpenAlex searches
-  share a small per-IP daily budget, and the keyless Semantic Scholar pool is busy.
+- Optional: `export S2_API_KEY=…` before large bibliographies — the keyless
+  Semantic Scholar pool is shared and busy. Never needed for a verdict.
+- Exit codes: 0 complete, 2 bad input / nothing parseable, 3 partial (the report is
+  still written).
 
 The script uses `requests` if installed, else the Python stdlib (`urllib`), so it
 runs with no extra dependencies in a bare `uv` environment. Expect roughly 3–10 s
@@ -183,7 +205,9 @@ per entry: it spaces arXiv calls 3 s apart and backs off on rate limits.
 
 ### 3. Read the JSON and report
 
-Parse `summary.verdict` and the per-entry `verdict` codes. Present:
+Check `status` first: if it is `partial`, list `input_accounting.rejected_entries` and
+`unsupported_entries` with their line numbers and reasons before anything else. Then parse
+`summary.verdict` and the per-entry `verdict` codes. Present:
 
 1. The **headline verdict** and counts (`verdict_counts`, `severity_counts`).
 2. A **table of every non-`verified` entry** with its code, severity, and `detail`.
@@ -192,9 +216,10 @@ Parse `summary.verdict` and the per-entry `verdict` codes. Present:
    at doi.org").
 4. Any `RETRACTED` / `EXPRESSION_OF_CONCERN` flags, prominently.
 5. For `unverified` entries: say which sources failed (`source_status`), relay the
-   `manual_instructions` and any `summary.notes` (for example, an OpenAlex HTTP 429
-   means the keyless per-IP budget is spent — a free `OPENALEX_API_KEY` fixes it),
-   and run the fallback below.
+   `manual_instructions` and any `summary.notes` (for example, a Semantic Scholar
+   HTTP 429 means its shared keyless pool was busy: that source was not checked,
+   which is not "not found"), and run the fallback below. For a `TF` without an
+   identifier, quote the indexes its `detail` says answered with no match.
 
 ### 4. Route fixes
 
@@ -220,8 +245,8 @@ Failures are never swallowed into a pass:
   nothing SERIOUS was found.
 
 For each `unverified` entry, re-run with connectivity or a key if possible;
-otherwise look it up with the plugin's `crossref` / `openalex` MCP tools when they
-are available (setup: `mcp_setup.md` under `skills/core/references`), then fall back to WebSearch with
+otherwise look it up with the plugin's keyless `crossref` MCP tools when they
+are available (setup: `mcp_setup.md` in the alterlab-core plugin's `references/` folder), then fall back to WebSearch with
 three distinct queries (exact title in quotes; title + first author; first author +
 venue + year) and, for a DOI, open `https://doi.org/<DOI>`. If a record is found, report the verdict it supports
 and say it came from the fallback. If nothing is found, classify the entry as
@@ -235,19 +260,27 @@ precisely because it was parked in that gray zone and never searched.
 
 Existence is half of the gate; a real paper cited for something it never said
 (the "Frankenstein" pattern) passes every existence check. For (claim, DOI) pairs,
-`claim_faithfulness.py` fetches the cited abstract (Crossref, then OpenAlex) and
-returns `support` / `contradict` / `unsupported`:
+`claim_faithfulness.py` fetches the cited abstract (Crossref, falling back to Semantic
+Scholar, then Europe PMC; `signals.abstract_sources` says what each answered, and a
+rate-limited source is reported as not checked) and returns `support` / `contradict` /
+`unsupported`:
 
 ```bash
-uv run python skills/core/alterlab-citation-verifier/scripts/claim_faithfulness.py \
+uv run python scripts/claim_faithfulness.py \
     --claim "<the sentence as written>" --doi <doi>
 uv run python .../claim_faithfulness.py --input pairs.json --json        # batch
 uv run python .../claim_faithfulness.py --input pairs.json --tier llm --json
 ```
 
 - The default `heuristic` tier is lexical and deliberately abstains
-  (`unsupported`) rather than guessing `support`; it cannot see role reversals or
-  wrong numbers. The `llm` tier asks the model set by `ALTERLAB_MODEL` (see
+  (`unsupported`) rather than guessing `support`; it cannot see role reversals or a
+  changed population reliably, so its `support` carries taxonomy
+  `LEXICAL_MATCH_REQUIRES_REVIEW` — report it as "needs review", never as verified.
+  Guards make it abstain on a figure the abstract lacks, a reversed or unmatched comparison,
+  a population mismatch (people vs animals or cells; age group), and a definite or causal
+  claim against tentative or associational evidence. An llm-tier `support` is
+  `MODEL_JUDGED_SUPPORT_REQUIRES_REVIEW` — one model's reading, also not verification. The
+  script never returns VERIFIED for a claim. The `llm` tier asks the model set by `ALTERLAB_MODEL` (see
   `shared/model_env.md`) and falls back to the heuristic, flagged, if the `claude`
   CLI is unavailable.
 - It only sees the abstract (`abstract_only: true`). `unsupported` means the
@@ -263,22 +296,25 @@ uv run python .../claim_faithfulness.py --input pairs.json --tier llm --json
 ```json
 {
   "tool": "alterlab-citation-verifier/verify_citations.py",
-  "version": "1.1.0",
+  "version": "1.4.1",
+  "status": "complete",
+  "warning": null,
   "summary": {
     "total": 2,
+    "input": {"detected": 2, "parsed": 2, "rejected": 0, "unsupported": 0},
     "verdict": "FAIL",
     "verdict_counts": {"verified": 1, "TF": 1, "PAC": 0, "IH": 0, "PH": 0, "SH": 0, "unverified": 0},
     "severity_counts": {"SERIOUS": 1, "MEDIUM": 0, "MINOR": 0},
     "citation_integrity_score": 0.5,
     "fabrication_risk_score": 0.5,
     "retracted": 0,
-    "source_errors": {"openalex": 1},
-    "notes": ["OpenAlex rate limit: the keyless daily budget shared by this IP is spent ..."]
+    "source_errors": {"semanticscholar": 1},
+    "notes": ["Semantic Scholar rate limit: not checked (which is not 'not found'); the keyless pool is shared ..."]
   },
   "entries": [
     {"ref_id": "walters2023", "verdict": "verified", "severity": "NONE",
      "title_ratio": 1.0, "author_overlap": 1.0, "matches": [{"source": "crossref"}],
-     "source_status": {"crossref": "record", "openalex": "record", "semanticscholar": "record", "arxiv": "no_record"}},
+     "source_status": {"crossref": "record", "semanticscholar": "error: HTTP 429 — Semantic Scholar rate limit: not checked ...", "europepmc": "no_record", "arxiv": "no_record"}},
     {"ref_id": "ghostpaper2021", "verdict": "TF", "severity": "SERIOUS",
      "detail": "DOI 10.xxxx/... is not registered with any DOI agency (doi.org Handle API)..."}
   ]
@@ -293,6 +329,8 @@ the Integrity Report schema fields of the same name, so the report can feed
 
 ## Self-Check Before Reporting
 
+- Is `status` complete? A PARTIAL run (rejected or unsupported entries) is never
+  reported as a pass.
 - Did the run reach the network, and which sources answered? If entries are
   `unverified`, name the failing sources from `source_status`; do not imply a pass.
 - Are there any `RETRACTED` flags? Surface them even on otherwise-`verified` entries.

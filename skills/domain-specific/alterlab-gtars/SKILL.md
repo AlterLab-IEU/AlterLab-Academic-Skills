@@ -35,6 +35,8 @@ Use this skill when working with:
 | Normalized bigWig coverage from BAM, TSS heatmaps/profiles | `alterlab-deeptools` |
 | Geographic (non-genomic) spatial joins and overlaps | `alterlab-geopandas` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-geniml`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 > Version note: examples are verified against the **`gtars` Python package 0.10.0** (PyPI, 2026-09; first written for 0.8 — the calls below are unchanged). The Python API is exposed through submodules — `gtars.models`, `gtars.tokenizers`, `gtars.refget`, `gtars.utils`, plus the newer `gtars.genomic_distributions`, `gtars.lola`, `gtars.vrs` — NOT as flat top-level functions. There is no `gtars.igd` or `gtars.uniwig` Python submodule; IGD building and uniwig track generation are CLI-only.
 
 ## Installation

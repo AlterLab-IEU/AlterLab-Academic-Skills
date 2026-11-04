@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.2"
+    last_updated: "2026-11-04"
 ---
 
 # Matchms
@@ -32,6 +32,8 @@ Use this skill when the user wants to:
 | Looking up a metabolite's reference record, pathways, or published spectra in HMDB | `alterlab-hmdb` |
 | Querying Metabolomics Workbench studies, RefMet names, or m/z mass searches | `alterlab-metabolomics-wb` |
 | Structure-level cheminformatics on the annotated compounds (substructure, descriptors) | `alterlab-rdkit` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-pyopenms`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 
@@ -119,8 +121,19 @@ best_matches = scores.scores_by_query(query_spectra[0],
                                       sort=True)[:10]
 ```
 
+**One pair of spectra:** call the similarity function's `.pair()` — no score matrix needed:
+
+```python
+result = CosineGreedy(tolerance=0.1).pair(spectrum_1, spectrum_2)
+float(result["score"]), int(result["matches"])   # structured value: cosine + matched-peak count
+```
+
+**Greedy vs Hungarian:** each peak may match at most one peak in the other spectrum. `CosineGreedy` takes the candidate pairs within `tolerance` in order of their (weighted) intensity product and keeps each one whose peaks are still free — fast, but when several peaks compete for the same partner it can miss the best overall assignment and under-score. `CosineHungarian` solves the assignment exactly (never lower, slower). With well-separated peaks the two agree; with peaks closer together than the tolerance they can differ (verified on matchms 0.33.1: two competing peak pairs at 0.1 Da gave 0.767 with 1 match greedy vs 0.844 with 2 matches Hungarian).
+
+**Report a score with how it was computed:** the function, `tolerance`, `mz_power`/`intensity_power` (defaults 0 and 1), any filters applied first, the matched-peak count, and why greedy or Hungarian was used.
+
 **Available similarity functions:**
-- **CosineGreedy/CosineHungarian**: Peak-based cosine similarity with different matching algorithms
+- **CosineGreedy/CosineHungarian**: Peak-based cosine similarity, greedy (fast) or optimal (Hungarian) peak matching — see above
 - **ModifiedCosineGreedy** (also `ModifiedCosineHungarian`): cosine similarity accounting for precursor mass differences. Note the rename — the class is no longer called `ModifiedCosine`.
 - **NeutralLossesCosine**: Similarity based on neutral loss patterns
 - **FingerprintSimilarity**: Molecular structure similarity using fingerprints
@@ -216,13 +229,18 @@ Consult `references/workflows.md` for detailed examples.
 
 ## Installation
 
+No install step — run install-free with uv, pinning the interpreter (uv's default
+Python here is 3.9, but matchms needs ≥ 3.10; on 3.9 uv resolves an old matchms
+without `ModifiedCosineGreedy`):
+
 ```bash
-uv pip install matchms
+uv run --python ">=3.11" --with "matchms>=0.33" python your_script.py
 ```
 
 Molecular-structure processing (SMILES/InChI/fingerprints) needs rdkit, which
 ships in the base matchms install on current versions — there is no separate
-`[chemistry]` extra. If `import rdkit` fails, `uv pip install rdkit` explicitly.
+`[chemistry]` extra. If `import rdkit` fails, add `--with rdkit`. (A persistent
+`uv pip install matchms` works too.)
 
 API notes below were verified against **matchms 0.33.x**.
 

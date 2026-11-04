@@ -1,5 +1,8 @@
 # Installation Guide
 
+> This page covers the optional denario package and its LLM keys. The skill's default pipeline
+> (SKILL.md, "Keyless pipeline") needs none of them: Claude performs each stage itself.
+
 ## System Requirements
 
 - **Python**: 3.12 or 3.13 (denario 1.0.x declares `>=3.12,<3.14`; 3.14 is not supported)
@@ -72,7 +75,7 @@ Access the GUI at `http://localhost:8501` after the container starts.
 
 After installation, verify denario is available:
 
-```python
+```bash
 # Test import
 python -c "from denario import Denario; print('Denario installed successfully')"
 ```

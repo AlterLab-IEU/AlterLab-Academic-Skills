@@ -2,7 +2,7 @@
 name: alterlab-gnomad
 description: Query gnomAD (Genome Aggregation Database) for population allele frequencies and gene constraint scores (pLI, LOEUF) reflecting loss-of-function intolerance. Use when checking how common a variant is across populations, filtering rare-disease candidate variants, assessing variant pathogenicity, or identifying loss-of-function intolerant genes. Part of the AlterLab Academic Skills suite.
 license: CC0-1.0
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
 compatibility: Keyless gnomAD GraphQL API (no authentication required)
 metadata:
     skill-author: AlterLab
@@ -42,6 +42,8 @@ Use gnomAD when:
 | Variant consequence prediction (VEP) or gene/transcript models | `alterlab-ensembl` |
 | GWAS associations for a trait or variant | `alterlab-gwas` |
 | Tissue expression or eQTLs for a gene | `alterlab-gtex` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-clinvar`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 

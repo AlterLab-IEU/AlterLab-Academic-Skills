@@ -5,7 +5,8 @@ pingouin current docs (versions pinned in the SKILL frontmatter).
 
 ## Omega vs alpha (why the bundled script exists)
 
-Cronbach's alpha assumes tau-equivalence (equal loadings) and is a lower bound. McDonald's omega
+Cronbach's alpha equals reliability only under tau-equivalence (equal loadings, uncorrelated
+errors) and is a lower bound when loadings differ (Sijtsma, 2009). McDonald's omega
 uses the actual standardized loadings and is the honest congeneric-model reliability. Neither
 semopy nor pingouin returns omega directly (pingouin exposes only `cronbach_alpha`; semopy's
 `calc_stats` returns fit indices, not reliability), so compute it from the standardized loadings

@@ -30,11 +30,14 @@
     },
     {
       "id": "sqtl-splicing",
+      "files": ["fixtures/gene_of_interest.txt"],
       "prompt": "Are there any splicing QTLs in GTEx that affect how a gene of mine is spliced in skeletal muscle? I want the sQTL associations.",
       "expected_output": "Invokes alterlab-gtex. Calls /association/singleTissueSqtl with the gene's GENCODE ID filtered by the Muscle_Skeletal tissueSiteDetailId, returning significant sQTL associations affecting splicing ratios.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "sQTL" }
+        { "type": "output_contains", "value": "sQTL" },
+        { "type": "output_contains", "value": "ENSG00000164308.17" },
+        { "type": "behavior", "value": "Resolves ERAP2 from the attached note to the GENCODE v39 ID ENSG00000164308.17, queries Muscle_Skeletal sQTLs with datasetId=gtex_v10, and reports all significant associations (655 variant-intron pairs over 364 variants and two intron clusters, top p about 2e-33) rather than only the first page of 250." }
       ]
     },
     {

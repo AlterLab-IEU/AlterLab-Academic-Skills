@@ -3,6 +3,7 @@
   "evals": [
     {
       "id": "antibody-antigen",
+      "files": ["fixtures/antibody_antigen.fasta"],
       "prompt": "Predict the structure of my antibody Fv bound to its antigen. I have both sequences and want to see the predicted binding interface.",
       "expected_output": "Invokes alterlab-chai: folds the antibody and antigen as a complex from a single typed FASTA with Chai-1, and reports the interface confidence so the user can judge the predicted paratope–epitope contact. Notes GPU/weights and dispatch via alterlab-remote-compute.",
       "assertions": [

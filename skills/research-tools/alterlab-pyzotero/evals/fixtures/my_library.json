@@ -1,0 +1,157 @@
+[
+  {
+    "id": "http://zotero.org/users/local/k7Pq2Lx9/items/3NB8XQ2V",
+    "type": "article-journal",
+    "title": "The PRISMA 2020 statement: an updated guideline for reporting systematic reviews",
+    "container-title": "BMJ",
+    "page": "n71",
+    "volume": "372",
+    "DOI": "10.1136/bmj.n71",
+    "author": [
+      {"family": "Page", "given": "Matthew J."},
+      {"family": "McKenzie", "given": "Joanne E."},
+      {"family": "Bossuyt", "given": "Patrick M."}
+    ],
+    "issued": {"date-parts": [["2021", 3, 29]]}
+  },
+  {
+    "id": "http://zotero.org/users/local/k7Pq2Lx9/items/9KQ4W7ZR",
+    "type": "article-journal",
+    "title": "Plasticenta: First evidence of microplastics in human placenta",
+    "container-title": "Environment International",
+    "page": "106274",
+    "volume": "146",
+    "DOI": "10.1016/j.envint.2020.106274",
+    "author": [
+      {"family": "Ragusa", "given": "Antonio"},
+      {"family": "Svelato", "given": "Alessandro"},
+      {"family": "Santacroce", "given": "Criselda"}
+    ],
+    "issued": {"date-parts": [["2021", 1]]}
+  },
+  {
+    "id": "http://zotero.org/users/local/k7Pq2Lx9/items/E2M5TQ8C",
+    "type": "article-journal",
+    "title": "Microplastics detected in cirrhotic liver tissue",
+    "container-title": "eBioMedicine",
+    "page": "104147",
+    "volume": "82",
+    "DOI": "10.1016/j.ebiom.2022.104147",
+    "author": [
+      {"family": "Horvatits", "given": "Thomas"},
+      {"family": "Tamminga", "given": "Matthias"},
+      {"family": "Liu", "given": "Beibei"}
+    ],
+    "issued": {"date-parts": [["2022", 8]]}
+  },
+  {
+    "id": "http://zotero.org/users/local/k7Pq2Lx9/items/U6YF3K2A",
+    "type": "article-journal",
+    "title": "Semaglutide and cardiovascular outcomes in obesity without diabetes",
+    "container-title": "New England Journal of Medicine",
+    "page": "2221-2232",
+    "volume": "389",
+    "issue": "24",
+    "DOI": "10.1056/NEJMoa2307563",
+    "author": [
+      {"family": "Lincoff", "given": "A. Michael"},
+      {"family": "Brown-Frandsen", "given": "Kirstine"},
+      {"family": "Colhoun", "given": "Helen M."}
+    ],
+    "issued": {"date-parts": [["2023", 12, 14]]}
+  },
+  {
+    "id": "http://zotero.org/users/local/k7Pq2Lx9/items/H8RC2N4P",
+    "type": "article-journal",
+    "title": "Accurate structure prediction of biomolecular interactions with AlphaFold 3",
+    "container-title": "Nature",
+    "page": "493-500",
+    "volume": "630",
+    "issue": "8016",
+    "DOI": "10.1038/s41586-024-07487-w",
+    "author": [
+      {"family": "Abramson", "given": "Josh"},
+      {"family": "Adler", "given": "Jonas"},
+      {"family": "Dunger", "given": "Jack"}
+    ],
+    "issued": {"date-parts": [["2024", 6]]}
+  },
+  {
+    "id": "http://zotero.org/users/local/k7Pq2Lx9/items/P3W9V6JM",
+    "type": "paper-conference",
+    "title": "Language models are few-shot learners",
+    "container-title": "Advances in Neural Information Processing Systems 33",
+    "page": "1877-1901",
+    "author": [
+      {"family": "Brown", "given": "Tom B."},
+      {"family": "Mann", "given": "Benjamin"},
+      {"family": "Ryder", "given": "Nick"}
+    ],
+    "issued": {"date-parts": [["2020"]]}
+  },
+  {
+    "id": "http://zotero.org/users/local/k7Pq2Lx9/items/Z5T2KQ7B",
+    "type": "report",
+    "title": "Global tuberculosis report 2024",
+    "publisher": "World Health Organization",
+    "publisher-place": "Geneva",
+    "author": [{"literal": "World Health Organization"}],
+    "issued": {"date-parts": [["2024", 10, 29]]}
+  },
+  {
+    "id": "http://zotero.org/users/local/k7Pq2Lx9/items/B7N4RM2X",
+    "type": "chapter",
+    "title": "Spaced retrieval in initial teacher education",
+    "container-title": "Learning Sciences in Practice (department volume)",
+    "page": "41-58",
+    "author": [
+      {"family": "Yılmaz", "given": "Ayşe"}
+    ],
+    "issued": {"date-parts": [["2022"]]}
+  },
+  {
+    "id": "http://zotero.org/users/local/k7Pq2Lx9/items/C2Q8YT5L",
+    "type": "article-journal",
+    "title": "Test-enhanced learning: taking memory tests improves long-term retention",
+    "container-title": "Psychological Science",
+    "page": "249-255",
+    "volume": "17",
+    "issue": "3",
+    "DOI": "10.1111/j.1467-9280.2006.01693.x",
+    "author": [
+      {"family": "Roediger", "given": "Henry L."},
+      {"family": "Karpicke", "given": "Jeffrey D."}
+    ],
+    "issued": {"date-parts": [["2006", 3]]}
+  },
+  {
+    "id": "http://zotero.org/users/local/k7Pq2Lx9/items/M4K7WP9D",
+    "type": "article-journal",
+    "title": "Why most published research findings are false",
+    "container-title": "PLoS Medicine",
+    "page": "e124",
+    "volume": "2",
+    "issue": "8",
+    "DOI": "10.1371/journal.pmed.0020124",
+    "author": [
+      {"family": "Ioannidis", "given": "John P. A."}
+    ],
+    "issued": {"date-parts": [["2005", 8]]}
+  },
+  {
+    "id": "http://zotero.org/users/local/k7Pq2Lx9/items/R9F3HX6K",
+    "type": "article-journal",
+    "title": "Deep learning",
+    "container-title": "Nature",
+    "page": "436-444",
+    "volume": "521",
+    "issue": "7553",
+    "DOI": "10.1038/nature14539",
+    "author": [
+      {"family": "LeCun", "given": "Yann"},
+      {"family": "Bengio", "given": "Yoshua"},
+      {"family": "Hinton", "given": "Geoffrey"}
+    ],
+    "issued": {"date-parts": [["2015", 5, 28]]}
+  }
+]

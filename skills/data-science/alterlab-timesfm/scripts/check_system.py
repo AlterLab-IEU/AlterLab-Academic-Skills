@@ -390,7 +390,10 @@ def check_package(pkg_name: str, import_name: str | None = None) -> CheckResult:
         return CheckResult(
             name=pkg_name,
             status="warn",
-            detail=f"{pkg_name} is not installed. Run: uv pip install {pkg_name}",
+            detail=(
+                f"{pkg_name} is not installed. No install step needed: run the forecast "
+                f'with uv run --python ">=3.12" --with "timesfm[torch]" --with pandas python ...'
+            ),
             value="Not installed",
         )
 

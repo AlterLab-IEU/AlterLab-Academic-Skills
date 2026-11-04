@@ -3,11 +3,13 @@
   "evals": [
     {
       "id": "evidence-quality-grade",
+      "files": ["fixtures/trials_summary.md"],
       "prompt": "I have a handful of trials of varying quality on a new intervention. How confident should I be in the overall evidence? Can you grade the certainty of the evidence for me?",
       "expected_output": "Invokes alterlab-scientific-thinking and applies the GRADE framework to assess certainty of evidence: starts from design type (RCT = high, observational = low), then downgrades for risk of bias, inconsistency, indirectness, imprecision, and publication bias, and upgrades for large effects, dose-response, or confounders that would reduce the effect.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "GRADE" }
+        { "type": "output_contains", "value": "GRADE" },
+        { "type": "behavior", "value": "Rates the certainty below High and downgrades for risk of bias, noting that the three small trials at high risk (A, B and E: allocation not concealed or not reported, completers-only analysis, not registered) report much larger effects than the two well-conducted trials (C and D, about 2 ISI points, below the 4-point clinically important difference)." }
       ]
     },
     {
@@ -21,11 +23,13 @@
     },
     {
       "id": "design-validity-critique",
+      "files": ["fixtures/methods_section.md"],
       "prompt": "Here is the methods section of a study making a strong causal claim from a small, unblinded trial. Can you critique the experimental design and whether the design can support that claim?",
       "expected_output": "Invokes alterlab-scientific-thinking and critiques the methodology across the validity types (internal, external, construct, statistical conclusion), evaluates randomization, blinding, control conditions, and sample size/power, and assesses whether the design can actually support the causal claim being made, organizing concerns by severity.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Assesses internal/external/construct/statistical-conclusion validity and judges whether the design supports the causal claim." }
+        { "type": "behavior", "value": "Assesses internal/external/construct/statistical-conclusion validity and judges whether the design supports the causal claim." },
+        { "type": "behavior", "value": "Flags that odd/even allocation by sign-up order is not randomisation, that the unblinded first author both delivered the programme and collected the self-reported outcome, that excluding the three waitlist dropouts makes the analysis per-protocol rather than intention-to-treat, and that seven outcomes were tested without correction, and concludes that the design cannot support the claim that journaling causes reduced burnout or justify district-wide adoption." }
       ]
     },
     {

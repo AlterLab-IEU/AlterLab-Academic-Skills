@@ -1,0 +1,68 @@
+SYNTHETIC FIXTURE — created for benchmarking; not a real review, study, or person.
+L2: Database export, batch B (Embase and TR Dizin). Each record: ID, title, year, language, abstract.
+L3:
+L4: R07
+L5: Title: Mindfulness-based stress reduction to prevent burnout in emergency department nurses: protocol for a randomised controlled trial
+L6: Year: 2024 | Language: English | Type: journal article
+L7: Abstract: This paper describes the design of a two-arm randomised controlled trial. A total of 150
+L8: registered nurses from three emergency departments will be randomised to an 8-week MBSR programme
+L9: (eight weekly sessions of formal meditation practice) or a waitlist. The primary outcome will be
+L10: emotional exhaustion (MBI-HSS) at 8 weeks. Recruitment began in March 2024 and results are expected in
+L11: 2026.
+L12:
+L13: R08
+L14: Title: Mindfulness and burnout in nursing: a narrative review of interventions and mechanisms
+L15: Year: 2023 | Language: English | Type: journal article
+L16: Abstract: We searched three databases and narratively summarise 27 studies, including several randomised
+L17: trials of MBSR and MBCT in registered nurses that measured burnout with the Maslach Burnout Inventory.
+L18: Most trials reported reductions in emotional exhaustion. We discuss attention regulation and
+L19: self-compassion as mechanisms and outline priorities for future research.
+L20:
+L21: R09
+L22: Title: Mindfulness-based stress reduction for burnout during clinical placements: a randomised controlled trial in nursing
+L23: Year: 2021 | Language: English | Type: journal article
+L24: Abstract: One hundred and ten final-year undergraduate nursing students on hospital clinical placements
+L25: were randomised to MBSR (eight weekly sessions of formal meditation practice) or a waitlist. Burnout
+L26: was measured with the Maslach Burnout Inventory-Student Survey. Exhaustion scores were lower in the
+L27: MBSR group at the end of the placement (mean difference -2.7, 95% CI -4.5 to -0.9).
+L28:
+L29: R10
+L30: Title: A mind-body relaxation programme for burnout in hospital nurses: a randomised controlled trial
+L31: Year: 2020 | Language: English | Type: journal article
+L32: Abstract: The programme was designed as a low-cost alternative to mindfulness training. Ninety registered
+L33: nurses were randomised to eight weekly group sessions of progressive muscle relaxation and guided
+L34: imagery with audio-guided home practice, or to usual care. Burnout was measured with the MBI-HSS.
+L35: Emotional exhaustion was lower in the relaxation group at 8 weeks (mean difference -3.6, 95% CI -6.2
+L36: to -1.0).
+L37:
+L38: R11
+L39: Title (original, Turkish): Çevrim içi bilinçli farkındalık temelli stres azaltma programının sağlık çalışanlarında
+L40: tükenmişliğe etkisi: randomize kontrollü çalışma
+L41: Title (English, from the journal): Effect of an online mindfulness-based stress reduction programme on burnout in
+L42: healthcare workers: a randomised controlled trial
+L43: Year: 2023 | Language: Turkish (English abstract) | Type: journal article
+L44: Abstract: Healthcare workers at a university hospital (n = 124: 104 registered nurses and 20 nursing
+L45: assistants) were randomised to an 8-week online adaptation of MBSR (eight weekly 2-hour live video
+L46: sessions with formal sitting meditation, body scan and daily home practice) or to an active control
+L47: (eight weekly health-education webinars). Burnout was measured with the Oldenburg Burnout Inventory.
+L48: Results are reported for the whole sample and separately for registered nurses: among registered
+L49: nurses, exhaustion scores were lower in the MBSR group at 8 weeks (mean difference -0.31, 95% CI -0.52
+L50: to -0.10).
+L51:
+L52: R12
+L53: Title: Brief mindfulness training for burnout in community nurses: a pilot randomised controlled trial
+L54: Year: 2017 | Language: English | Type: journal article
+L55: Abstract: Forty registered community nurses were randomised to four weekly 90-minute group sessions of
+L56: mindfulness training (formal sitting meditation, body scan and mindful breathing, with 15 minutes of
+L57: daily home practice) or to a waitlist. Feasibility outcomes were recruitment, retention and session
+L58: attendance; burnout was assessed with the Copenhagen Burnout Inventory at baseline and week 6.
+L59: Retention was 90%. Burnout scores did not differ significantly between groups at week 6 (mean
+L60: difference -3.1, 95% CI -9.4 to 3.2).
+L61:
+L62: R13
+L63: Title: Mindfulness-based stress reduction for burnout in surgical nurses: a controlled trial
+L64: Year: 2016 | Language: English | Type: journal article
+L65: Abstract: Eight surgical wards were allocated alternately, in order of ward number, to an 8-week MBSR
+L66: programme (eight weekly sessions of formal meditation practice) or usual care; 132 registered nurses
+L67: took part. Burnout was measured with the MBI-HSS at baseline and 8 weeks. Emotional exhaustion decreased
+L68: more on intervention wards (mean difference -4.8, 95% CI -7.9 to -1.7).

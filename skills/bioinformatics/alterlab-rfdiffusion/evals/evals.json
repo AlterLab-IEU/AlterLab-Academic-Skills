@@ -22,6 +22,7 @@
     },
     {
       "id": "binder-design",
+      "files": ["fixtures/target.pdb"],
       "prompt": "Design a de-novo binder backbone against this target protein — I know the hotspot residues on its surface.",
       "expected_output": "Invokes alterlab-rfdiffusion for binder design: generates binder backbones docked against the target using the hotspot residues, to be sequence-designed and interface-validated (ipTM) downstream.",
       "assertions": [

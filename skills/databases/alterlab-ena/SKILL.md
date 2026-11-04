@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless ENA API and FTP for data retrieval (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.3"
+    last_updated: "2026-11-04"
 ---
 
 # ENA Database
@@ -37,6 +37,9 @@ This skill should be used when:
 | Gene-centric annotation (symbols, RefSeq, GO) from NCBI Gene | `alterlab-gene-db` |
 | Genome annotation, VEP, orthologs, or coordinate lookups | `alterlab-ensembl` |
 | Running BLAST locally against a custom database | `alterlab-blast` |
+| Curated protein sequences, function, domains or UniProt accessions | `alterlab-uniprot` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-geo`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 
@@ -151,9 +154,10 @@ url = ("https://www.ebi.ac.uk/ena/portal/api/filereport"
 
 **Search for all samples in a study:**
 ```python
-# Use Portal API to list samples
+# Use Portal API to list samples; limit=0 returns every record
+# (scripts/query_ena.py --limit defaults to 100)
 study_id = "PRJNA123456"
-url = f"https://www.ebi.ac.uk/ena/portal/api/search?result=sample&query=study_accession={study_id}&format=tsv"
+url = f"https://www.ebi.ac.uk/ena/portal/api/search?result=sample&query=study_accession={study_id}&format=tsv&limit=0"
 ```
 
 **Find assemblies for a specific organism:**
@@ -193,6 +197,7 @@ Integrate with EBI's NCBI BLAST service (REST/SOAP API) for sequence similarity 
 **Data Citation:**
 - Always cite using Study/Project accessions when publishing
 - Include accession numbers for specific samples, runs, or assemblies used
+- End every answer with a short "How this was retrieved" line: the Portal API endpoint (`/search` or `/filereport`) with its `result`, `query` or `accession`, `fields` and `limit`, the number of records returned (checked against `/count`), and the retrieval date
 
 **API Response Handling:**
 - Check HTTP status codes before processing responses

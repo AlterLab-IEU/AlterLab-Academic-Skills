@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch WebSearch
 compatibility: No API key required. Guidance-focused, conversational skill; optionally uses WebFetch/WebSearch to pull cross-disciplinary analogies or check whether a research gap is already covered.
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.2"
+    last_updated: "2026-11-04"
 ---
 
 # Scientific Brainstorming
@@ -36,6 +36,8 @@ This skill should be used when:
 | Grading evidence, critiquing a study design, or naming biases and fallacies | `alterlab-scientific-thinking` |
 | Clarifying a vague research question through guided Socratic dialogue before a literature investigation | `alterlab-deep-research` (socratic mode) |
 | Checking systematically whether a candidate gap is already covered in the literature | `alterlab-literature-review` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-hypothesis-gen`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Principles
 
@@ -107,7 +109,9 @@ Help the scientist generate a wide range of ideas without judgment. The goal is 
 - Rapid-fire idea generation with the scientist
 - Build on their suggestions with "Yes, and..."
 - Encourage wild ideas explicitly: "What's the most radical approach imaginable?"
-- Consult references/brainstorming_methods.md for additional structured techniques
+- Consult references/brainstorming_methods.md for additional structured techniques. Do any lookup (this file, or a search for
+  whether a gap is already covered) before you start writing the reply, not partway through it, so the whole answer
+  arrives in one message
 
 ### Phase 3: Connection Making
 
@@ -196,6 +200,9 @@ Consult this file when the scientist requests a specific methodology or when the
 ## Notes
 
 - This is a **conversation**, not a lecture. The scientist should be doing at least 50% of the talking.
+- A conversation never means withholding what was asked for: when the user asks you to spot research gaps or
+  opportunities, this reply carries the candidate gaps, the two or three most promising, and a concrete next step for
+  each. Questions about their context can come before or after that content, not instead of it.
 - Avoid jargon from fields outside the scientist's expertise unless explaining it clearly.
 - Be comfortable with silence—give space for thinking.
 - Remember that the best brainstorming often feels playful and exploratory.

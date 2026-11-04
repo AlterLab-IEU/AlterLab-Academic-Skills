@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*) WebFetch
 compatibility: "No API key required. The chooser and the eligibility/timing pre-screen run offline via `uv run python` on the standard library only. Every amount, date and rule is dated to TÜBİTAK programme pages and call documents read on 2026-09-23 and changes with each call, so WebFetch the live tubitak.gov.tr programme page before quoting figures."
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-09-23"
+  version: "1.0.2"
+  last_updated: "2026-11-04"
   depends_on: "alterlab-tubitak-proposal (ARDEB project grants incl. 3501, routed there)"
 ---
 
@@ -65,6 +65,10 @@ after an award; or understanding how BİDEB support combines with an ARDEB proje
 | Whether a journal is currently in **TR Dizin** (for Tablo 1 counting) | `alterlab-trdizin` |
 | Non-TÜBİTAK funders (NSF, NIH and similar) or generic proposal craft | `alterlab-research-grants` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-tubitak-proposal`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+In scope here is only choosing, checking eligibility for, or preparing an application to a BİDEB programme. A BİDEB award mentioned as background (a past 2218, 2219 or 2224-A behind a CV, an incentive score or a doçentlik file) is context, not a BİDEB question. A hand-off names the sibling and what to bring to it, and adds no programme facts, eligibility opinions, criteria or descriptions from this skill. For ARDEB grants (3501, 1001, 1002-A) that includes their criteria, caps and eligibility: `alterlab-tubitak-proposal` holds them.
+
 ---
 
 ## Framework 1 — Programme Chooser
@@ -116,15 +120,15 @@ prints the gates it cannot compute as a "verify by hand" list. Its verdicts are
 
 ```bash
 # Screen a profile (JSON keys are documented in the script's docstring)
-uv run python skills/turkish-academia/alterlab-tubitak-bideb/scripts/bideb_prescreen.py \
+uv run python scripts/bideb_prescreen.py \
     screen profile.json --programs 2218,2219
 
 # Which 2026 period fits a guest arrival (2221) or an event start (2224a, 2223b)?
-uv run python skills/turkish-academia/alterlab-tubitak-bideb/scripts/bideb_prescreen.py \
+uv run python scripts/bideb_prescreen.py \
     timing --program 2224a --date 2027-03-10
 
 # Offline self-test
-uv run python skills/turkish-academia/alterlab-tubitak-bideb/scripts/bideb_prescreen.py --self-test
+uv run python scripts/bideb_prescreen.py --self-test
 ```
 
 Minimal profile for a domestic-postdoc question:

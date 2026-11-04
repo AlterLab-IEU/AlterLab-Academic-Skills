@@ -41,7 +41,9 @@ max_redirects = 10
 # Paths to skip entirely. Keeps CI focused on user-facing content.
 # Entries are regexes matched against the path: anchor them, or ".git" also matches
 # "digital-humanities" (any character + "git") and silently skips that skill.
-exclude_path = ["(^|/)node_modules/", "(^|/)\\.git/", "(^|/)\\.github/ISSUE_TEMPLATE/"]
+# evals/fixtures/ holds test inputs, some with deliberately broken links or fabricated DOIs
+# (link-health and citation-verifier cases); checking them would only report the plants.
+exclude_path = ["(^|/)node_modules/", "(^|/)\\.git/", "(^|/)\\.github/ISSUE_TEMPLATE/", "(^|/)evals/fixtures/"]
 
 # Placeholder / example DOIs deliberately included in template files as
 # illustrative filler (e.g. doi.org/xxxxx, doi.org/10.xxxx). These are

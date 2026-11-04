@@ -131,8 +131,7 @@ Top level is unchanged (name, owner, metadata). Each of the 13 plugin entries ch
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "alterlab-academic-skills",
   "owner": {
-    "name": "AlterLab @ Izmir University of Economics",
-    "email": "alterlab.ieu@gmail.com"
+    "name": "AlterLab @ Izmir University of Economics"
   },
   "metadata": {
     "description": "180 Claude skills for academic research, organized by domain",

@@ -1,13 +1,13 @@
 # AlterLab Academic Skills — by AlterLab Creative Technologies Laboratory
 
-> **Project**: AlterLab Academic Skills — 242 Claude AI skills for faculty and researchers
+> **Project**: AlterLab Academic Skills — 241 Claude AI skills for faculty and researchers
 > **Owner**: AlterLab Creative Technologies Laboratory
 
 ---
 
 ## Project Overview
 
-This project provides **242 professional Claude AI skills** organized into 18 domain categories for faculty members, academicians, and researchers. Each skill transforms Claude into a domain-specific expert assistant tailored to academic research, scientific computing, and scholarly publishing workflows.
+This project provides **241 professional Claude AI skills** organized into 18 domain categories for faculty members, academicians, and researchers. Each skill transforms Claude into a domain-specific expert assistant tailored to academic research, scientific computing, and scholarly publishing workflows.
 
 The repo is installable as a Claude Code plugin marketplace named `alterlab-academic-skills`, with 18 domain plugins (`alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`, `alterlab-turkish-academia`, `alterlab-faculty-life`, `alterlab-methodology`, `alterlab-social-science-workflow`, `alterlab-workflows`) plus two dependency-only bundles (`alterlab-essentials`, `alterlab-complete`, in `plugins/`). `alterlab-workflows` also ships seven Claude Code dynamic-workflow scripts in `skills/workflows/workflows/`, validated by `node scripts/workflow_dryrun.mjs`.
 
@@ -27,7 +27,7 @@ The repo is installable as a Claude Code plugin marketplace named `alterlab-acad
 | Category | Path | Count | Description |
 |----------|------|-------|-------------|
 | Core Pipeline | `skills/core/` | 10 | Research -> Write -> Review -> Publish pipeline + citation-verifier + link-health + workflow-orchestration + skill-finder router |
-| Databases | `skills/databases/` | 39 | Scientific database connectors |
+| Databases | `skills/databases/` | 38 | Scientific database connectors |
 | Bioinformatics | `skills/bioinformatics/` | 38 | Genomics, proteomics, molecular biology |
 | Cheminformatics | `skills/cheminformatics/` | 12 | Chemistry, drug discovery |
 | Clinical Research | `skills/clinical-research/` | 7 | Clinical decision support, medical tools |
@@ -45,7 +45,7 @@ The repo is installable as a Claude Code plugin marketplace named `alterlab-acad
 | Social-Science Workflow | `skills/social-science-workflow/` | 17 | Stage-gated methods spine: orchestrator + 5 validity gates (design, measurement, sampling, reflexivity, inference) + 11 analysis modules (causal-inference, SEM/psychometrics, QCA, SNA, ABM, text-as-data, survey-analysis, qualitative-analysis, multilevel-models, meta-analysis, missing-data) |
 | Research Workflows | `skills/workflows/` | 1 | Portable playbook skill for the 7 packaged dynamic workflows (citation audit, review panel, claim stress-test, PRISMA screening, rebuttal, grant mock panel, literature map) |
 
-**Total: 242 skills across 18 categories**
+**Total: 241 skills across 18 categories**
 
 ---
 
@@ -124,6 +124,12 @@ When MCP tools are available, skills should prefer them over simulated responses
 | `python scripts/gen_marketplace.py` | Regenerate the `alterlab-academic-skills` marketplace, the 18 domain plugins, and the bundles |
 | `claude plugin validate .` | Validate the marketplace with the real Claude Code loader |
 | `node scripts/workflow_dryrun.mjs <script.js> '<args-json>'` | Dry-run a dynamic-workflow script against a mocked runtime |
+| `uv run python scripts/run_evals.py --behavioral --skill <name>` | Live skilled-vs-bare grading through the `claude` CLI's login; exit 0 only if every selected case passed (2 = blocked, 3 = partial) |
+| `scripts/eval_sweep.sh LIST N OUTDIR` | Run `--behavioral` over many skills, N at a time (one results file per skill) |
+| `python3 scripts/check_keyless.py` | Keyless-first rule: every skill does what it claims with no external API key (credentials only optional, declared in `metadata.credentials`) |
+| `uv run python scripts/defect_scan.py RESULTS_DIR` | Flag missing inputs, denied tools, crashed scripts and blocked hosts in saved results (no model) |
+| `uv run python scripts/run_benchmark.py` | Five-task live benchmark with deterministic scoring (`benchmarks/`); results in `eval-results/` |
+| `python3 scripts/build_bundles.py release --out dist --verify` | Build and verify every release archive (the only packaging path) |
 
 ---
 

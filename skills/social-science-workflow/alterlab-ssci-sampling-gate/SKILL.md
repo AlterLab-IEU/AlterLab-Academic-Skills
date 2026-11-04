@@ -2,7 +2,7 @@
 name: alterlab-ssci-sampling-gate
 description: "Gates who is sampled, how, and how many before data collection — checks that the sampling FRAME matches the target population (coverage error), that the METHOD is named (probability vs non-probability: simple random, stratified, cluster, systematic, quota, convenience, snowball), that sample SIZE follows the inference paradigm (an a-priori power analysis for hypothesis tests, a precision/margin-of-error target for estimation, or saturation/information power for qualitative studies — never a rule of thumb or collect-until-significant), and that the generalization claim matches the sample (statistical generalization only from probability samples). Use when asking how many participants are needed, planning recruitment, running or checking a power analysis, or judging whether a sample supports a population claim. For questionnaire items prefer alterlab-survey-design; for choosing the statistical test prefer alterlab-test-selection-guard. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. A discipline-enforcing sampling-and-power skill; the optional sample-size calculator runs locally via `uv run python` (standard library only).
 metadata:
     skill-author: AlterLab
@@ -49,6 +49,8 @@ population. Coverage error and self-selection are not cured by collecting more.
 | Executing the power analysis / analysis in software | `alterlab-statistical-analysis` | Computation; this gate sets the *logic*, hands execution off. |
 | Deep grounded-theory / coding mechanics | `alterlab-qualitative-methods` | This gate sets saturation *logic*; that skill does the qual depth. |
 | Choosing the design & identifying assumption | `alterlab-ssci-design-gate` | Design routing, upstream of sampling. |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-survey-design`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Three sizing logics — pick by the inference, not by habit
 
@@ -104,6 +106,10 @@ the final generalization claim against `sampling_method` + `generalization`.
 ## References
 
 - `references/sampling_and_power.md` — sizing logics, design effects, finite-population correction, reporting templates.
-- `scripts/sample_size.py` — stdlib a-priori N for two-group mean and two-proportion designs.
+- `scripts/sample_size.py` — stdlib a-priori N for two-group mean (`mean --d`), two-proportion
+  (`prop --p1 --p2`) and proportion-precision (`precision --margin --p`) designs. Inputs must be
+  finite; alpha, power, p, p1, p2 strictly in (0, 1) with power > alpha; d ≠ 0 and p1 ≠ p2 (a
+  zero effect has no finite N); margin in (0, 1) on the proportion scale (0.03 = ±3 points).
+  Invalid input exits 2.
 
 Part of the AlterLab Academic Skills suite.

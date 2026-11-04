@@ -13,11 +13,11 @@
 ## Installation
 
 ```bash
-# Core library
-uv pip install edgartools
+# Core library (no install step; pin a Python >= 3.10 interpreter)
+uv run --python ">=3.11" --with "edgartools>=5.58" python script.py
 
 # For MCP server and Skills
-uv pip install "edgartools[ai]"
+uv run --python ">=3.11" --with "edgartools[ai]>=5.58" python script.py
 ```
 
 ---
@@ -261,7 +261,7 @@ print(f"Saved {len(md)} characters")
 Add your name and email to the `env` section of your MCP config. The SEC requires identification.
 
 **"Module edgar.ai not found"**
-Install with AI extras: `uv pip install "edgartools[ai]"`
+Run with the AI extras: `uv run --python ">=3.11" --with "edgartools[ai]>=5.58" python ...`
 
 **"python3: command not found" (Windows)**
 Use `python` instead of `python3` in MCP config.

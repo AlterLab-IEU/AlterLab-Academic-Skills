@@ -14,10 +14,11 @@
     {
       "id": "larger-than-memory-array-zarr",
       "prompt": "I need to normalize a 100000x100000 float array stored in Zarr by subtracting the mean and dividing by the std, but it's way bigger than my 48 GB of RAM. What's the right way to do this in chunks?",
-      "expected_output": "Invokes alterlab-dask using dask.array: loads with da.from_zarr, chooses chunk sizes around 100 MB, expresses (x - x.mean()) / x.std() as blocked operations that run per-chunk in parallel, and writes back with da.to_zarr. Notes chunk-size tradeoffs (too large overflows memory, too small adds scheduling overhead).",
+      "expected_output": "Invokes alterlab-dask using dask.array: loads with da.from_zarr, chooses chunk sizes around 100 MB, computes the global mean and std first (one dask.compute pass) and then applies (x - mean) / std as blocked operations that run per-chunk in parallel, and writes back with da.to_zarr. Explains that the lazy one-liner (x - x.mean()) / x.std() makes every output chunk wait on a full-array reduction, so the loaded input stays in memory, which fails for an array larger than RAM. Notes chunk-size tradeoffs (too large overflows memory, too small adds scheduling overhead).",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Recommends dask.array with explicit chunking (~100 MB) and blocked/lazy computation rather than loading the full array into NumPy." }
+        { "type": "behavior", "value": "Recommends dask.array with explicit chunking (~100 MB) and blocked/lazy computation rather than loading the full array into NumPy." },
+        { "type": "behavior", "value": "Computes the mean and std in a first pass (for example one dask.compute call) before the elementwise normalization, or otherwise warns that the lazy (x - x.mean()) / x.std() keeps the input in memory until the reduction completes; it does not present that one-liner as safe for an array larger than RAM." }
       ]
     },
     {

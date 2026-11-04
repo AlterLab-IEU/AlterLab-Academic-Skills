@@ -13,6 +13,7 @@
     },
     {
       "id": "draft-yaygin-etki-section",
+      "files": ["fixtures/1001_taslak.md"],
       "prompt": "My ARDEB 1001 draft is mostly done but the reviewers always complain my yaygın etki section is thin. Can you help me write the öngörülen çıktılar and öngörülen etkiler parts properly?",
       "expected_output": "Invokes alterlab-tubitak-proposal to draft the §4 YAYGIN ETKİ (broader impact) section: populates all three sub-parts — 4.1 Öngörülen Çıktılar (scientific/academic, economic/commercial/social and researcher-training outputs with timing), 4.2 Öngörülen Etkiler (application areas, end users, socio-economic/cultural contribution) and 4.3 the dissemination / bilim iletişimi activity plan (target audience, goals, tools, timing) — mapping the user's material to the TÜBİTAK yaygın-etki structure rather than a generic broader-impacts paragraph. Notes that yaygın etki carries 20% of the 1001 panel score and ties outputs to the work packages.",
       "assertions": [

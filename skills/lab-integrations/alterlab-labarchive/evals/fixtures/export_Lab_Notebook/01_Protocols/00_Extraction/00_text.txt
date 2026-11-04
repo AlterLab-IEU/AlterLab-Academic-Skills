@@ -1,0 +1,1 @@
+Extraction protocol: lyse, bind, wash, elute. Yield recorded in run records.

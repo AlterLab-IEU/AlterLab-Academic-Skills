@@ -34,18 +34,21 @@ In PyHealth 2.x, dataset constructors take an explicit table list naming the sou
 - 40,000+ critical care patients
 - Diagnoses, procedures, medications, lab results
 - Usage: `from pyhealth.datasets import MIMIC3Dataset`
+- Full data: the user's own PhysioNet credentialed copy. Keyless: MIMIC-III Demo 1.4 (`physionet.org/files/mimiciii-demo/1.4/`, 100 patients) or PyHealth's synthetic MIMIC-III (`root="https://storage.googleapis.com/pyhealth/Synthetic_MIMIC-III/"`)
 
 **MIMIC-IV Datasets** (`MIMIC4EHRDataset`, `MIMIC4NoteDataset`, `MIMIC4CXRDataset`, `MIMIC4Dataset`)
 - Hospital + ICU EHR from Beth Israel Deaconess (MIMIC-IV), with optional notes and chest X-rays
 - `MIMIC4EHRDataset(root=..., tables=[...])` for structured EHR only
 - `MIMIC4Dataset(ehr_root=..., ehr_tables=[...], note_root=..., cxr_root=...)` to combine modalities
 - Usage: `from pyhealth.datasets import MIMIC4EHRDataset`
+- Full data: the user's own PhysioNet credentialed copy. Keyless: MIMIC-IV Clinical Database Demo 2.2 (`physionet.org/files/mimic-iv-demo/2.2/`, 100 patients, same `hosp/` and `icu/` layout; download it and pass the local folder as `root=`)
 
 **eICU Dataset** (`eICUDataset`)
 - Multi-center critical care database
 - 200,000+ admissions from 200+ hospitals
 - Standardized ICU data across facilities
 - Usage: `from pyhealth.datasets import eICUDataset`
+- Full data: the user's own PhysioNet credentialed copy. Keyless: eICU-CRD Demo 2.0.1 (`physionet.org/files/eicu-crd-demo/2.0.1/`, 2,520 unit stays; its `.csv.gz` files satisfy the loader's `.csv` paths)
 
 **OMOP Dataset** (`OMOPDataset`)
 - Observational Medical Outcomes Partnership format

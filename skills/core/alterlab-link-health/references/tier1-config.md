@@ -135,7 +135,7 @@ jobs:
 - Args reference `.lychee.toml` via `--config` — keep inline args to the glob only.
 - `fail: true` — CI fails on residual errors so regressions are visible.
 - `permissions: contents: read` — least privilege; the workflow doesn't need write.
-- `GITHUB_TOKEN` exposed — lychee authenticates github.com URLs (higher rate limit).
+- `GITHUB_TOKEN` exposed — lychee authenticates github.com URLs (higher rate limit). It is optional: the workflow's built-in token is enough, and a local run needs no token at all. Without one, github.com may answer 403 or 429, which the `accept` set above already treats as reachable rather than dead.
 
 ## The gotcha that motivated this tier
 

@@ -6,7 +6,7 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Runs under `uv run python` with histolab 0.7.0 (still the latest release, Feb 2024) in a **dedicated environment**: it requires Python >= 3.8, < 3.12 and pins numpy <= 1.24.4, scipy < 1.10.1, scikit-image < 0.19.4 and openslide-python 1.3.1 — it will not co-install with a modern numpy 2.x / Python 3.12+ stack. The OpenSlide C library must also be present (`uv pip install openslide-bin`, or `brew install openslide` / `apt install libopenslide0`). No API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.1.1"
     last_updated: "2026-09-23"
 ---
 
@@ -29,6 +29,9 @@ Use histolab for lightweight WSI tile pipelines: tissue detection, building tile
 | DICOM whole-slide or radiology images rather than SVS/NDPI | `alterlab-pydicom`, `alterlab-imaging-data-commons` |
 | Spatial transcriptomics on tissue sections | `alterlab-squidpy-spatial` |
 | Managing/versioning the slide collection itself | `alterlab-omero`, `alterlab-lamindb` |
+| Single-cell RNA-seq analysis of an `.h5ad` (QC, normalisation, Leiden clustering, marker genes) | `alterlab-scanpy` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-pathml`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Installation
 

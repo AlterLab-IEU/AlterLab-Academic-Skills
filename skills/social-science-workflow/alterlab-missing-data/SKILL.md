@@ -2,7 +2,7 @@
 name: alterlab-missing-data
 description: "Handles missing data with principled methods — forces an explicit MCAR / MAR / MNAR mechanism statement, then applies multiple imputation by chained equations (MICE) with Rubin's-rules pooling of estimates and standard errors, or full-information maximum likelihood (FIML) where a likelihood/SEM model applies. Uses statsmodels MICE / MICEData in Python or the field-standard R mice via Rscript, and warns that single (mean/regression) imputation and scikit-learn's IterativeImputer return one completed dataset without Rubin's-rules pooling, so they understate standard errors if used as multiple imputation. Use when a dataset has missing values, when choosing an imputation strategy, or when reporting how missingness was handled. For general modeling on complete data prefer alterlab-statistical-analysis; for latent-variable models with FIML prefer alterlab-sem-psychometrics. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "Requires (declare in-session, no runtime install on Anthropic API): Python statsmodels>=0.14 (statsmodels.imputation.mice), pandas; scikit-learn IterativeImputer only for single imputation (NOT Rubin pooling) — OR the field-standard R mice>=3.19 via Rscript (mice/with/pool). Runs locally via `uv run python` / `Rscript`; no API key."
 metadata:
     skill-author: AlterLab
@@ -40,6 +40,10 @@ SINGLE IMPUTATION FAKES CERTAINTY IT DOESN'T HAVE.
 | FIML inside an SEM / latent-variable model | `alterlab-sem-psychometrics` | That skill fits the latent model with FIML. |
 | Survey weights / design (a different kind of "adjustment") | `alterlab-survey-analysis` | Design-based inference, not imputation. |
 | Whether the study design is sound | `alterlab-ssci-design-gate` | Design routing. |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-statistical-analysis`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+**Running the code.** In Claude Code, run analysis code in a throwaway environment instead of installing packages: `uv run --python ">=3.11" --with "statsmodels>=0.14" --with pandas python impute.py`. This needs no install approval and leaves the user's environment untouched. If `uv` or the network is unavailable, say so and hand over the script; never report results you did not compute.
 
 ## Step 1 — state the mechanism (Rubin)
 

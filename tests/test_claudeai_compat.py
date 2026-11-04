@@ -54,3 +54,16 @@ def test_packaging_strips_to_whitelist(skill_md: Path) -> None:
     )
     # A stripped skill must still carry the load-bearing keys.
     assert "name" in keys and "description" in keys, "packaging dropped name/description"
+
+
+def test_package_writes_complete_sanitized_skills(tmp_path: Path) -> None:
+    """`--package OUT` goes through the release packaging path: whole skill folders (agents,
+    the per-skill shared/ copies, notices) with only whitelisted frontmatter keys."""
+    assert cc.main(["--package", str(tmp_path)]) == 0
+    sd = tmp_path / "core" / "alterlab-deep-research"
+    keys = cc.top_level_keys(sd / "SKILL.md")
+    assert keys and not [k for k in keys if k not in cc.CLAUDEAI_WHITELIST]
+    assert (sd / "shared" / "handoff_schemas.md").is_file()
+    assert (sd / "agents").is_dir() and (sd / "LICENSE").is_file() and (sd / "NOTICE").is_file()
+    written = sorted(p.parent.name for p in tmp_path.glob("*/*/SKILL.md"))
+    assert written == sorted(p.parent.name for p in (REPO_ROOT / "skills").glob("*/*/SKILL.md"))

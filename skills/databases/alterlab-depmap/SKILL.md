@@ -2,7 +2,7 @@
 name: alterlab-depmap
 description: Query the Cancer Dependency Map (DepMap) for cancer cell line gene dependency scores (CRISPR Chronos), drug sensitivity data, and gene effect profiles. Use when identifying cancer-specific genetic vulnerabilities, finding synthetic lethal interactions, checking whether a gene is essential in given cell lines, or validating oncology drug targets. Part of the AlterLab Academic Skills suite.
 license: CC-BY-4.0
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
 compatibility: Keyless DepMap public data downloads/API (no authentication required)
 metadata:
     skill-author: AlterLab
@@ -46,6 +46,8 @@ Use DepMap when:
 | Curated somatic mutation catalog, Cancer Gene Census | `alterlab-cosmic` |
 | Aggregated target–disease evidence, tractability, safety | `alterlab-opentargets` |
 | Compound potency (IC50/Ki) against purified targets | `alterlab-chembl` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-cbioportal`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Concepts
 

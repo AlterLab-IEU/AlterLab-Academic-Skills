@@ -4,29 +4,33 @@
     {
       "id": "seed-doi-map",
       "prompt": "I have one key paper, DOI 10.1038/nphys1170. Map the literature around it for me — I want to see what it cites and what cites it, as a network I can open in Gephi.",
-      "expected_output": "Invokes alterlab-citation-graph: runs build_graph.py with the seed DOI against the free OpenAlex API (using OPENALEX_API_KEY when set; keyless calls work only while the shared per-IP budget lasts), walks both directions of the citation network (the seed's referenced_works and its cited_by set), and exports a GraphML file (plus JSON) the user can open in Gephi.",
+      "expected_output": "Invokes alterlab-citation-graph: runs build_graph.py with the seed DOI with no key or account needed (references and citing works from the keyless OpenCitations index, with Semantic Scholar for works OpenCitations has no data for, and titles from Crossref), walks both directions of the citation network (the seed's reference list and the works citing it), and exports a GraphML file (plus JSON) the user can open in Gephi.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "OpenAlex" },
-        { "type": "behavior", "value": "Builds the graph from the seed DOI via OpenAlex, recommends a free OpenAlex API key rather than the retired mailto polite pool, and exports GraphML for Gephi." }
+        { "type": "output_contains", "value": "OpenCitations" },
+        { "type": "behavior", "value": "Builds the graph from the seed DOI via the keyless OpenCitations / Semantic Scholar route without asking for an API key, account or mailto address, and exports GraphML for Gephi." }
       ]
     },
     {
       "id": "cocitation-seminal",
+      "files": ["fixtures/seed_paper.txt"],
       "prompt": "Starting from this seed paper, which papers are the most co-cited / central in this area? I want the seminal works in the field around my DOI, ranked.",
-      "expected_output": "Invokes alterlab-citation-graph: builds the citation neighbourhood from the seed via OpenAlex and returns the co-citation ranking table (scored by shared references, shared citers, and direct seed links, tie-broken by global cited_by_count) to surface the most central / seminal works, like ResearchRabbit's similarity panel.",
+      "expected_output": "Invokes alterlab-citation-graph: builds the citation neighbourhood from the seed via OpenCitations (Semantic Scholar where it has no data) and returns the co-citation ranking table (scored by shared references, shared citers, and direct seed links, tie-broken by global cited_by_count) to surface the most central / seminal works, like ResearchRabbit's similarity panel.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Ranks neighbourhood papers by co-citation strength rather than just listing references." }
+        { "type": "behavior", "value": "Ranks neighbourhood papers by co-citation strength rather than just listing references." },
+        { "type": "behavior", "value": "Builds the ranking from the seed paper in the attached file (Deep learning, 10.1038/nature14539) instead of asking the user for a DOI." }
       ]
     },
     {
       "id": "multi-seed-landscape",
+      "files": ["fixtures/foundational_papers.txt"],
       "prompt": "Here are three foundational papers in my topic (two DOIs and an arXiv id, arXiv:1706.03762). Build me a combined citation map across all three so I can see how the subfield connects.",
-      "expected_output": "Invokes alterlab-citation-graph with multiple --seed values (DOI and arXiv forms both normalized to OpenAlex selectors), assembles one merged citation/co-citation graph across all seeds, ranks the shared neighbourhood by co-citation, and exports GraphML + JSON.",
+      "expected_output": "Invokes alterlab-citation-graph with multiple --seed values (DOIs as given, the arXiv id normalized to its DataCite DOI 10.48550/arXiv.1706.03762), assembles one merged citation/co-citation graph across all seeds, ranks the shared neighbourhood by co-citation, and exports GraphML + JSON.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Accepts several seeds (DOI and arXiv) and merges them into a single combined graph." }
+        { "type": "behavior", "value": "Accepts several seeds (DOI and arXiv) and merges them into a single combined graph." },
+        { "type": "behavior", "value": "Passes all three seeds from the attached list (10.1162/neco.1997.9.8.1735, 10.18653/v1/N19-1423 and arXiv:1706.03762) to a single combined run instead of asking for the two DOIs." }
       ]
     },
     {
@@ -40,11 +44,13 @@
     },
     {
       "id": "no-key-researchrabbit",
+      "files": ["fixtures/my_paper.txt"],
       "prompt": "Is there a free way to do what ResearchRabbit does — build a citation graph around a paper without paying or making an account? I just have a DOI.",
-      "expected_output": "Invokes alterlab-citation-graph, positioning itself as the free, subscription-free ResearchRabbit analog built on the open OpenAlex API, notes that a free OpenAlex account/API key is recommended (keyless requests share a small per-IP daily budget), and builds the citation/co-citation graph from the user's DOI, exporting GraphML + JSON.",
+      "expected_output": "Invokes alterlab-citation-graph, positioning itself as the free, subscription-free ResearchRabbit analog built on open citation data (OpenCitations and Semantic Scholar, with titles from Crossref), notes that no account or key is needed (an optional Semantic Scholar key only raises its rate limit), and builds the citation/co-citation graph from the user's DOI, exporting GraphML + JSON.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Frames itself as the free, no-subscription ResearchRabbit alternative, is accurate that a free OpenAlex API key is recommended, and proceeds to build the graph from the DOI." }
+        { "type": "behavior", "value": "Frames itself as the free, no-subscription ResearchRabbit alternative, is accurate that no API key or account is needed (and does not ask for one), and proceeds to build the graph from the DOI." },
+        { "type": "behavior", "value": "Builds the graph from the DOI in the attached file (10.1037/0003-066X.55.1.68) instead of asking the user for one." }
       ]
     },
     {
@@ -59,19 +65,19 @@
     {
       "id": "near-miss-research-lookup",
       "prompt": "Look up current research on diffusion models for video generation and give me a cited report — I don't have a starting paper, just route my question to whatever search backend is best.",
-      "expected_output": "Does NOT invoke this skill; defers to alterlab-research-lookup. The user has a free-text research question with no seed DOI and wants a routed, cited research report, not a citation graph. citation-graph needs a seed work to walk OpenAlex edges from; open-ended query routing belongs to research-lookup.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-research-lookup. The user has a free-text research question with no seed DOI and wants a routed, cited research report, not a citation graph. citation-graph needs a seed work to walk citation edges from; open-ended query routing belongs to research-lookup.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-research-lookup" }
       ]
     },
     {
-      "id": "near-miss-openalex",
-      "prompt": "Using OpenAlex, how many papers did my university publish on climate adaptation each year since 2015, and which of our authors are most cited in that area?",
-      "expected_output": "Does NOT invoke this skill; defers to alterlab-openalex. The user wants bibliometric counts and author rankings from OpenAlex queries (filters, group_by), not a citation/co-citation network grown from a seed paper. citation-graph walks references and citers of seed works; institutional publication trends are the OpenAlex database skill's job.",
+      "id": "near-miss-pubmed",
+      "prompt": "In PubMed, which randomized trials on GLP-1 receptor agonists and acute pancreatitis have been published since 2018, and which are the most cited? List each with its PMID and MeSH terms, and pull PubMed's 'similar articles' for the largest trial.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-pubmed. The user wants PubMed records (a MeSH/Boolean E-utilities search with PMIDs and MeSH terms, plus PubMed's ELink similar-articles list), not a citation/co-citation network grown from a seed paper. citation-graph walks references and citers of seed works; biomedical record retrieval from PubMed is the PubMed database skill's job.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
-        { "type": "output_contains", "value": "alterlab-openalex" }
+        { "type": "output_contains", "value": "alterlab-pubmed" }
       ]
     }
   ]

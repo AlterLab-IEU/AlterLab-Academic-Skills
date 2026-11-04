@@ -143,7 +143,7 @@ The 60% interval is q20–q80 and the 80% interval is q10–q90 (TimesFM 2.5 qua
 uv pip install "timesfm[torch]" matplotlib pandas numpy
 
 # Run the complete example
-cd skills/data-science/alterlab-timesfm/examples/global-temperature
+cd examples/global-temperature   # from the alterlab-timesfm skill directory
 ./run_example.sh
 ```
 

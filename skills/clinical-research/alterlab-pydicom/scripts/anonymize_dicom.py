@@ -2,10 +2,12 @@
 """
 Anonymize DICOM files by removing or replacing Protected Health Information (PHI).
 
-This is a first-pass tag scrubber, not a validated de-identification profile: it does
-not shift other dates, replace UIDs, walk nested sequences, or detect text burned into
-the pixel data. For data leaving your institution, use a DICOM PS3.15 Annex E based
-tool (e.g. `deid` or `dicognito`) and review the output.
+This is a first-pass tag scrubber, not a validated de-identification profile: it applies
+the tag list below at every level, including inside sequences (e.g. an Accession Number
+repeated in Request Attributes Sequence), but it does not shift other dates, replace UIDs,
+or detect text burned into the pixel data; it only warns when Burned In Annotation is YES.
+For data leaving your institution, use a DICOM PS3.15 Annex E based tool (e.g. `deid` or
+`dicognito`) and review the output.
 
 Usage:
     python anonymize_dicom.py input.dcm output.dcm
@@ -20,7 +22,8 @@ from pathlib import Path
 try:
     import pydicom
 except ImportError:
-    print("Error: pydicom is not installed. Install it with: pip install pydicom")
+    print("Error: pydicom is not installed. Run this script with: "
+          "uv run --python \">=3.11\" --with \"pydicom>=3.0\" python anonymize_dicom.py ...")
     sys.exit(1)
 
 
@@ -64,21 +67,36 @@ def anonymize_dicom(input_path, output_path, patient_id='ANONYMOUS', patient_nam
         # Track what was anonymized
         anonymized = []
 
-        # Remove or replace sensitive data
-        for tag in PHI_TAGS:
-            if hasattr(ds, tag):
-                if tag == 'PatientName':
-                    ds.PatientName = patient_name
-                    anonymized.append(f"{tag}: replaced with '{patient_name}'")
-                elif tag == 'PatientID':
-                    ds.PatientID = patient_id
-                    anonymized.append(f"{tag}: replaced with '{patient_id}'")
-                elif tag == 'PatientBirthDate':
-                    ds.PatientBirthDate = '19000101'
-                    anonymized.append(f"{tag}: replaced with '19000101'")
-                else:
-                    delattr(ds, tag)
-                    anonymized.append(f"{tag}: removed")
+        # Remove or replace sensitive data at every nesting level: identifiers are often
+        # repeated inside sequences (Request Attributes, Referenced Patient, ...), which a
+        # loop over the top-level dataset never reaches.
+        phi = set(PHI_TAGS)
+
+        def scrub(dataset, elem):
+            tag = elem.keyword
+            if tag not in phi:
+                return
+            where = '' if dataset is ds else ' (inside a sequence)'
+            if tag == 'PatientName':
+                dataset.PatientName = patient_name
+                anonymized.append(f"{tag}{where}: replaced with '{patient_name}'")
+            elif tag == 'PatientID':
+                dataset.PatientID = patient_id
+                anonymized.append(f"{tag}{where}: replaced with '{patient_id}'")
+            elif tag == 'PatientBirthDate':
+                dataset.PatientBirthDate = '19000101'
+                anonymized.append(f"{tag}{where}: replaced with '19000101'")
+            else:
+                del dataset[elem.tag]
+                anonymized.append(f"{tag}{where}: removed")
+
+        ds.walk(scrub)
+
+        # Tags cannot remove text drawn into the image itself
+        if str(ds.get('BurnedInAnnotation', '')).upper() == 'YES':
+            print(f"WARNING: {input_path}: BurnedInAnnotation is YES - the pixels may show "
+                  "names or IDs; review the image or exclude it before sharing", file=sys.stderr)
+            anonymized.append("BurnedInAnnotation is YES: pixel data needs manual review")
 
         # Vendor private tags frequently carry names, IDs, or dates
         if remove_private:

@@ -3,7 +3,7 @@ name: alterlab-statsmodels
 description: Statistical modeling in Python with statsmodels — OLS/WLS/GLS, GLM, discrete-choice and count models, mixed models, ARIMA/SARIMAX/VAR, with diagnostics, robust standard errors, and coefficient-level inference. Use when fitting specific model classes for econometrics, time series, or rigorous inference with coefficient tables and confidence intervals, or when updating code for statsmodels 0.15 (result_object named results, rng keyword). For guided statistical test selection with APA reporting prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires statsmodels >= 0.14 (current 0.15.0 as of 2026-09; Python >= 3.10). 0.15 adds formulaic as a required dependency and accepts Polars DataFrames.
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "statsmodels>=0.14" --with pandas python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires statsmodels >= 0.14 (current 0.15.0 as of 2026-09; Python >= 3.10). 0.15 adds formulaic as a required dependency and accepts Polars DataFrames.
 metadata:
     skill-author: AlterLab
     version: "1.1.0"
@@ -39,6 +39,8 @@ This skill should be used when:
 | Quasi-experimental causal designs (DiD, IV, RD, panel fixed effects, event studies) as a full workflow | `alterlab-causal-inference` |
 | Predictive machine learning with cross-validated tuning rather than coefficient inference | `alterlab-scikit-learn` |
 | Zero-shot forecasting with a pretrained foundation model instead of fitting ARIMA/ETS | `alterlab-timesfm` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-statistical-analysis`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## statsmodels 0.15 Notes
 

@@ -2,11 +2,12 @@
 name: alterlab-qiskit
 description: Builds, transpiles, and runs quantum circuits with Qiskit, IBM's quantum computing framework, including Qiskit Runtime primitives (Sampler/Estimator), circuit transpilation, and error mitigation on IBM Quantum hardware. Use when targeting IBM Quantum backends, transpiling circuits, running Runtime sessions or batches, or applying resilience/error mitigation. For Google Quantum AI hardware and NISQ circuits prefer alterlab-cirq; for gradient-trained quantum ML and hybrid quantum-classical models prefer alterlab-pennylane; for open-system Lindblad/master-equation dynamics prefer alterlab-qutip. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
-allowed-tools: Read Write Edit Bash(python:*)
-compatibility: No API key required for local simulation. Runs via `uv run python`; requires the qiskit Python package. IBM Quantum hardware/Runtime needs an IBM Quantum account and API token.
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
+compatibility: "No API key required: building circuits, transpilation, and running them on local simulators (`StatevectorSampler`/`StatevectorEstimator`, Aer) — including VQE/QAOA and textbook algorithms — is the core and runs offline under `uv run python` with the qiskit package. Submitting to IBM Quantum hardware via Qiskit Runtime is an optional extra that uses an IBM Quantum token."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    credentials: "optional: QISKIT_IBM_TOKEN (run circuits on IBM Quantum hardware / Runtime primitives; local simulation and transpilation use none)"
+    version: "1.1.1"
     last_updated: "2026-09-23"
 ---
 
@@ -15,6 +16,8 @@ metadata:
 ## Overview
 
 Qiskit is an open-source quantum computing framework. Build quantum circuits, optimize for hardware, execute on simulators or real quantum computers, and analyze results. Supports IBM Quantum (100+ qubit Heron and Nighthawk systems), IonQ, Amazon Braket, and other providers.
+
+**Keyless by default.** The core of this skill — building and transpiling circuits and running them on local simulators (`StatevectorSampler`, `StatevectorEstimator`, Aer), including VQE/QAOA and textbook algorithms — runs entirely offline with no account or token. Submitting to IBM Quantum hardware through Qiskit Runtime is an optional add-on that uses an IBM Quantum token; with no token, transpile for the target backend and run on a (noisy) local simulator first.
 
 **Version note:** Examples target Qiskit SDK 2.x (`qiskit>=2,<3`, Python 3.10+; current 2.5.x as of 2026-09) and `qiskit-ibm-runtime` ≥ 0.40 (current 0.49). Older tutorials break on these changes, so check any snippet you adapt against them:
 - **Qiskit 1.0 removed** `execute()`, `BasicAer`, `qiskit.tools` (incl. `tools.jupyter`, `job_monitor`) and `bind_parameters` — use primitives, `qiskit.providers.basic_provider.BasicSimulator`, and `assign_parameters`.
@@ -38,6 +41,8 @@ Use this skill when the user wants to:
 | Gradient-trained hybrid quantum-classical models with PyTorch/JAX autodiff | `alterlab-pennylane` |
 | Open-system dynamics — Lindblad master equations, decoherence, cavity QED | `alterlab-qutip` |
 | Classical quantum-chemistry (DFT, conformers, pKa) with no quantum circuits | `alterlab-rowan` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-cirq`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 **Key Features:**
 - Configurable transpilation with multiple optimization levels

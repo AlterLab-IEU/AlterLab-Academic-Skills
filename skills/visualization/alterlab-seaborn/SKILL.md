@@ -2,8 +2,8 @@
 name: alterlab-seaborn
 description: Builds statistical plots with the seaborn Python library and pandas DataFrame integration, on attractive matplotlib-based defaults. Use for quick exploration of distributions, relationships, and categorical comparisons — box plots, violin plots, swarm/strip plots, KDE/histograms, pair plots, joint plots, regression plots, correlation heatmaps, and faceted small multiples (relplot/displot/catplot/lmplot). For interactive/hover/zoom charts defer to alterlab-plotly; for exact journal/manuscript styling (column widths, point fonts, CMYK, vector export) defer to alterlab-scientific-viz; for low-level custom matplotlib figures defer to alterlab-matplotlib (seaborn integrates with it for fine-tuning). Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
-compatibility: Requires seaborn >= 0.13 (current 0.13.2 as of 2026-09) and pandas — uv pip install seaborn pandas; verified on matplotlib 3.11 and pandas 3.0; no API key or external service needed
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
+compatibility: Requires seaborn >= 0.13 (current 0.13.2 as of 2026-09) and pandas — no install step, run scripts as uv run --python ">=3.11" --with seaborn python plot.py (seaborn brings pandas and matplotlib); verified on matplotlib 3.11 and pandas 3.0; no API key or external service needed
 metadata:
     skill-author: AlterLab
     version: "1.1.0"
@@ -30,6 +30,8 @@ Use seaborn for quick, attractive statistical graphics straight from a pandas Da
 | A full exploratory-data-analysis report on a data file (structure, quality, summary statistics) | `alterlab-eda` |
 | Choosing and running the statistical test behind a comparison | `alterlab-statistical-analysis` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-plotly`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Design Philosophy
 
 1. **Dataset-oriented** — work directly with DataFrames and named variables, not abstract coordinates.
@@ -39,6 +41,8 @@ Use seaborn for quick, attractive statistical graphics straight from a pandas Da
 5. **Matplotlib integration** — full compatibility with matplotlib customization when needed.
 
 ## Quick Start
+
+Run scripts without installing anything: `uv run --python ">=3.11" --with seaborn python plot.py` resolves seaborn (with pandas and matplotlib) per call, with no virtualenv; `uv pip install` fails outside one.
 
 Examples target **seaborn ≥ 0.13** (verified on 0.13.2, still the current release in September 2026). Two API points that bite on this version: pass `palette=` only together with `hue=` (palette-without-hue is deprecated and slated for removal in v0.14), and style error bars via `err_kws={...}` rather than the deprecated `errcolor`/`errwidth`/`scale`/`join` keywords (slated for removal in v0.15).
 

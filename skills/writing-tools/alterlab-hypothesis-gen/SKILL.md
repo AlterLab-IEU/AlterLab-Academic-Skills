@@ -6,8 +6,8 @@ license: MIT
 compatibility: Hypothesis reasoning runs with the Read/Write/Edit/Bash tools alone; the literature-grounding step uses WebSearch/WebFetch (skip it if offline). Rendering the LaTeX report requires a local XeLaTeX/LuaLaTeX install (e.g. TeX Live) — optional, the analysis stands without it.
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.2"
+    last_updated: "2026-11-04"
 ---
 
 # Scientific Hypothesis Generation
@@ -35,6 +35,10 @@ This skill should be used when:
 | A standalone systematic review or PRISMA evidence synthesis as the deliverable | `alterlab-literature-review` |
 | Grading the evidence quality or design flaws of existing claims | `alterlab-scientific-thinking` |
 | Freezing hypotheses and the analysis plan in a pre-registration before data collection | `alterlab-preregistration-discipline` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-scientific-brainstorm`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+An open-ended brainstorming request still asks for ideas, so after naming `alterlab-scientific-brainstorm` give a short, varied list of loose research directions the user can react to — no hypotheses, predictions or experiment designs, which are this skill's outputs.
 
 ## Workflow
 

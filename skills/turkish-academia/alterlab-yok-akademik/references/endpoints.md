@@ -85,8 +85,9 @@ year-based completed-project info.
   `AkademisyenYayinBilgileri?pubType=<token>&authorId=<id>`); never hardcode a token.
 
 Returns the portal-listed publications. This is the portal's own list — for canonical
-metadata (DOIs, citation counts, deduped co-authors) cross-enrich via
-`alterlab-openalex`, and to check the cited works actually exist via
+metadata (DOIs, citation counts, co-authors) cross-enrich keylessly via the person's
+ORCID record and Crossref, or `alterlab-research-lookup` (see
+`affiliation_verification.md`), and to check the cited works actually exist via
 `alterlab-citation-verifier`.
 
 ## 5. Supervised theses — `AkademisyenYonTezBilgileri`

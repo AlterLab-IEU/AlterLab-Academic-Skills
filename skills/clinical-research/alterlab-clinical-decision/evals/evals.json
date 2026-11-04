@@ -3,12 +3,15 @@
   "evals": [
     {
       "id": "nsclc-biomarker-cohort",
+      "files": ["fixtures/nsclc_pdl1_cohort"],
       "prompt": "Analyze a cohort of 45 NSCLC patients stratified by PD-L1 expression (<1%, 1-49%, >=50%) receiving pembrolizumab. Include ORR, median PFS, median OS with hazard ratios comparing PD-L1 >=50% vs <50%, and generate Kaplan-Meier curves and a waterfall plot.",
       "expected_output": "Invokes alterlab-clinical-decision in Patient Cohort Analysis mode. Stratifies by PD-L1 biomarker subgroups, reports ORR/PFS/OS with hazard ratios and 95% CIs, generates Kaplan-Meier survival curves (with log-rank tests and number-at-risk tables) and a waterfall plot, and outputs a publication-ready LaTeX/PDF document with a full-page page-1 executive summary of colored tcolorbox key-findings. May use generate_survival_analysis.py.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "hazard ratio" },
-        { "type": "behavior", "value": "Produces a biomarker-stratified cohort analysis with Kaplan-Meier curves, hazard ratios, and a waterfall plot as a LaTeX/PDF document." }
+        { "type": "output_contains", "value": ["hazard ratio", "HR 0.", "HR 1.", "HR 2.", "HR=", "HR =", "HR:"] },
+        { "type": "behavior", "value": "Produces a biomarker-stratified cohort analysis with Kaplan-Meier curves, hazard ratios, and a waterfall plot as a LaTeX/PDF document." },
+        { "type": "output_contains", "value": ["0.37", "0.365", "2.74", "2.71"] },
+        { "type": "behavior", "value": "Analyzes the attached nsclc_pdl1_cohort.csv instead of simulating a cohort: 15 patients per PD-L1 group; ORR (CR+PR, the 3 NE patients counted as non-responders unless the response says otherwise) 1/15 (6.7%) for TPS <1%, 5/15 (33.3%) for 1-49% and 7/15 (46.7%) for >=50%; median PFS about 2.2, 4.8 and 8.6 months; PFS HR for TPS >=50% vs <50% about 0.37 (95% CI about 0.17-0.77, p about 0.008); and OS HR about 0.62 (95% CI about 0.22-1.76, p about 0.37), reported as not statistically significant. It does not present these synthetic results as evidence about pembrolizumab." }
       ]
     },
     {
@@ -23,12 +26,15 @@
     },
     {
       "id": "gbm-molecular-subtype-comparison",
+      "files": ["fixtures/gbm_subtype_cohort"],
       "prompt": "Generate a cohort analysis for 30 glioblastoma patients classified into Cluster 1 (Mesenchymal-Immune-Active) and Cluster 2 (Proneural) molecular subtypes. Compare median OS, 6-month PFS rate, and response to TMZ+bevacizumab, with a biomarker profile table and statistical comparison.",
       "expected_output": "Invokes alterlab-clinical-decision in Patient Cohort Analysis mode. Classifies patients by molecular subtype, compares survival outcomes between the two clusters with log-rank tests and hazard ratios, builds biomarker frequency and outcomes tables, and produces a LaTeX/PDF document with the page-1 executive summary. May use biomarker_classifier.py and create_cohort_tables.py.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "molecular subtype" },
-        { "type": "behavior", "value": "Compares molecular-subtype subgroups with survival statistics and tables at the cohort/population level (not an individual patient)." }
+        { "type": "output_contains", "value": ["molecular subtype", "subtype"] },
+        { "type": "behavior", "value": "Compares molecular-subtype subgroups with survival statistics and tables at the cohort/population level (not an individual patient)." },
+        { "type": "output_contains", "value": ["46.2", "64.7", "46%", "65%", "6/13", "11/17"] },
+        { "type": "behavior", "value": "Analyzes the attached gbm_cohort.csv instead of simulating data: Cluster 1 n=13 and Cluster 2 n=17; median OS about 12.3 vs 21.8 months (log-rank p about 0.13; Cox HR about 2.0 for Cluster 1 vs 2, i.e. about 0.50 for 2 vs 1, 95% CI about 0.20-1.24), reported as not statistically significant; 6-month PFS 46.2% (6/13) vs 64.7% (11/17); RANO response 4/13 (30.8%) vs 7/17 (41.2%), Fisher p about 0.71; and a biomarker table showing NF1 loss enriched in Cluster 1 (8/13 vs 2/17) and PDGFRA amplification in Cluster 2 (7/17 vs 1/13), with EGFR amplification and MGMT methylation similar between clusters." }
       ]
     },
     {

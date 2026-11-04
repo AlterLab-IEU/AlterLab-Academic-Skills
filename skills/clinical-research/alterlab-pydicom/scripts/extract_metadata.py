@@ -16,7 +16,8 @@ from pathlib import Path
 try:
     import pydicom
 except ImportError:
-    print("Error: pydicom is not installed. Install it with: pip install pydicom")
+    print('Error: pydicom is not installed. Run with: '
+          'uv run --python ">=3.11" --with "pydicom>=3.0" python extract_metadata.py ...')
     sys.exit(1)
 
 

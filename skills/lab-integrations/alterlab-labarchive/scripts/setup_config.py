@@ -8,6 +8,7 @@ for LabArchives API access.
 
 import getpass
 import os
+import sys
 
 import yaml
 
@@ -161,6 +162,16 @@ def test_authentication(config_path='config.yaml'):
 
 def main():
     """Main setup workflow"""
+    if any(a in ("-h", "--help") for a in sys.argv[1:]):
+        print(__doc__.strip())
+        print("\nUsage: python setup_config.py   (interactive: prompts for the regional endpoint and"
+              "\ncredentials, then writes config.yaml in the current directory)")
+        return
+    if not sys.stdin.isatty():
+        # Prompting without a terminal would block forever (e.g. inside an agent or CI).
+        print("setup_config.py is interactive and needs a terminal; stdin is not a TTY. Run it in a "
+              "terminal, or write config.yaml by hand as described in the skill.", file=sys.stderr)
+        sys.exit(2)
     print("="*60)
     print("LabArchives API Configuration Setup")
     print("="*60)

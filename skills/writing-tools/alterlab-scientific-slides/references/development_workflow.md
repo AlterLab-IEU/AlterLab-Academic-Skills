@@ -48,10 +48,10 @@ and discussion (slides 13-14) BEFORE creating slides.
 
 **Choose Implementation Method:**
 
-**Option A: PowerPoint (via PPTX skill)**
+**Option A: PowerPoint (keyless: `scripts/build_deck.py`)**
 1. Read `assets/powerpoint_design_guide.md`
-2. Read `document-skills/pptx/SKILL.md`
-3. Choose approach (programmatic or template-based)
+2. Write the deck plan (JSON) and build it with `scripts/build_deck.py`; for template-based editing, Anthropic's separate `pptx` skill (`document-skills/pptx/SKILL.md`) also works
+3. Choose approach (programmatic plan or template-based)
 4. Create master slides with consistent design
 5. Build presentation following outline
 

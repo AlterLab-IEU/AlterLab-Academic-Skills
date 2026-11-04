@@ -42,6 +42,8 @@ This skill should be used when:
 | Thesis or dissertation chapters with a supervisor-style workflow | `alterlab-thesis-supervisor` |
 | A manuscript for a Turkish journal (TR Dizin rules, Turkish APA 7, bilingual öz) | `alterlab-tr-academic-style` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-paper-writer`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Figures and Visual Elements (Optional)
 
 Well-chosen figures—such as a graphical abstract, methods flowchart, or conceptual diagram—can strengthen a manuscript, but they are optional and should be added only where they genuinely improve clarity. If a diagram or figure would aid comprehension, invoke the **alterlab-scientific-schematics** skill (diagrams/schematics) or the **alterlab-generate-image** skill (images).

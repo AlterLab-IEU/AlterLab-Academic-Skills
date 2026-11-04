@@ -263,6 +263,9 @@ df = pl.read_database_uri("SELECT * FROM table", uri=uri)
 
 ## Cloud Storage
 
+Cloud credentials are only for your own private buckets: local files, public `https://` URLs
+and public buckets need no key or account.
+
 ### AWS S3
 
 ```python

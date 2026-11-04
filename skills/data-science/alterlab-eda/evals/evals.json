@@ -3,38 +3,50 @@
   "evals": [
     {
       "id": "fastq-sequence-eda",
+      "files": ["fixtures/reads.fastq"],
       "prompt": "I just got reads.fastq back from the sequencer. Can you explore this file and tell me what's in it and whether the quality looks OK before I run my pipeline?",
       "expected_output": "Invokes alterlab-eda: detects the .fastq extension as bioinformatics/genomics, loads the bioinformatics_genomics_formats reference, and runs sequence-appropriate EDA (read count, length distribution, GC content, per-base quality scores) using Biopython SeqIO, then writes a markdown report (reads_eda_report.md) with format description, QC findings, and downstream recommendations.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Detects the file as FASTQ, assesses quality scores and GC content, and produces a markdown EDA report with downstream-analysis recommendations." }
+        { "type": "behavior", "value": "Detects the file as FASTQ, assesses quality scores and GC content, and produces a markdown EDA report with downstream-analysis recommendations." },
+        { "type": "output_contains", "value": ["1,000", "1000"] },
+        { "type": "behavior", "value": "Reports what the attached reads.fastq contains: 1,000 single-end 100 bp reads in Phred+33, GC near 45%, per-base quality around Q35 through cycle 60 falling to about Q24 by cycle 100, and Illumina adapter read-through (AGATCGGAAGAGC...) in about 6% of reads, and recommends adapter and 3'-end quality trimming before the pipeline." }
       ]
     },
     {
       "id": "csv-tabular-eda",
+      "files": ["fixtures/experiment_results.csv"],
       "prompt": "Explore experiment_results.csv for me — I want to understand its structure, missing values, and summary stats before I decide what analysis to run.",
       "expected_output": "Invokes alterlab-eda: classifies .csv as a general scientific format, loads it with pandas, and reports dimensions, dtypes, missing-value patterns, summary statistics, correlations, duplicates, and outliers, then emits a markdown report (experiment_results_eda_report.md) with quality metrics and analysis recommendations.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "missing" }
+        { "type": "output_contains", "value": "missing" },
+        { "type": "output_contains", "value": "183" },
+        { "type": "behavior", "value": "Reports the attached experiment_results.csv as 183 rows x 10 columns and finds its specific problems: od600 missing in 12 rows, all in batch B3; ph missing in 5 rows; 3 exact duplicate rows; a temperature_c value of 370.0 (likely a 37.0 entry error); two cell_viability_pct values above 100 (104.2 and 101.7); and a constant incubation_h column (24)." }
       ]
     },
     {
       "id": "nd2-microscopy-eda",
+      "files": ["fixtures/cells.nd2"],
       "prompt": "Analyze cells.nd2 from the confocal — I need to know the dimensions, channels, and pixel calibration before I set up the image-analysis workflow.",
       "expected_output": "Invokes alterlab-eda: recognizes .nd2 as a Nikon microscopy format, loads it with the nd2 package (nd2.ND2File / nd2.imread), extracts multi-dimensional structure (XYZCT, channels, timepoints), pixel size/spatial calibration, and intensity statistics, then writes a markdown report with image-analysis recommendations.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Reports image dimensions/channels and spatial calibration for the ND2 file and recommends suitable downstream image analysis." }
+        { "type": "behavior", "value": "Reports image dimensions/channels and spatial calibration for the ND2 file and recommends suitable downstream image analysis." },
+        { "type": "output_contains", "value": ["0.2075", "0.208", "0.21"] },
+        { "type": "behavior", "value": "Reads the attached cells.nd2 and reports its actual structure: a Z-stack of 7 planes x 2 channels x 96 x 96 px, uint16 holding 12-bit data; voxel size 0.2075 x 0.2075 x 0.5 um (anisotropic Z); channels DAPI (ex 405 / em 450 nm) and AF488 (ex 488 / em 525 nm) on a 60x / NA 1.4 oil objective, laser-scanning confocal; and flags that AF488 clips at 4095 (the 12-bit maximum) on the middle plane while DAPI does not." }
       ]
     },
     {
       "id": "unknown-format-quality-check",
+      "files": ["fixtures/qc_run.mzML"],
       "prompt": "Here's a mzML file from the mass spec. Give me a structural overview and a data-quality assessment so I know what I'm working with.",
       "expected_output": "Invokes alterlab-eda: detects .mzML as a spectroscopy/proteomics format, loads the appropriate reference (pymzml/pyteomics libraries), summarizes spectra structure and metadata, assesses completeness and quality, and produces a markdown EDA report with preprocessing and downstream-analysis suggestions.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Identifies the file as mzML mass-spectrometry data and uses pymzml or pyteomics (not pandas) to summarize spectra/metadata, then reports a data-quality assessment." }
+        { "type": "behavior", "value": "Identifies the file as mzML mass-spectrometry data and uses pymzml or pyteomics (not pandas) to summarize spectra/metadata, then reports a data-quality assessment." },
+        { "type": "output_contains", "value": "120" },
+        { "type": "behavior", "value": "Summarizes the attached qc_run.mzML as 120 centroided, positive-mode spectra (30 MS1 and 90 HCD MS2, top-3 DDA) over RT 30.0-31.2 min from a Q Exactive, and flags its quality problems: an about 30-fold TIC drop in the MS1 scans 49, 53 and 57 (RT about 30.5 min), one MS2 spectrum with no peaks (scan 14), and 6 MS2 spectra with no precursor charge state." }
       ]
     },
     {

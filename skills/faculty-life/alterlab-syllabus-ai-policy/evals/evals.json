@@ -22,20 +22,24 @@
     },
     {
       "id": "academic-integrity-clause-for-ai",
+      "files": ["fixtures/course_assessment.md"],
       "prompt": "I need an academic-integrity clause for my syllabus that specifically covers AI tools, and it has to be consistent with our university's student disciplinary code. Can you write one with per-assignment rules on where AI is and isn't allowed?",
       "expected_output": "Invokes alterlab-syllabus-ai-policy. Writes a per-assignment tiered AI-use policy plus an integrity-binding sentence that ties prohibited-tier or undisclosed use to the named institutional code (inserted verbatim if supplied, otherwise a clearly-marked placeholder). Notes that detector outputs are probabilistic and not a sole basis for a finding, and that the policy states process rather than adjudicating individual cases.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Binds the policy to the institution's own academic-integrity code (or a marked placeholder, never an invented regulation name) and keeps per-assignment tiers." }
+        { "type": "behavior", "value": "Binds the policy to the institution's own academic-integrity code (or a marked placeholder, never an invented regulation name) and keeps per-assignment tiers." },
+        { "type": "output_contains", "value": ["Article 9(c)", "Article 9 (c)", "Art. 9(c)"] }
       ]
     },
     {
       "id": "per-assignment-ai-tiers",
+      "files": ["fixtures/course_assessment.md"],
       "prompt": "Can you give me a simple table for my syllabus that says, assignment by assignment, whether students are allowed to use generative AI, only allowed for some steps, or not allowed at all?",
       "expected_output": "Invokes alterlab-syllabus-ai-policy. Produces an assignment-by-assignment table mapping each task to prohibited / restricted (named sub-tasks only) / permitted, defaulting any unstated task to prohibited with an 'instructor to confirm' note rather than leaving it ambiguous. Can run scripts/policy_builder.py to generate the table.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Returns a per-assignment prohibited/restricted/permitted breakdown and applies default-deny to any task with no stated tier." }
+        { "type": "behavior", "value": "Returns a per-assignment prohibited/restricted/permitted breakdown and applies default-deny to any task with no stated tier." },
+        { "type": "behavior", "value": "Marks assessment 1 prohibited and assessment 2 restricted (image ideation and mood boards only), and treats assessments 3-6, which state no AI rule, as prohibited with an 'instructor to confirm' note." }
       ]
     },
     {

@@ -49,8 +49,13 @@
 \setlength{\headheight}{22pt}
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\color{primaryblue}\sffamily\small\textbf{Diabetes Treatment Plan}}
-\fancyhead[R]{\color{darkgray}\sffamily\small Patient Age: 23}
+% Running header: set per plan in the preamble, e.g.
+%   \renewcommand{\planheadertitle}{Depression Treatment Plan}
+%   \renewcommand{\planheaderinfo}{De-identified patient, age 30}
+\newcommand{\planheadertitle}{Treatment Plan}
+\newcommand{\planheaderinfo}{}
+\fancyhead[L]{\color{primaryblue}\sffamily\small\textbf{\planheadertitle}}
+\fancyhead[R]{\color{darkgray}\sffamily\small \planheaderinfo}
 \fancyfoot[C]{\color{darkgray}\small\thepage}
 \renewcommand{\headrulewidth}{2pt}
 \renewcommand{\headrule}{\hbox to\headwidth{\color{primaryblue}\leaders\hrule height \headrulewidth\hfill}}
@@ -71,7 +76,8 @@
   {\color{darkgray}\normalsize\sffamily\bfseries}
   {\thesubsubsection}{1em}{}
 
-% Title page styling
+% Title page styling: prints the document's own \title, \author (used as the subtitle
+% line) and \date
 \renewcommand{\maketitle}{
   \begin{tcolorbox}[
     enhanced,
@@ -87,10 +93,9 @@
   ]
     \color{white}
     \begin{center}
-      {\Huge\sffamily\bfseries Individualized Diabetes\\Treatment Plan}\\[10pt]
-      {\Large\sffamily 23-Year-Old Male Patient with Type 2 Diabetes}\\[15pt]
-      {\large\sffamily Comprehensive Evidence-Based Care Plan}\\[8pt]
-      {\normalsize\sffamily\color{secondaryblue}\today}
+      {\Huge\sffamily\bfseries \@title}\\[10pt]
+      {\Large\sffamily \@author}\\[8pt]
+      {\normalsize\sffamily\color{secondaryblue}\@date}
     \end{center}
   \end{tcolorbox}
   \vspace{1cm}

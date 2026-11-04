@@ -1,23 +1,32 @@
-# Academic MCP setup — keys, config, and the `requests` fallback
+# Academic MCP setup — config and the `requests` fallback
 
-The `alterlab-core` and `alterlab-databases` plugins bundle three Model Context
-Protocol (MCP) servers that give the citation, literature-review, and database
-skills live, deterministic access to scholarly metadata:
+The `alterlab-core` and `alterlab-databases` plugins bundle one Model Context
+Protocol (MCP) server that gives the citation, literature-review, and database
+skills live, deterministic access to scholarly metadata, with no key and no account:
 
 | Server name | Source (pinned, verified 2026-09-23) | What it does | Keys needed |
 | :--- | :--- | :--- | :--- |
-| `openalex` | `openalex-mcp@0.1.8` (npx) | Search scholarly works, authors, sources, institutions, topics | OpenAlex **API key** (optional but recommended — keyless use shares a small per-IP daily budget) |
 | `crossref` | `@botanicastudios/crossref-mcp@0.0.5` (npx) | Resolve DOIs, fetch work metadata, search by title/author | None (the server reads no environment variables) |
-| `zotero` | `zotero-mcp@0.3.1` (uvx) | Read your Zotero library: search, metadata, full text | Zotero **library ID**, **library type**, **API key** (or a local Zotero via `ZOTERO_LOCAL`) |
 
-All three are documented below. The server *names* (`openalex`, `crossref`,
-`zotero`) are the keys under `mcpServers` in `.mcp.json` and must stay
-in sync with this file — `tests/test_mcp_manifest.py` fails if any server is
-present in one but not the other.
+The server *name* (`crossref`) is the key under `mcpServers` in `.mcp.json` and must
+stay in sync with this file — `tests/test_mcp_manifest.py` fails if a server is
+present in a manifest but not documented here.
 
-Versions are pinned so an upstream release cannot silently break the plugin. The
-`openalex` server's `autocomplete` tool ships an invalid input
-schema upstream, so Claude Code excludes that one tool; its other ten tools load.
+Versions are pinned so an upstream release cannot silently break the plugin.
+
+**Removed servers (2026-11-02).** The suite has to work without logging in to
+third-party services, so the two bundled servers that needed an account were removed:
+
+- `openalex` — OpenAlex now meters keyless use per IP address: requests without a key
+  share a $0.10/day budget, and searches and filtered lists answer HTTP 429
+  "Insufficient budget" once it is spent. Real use therefore needs an API key, which
+  needs an OpenAlex account. Scholarly search and metadata now go through the keyless
+  APIs listed under the fallback below (Crossref, Semantic Scholar, OpenCitations,
+  Europe PMC, arXiv, PubMed).
+- `zotero` — its web-API mode needs a zotero.org account and API key. The
+  `alterlab-pyzotero` skill reads a library keylessly instead: through the running
+  Zotero desktop app's local API (`http://localhost:23119/api/`), or from an exported
+  `.bib` / CSL-JSON file.
 
 **No bundled PubMed server (since 3.0.0).** The third-party `mcp-simple-pubmed` broke
 under mcp 2.x and refuses to start without a contact email, so it was removed rather
@@ -25,58 +34,21 @@ than kept as a server that fails for most users. PubMed stays fully available: t
 `alterlab-pubmed` skill calls NCBI E-utilities directly (its script reads an optional
 `NCBI_API_KEY`), and hosts that offer a PubMed connector (claude.ai does) can use it.
 
-## Why these servers
+## Why this server
 
-- **Crossref + OpenAlex** hold the same records that `alterlab-citation-verifier`
-  (`/cite-check`) checks references against; its script also queries Semantic
-  Scholar, arXiv, and the doi.org Handle API. Biomedical literature goes through the
-  `alterlab-pubmed` skill (direct E-utilities) or a host's PubMed connector.
-- **Zotero** lets the citation and writing skills read the user's actual library
-  instead of re-deriving references from memory.
+- **Crossref** holds the DOI records that `alterlab-citation-verifier` (`/cite-check`)
+  checks references against; its script also queries Semantic Scholar, arXiv, and the
+  doi.org Handle API. Biomedical literature goes through the `alterlab-pubmed` skill
+  (direct E-utilities) or a host's PubMed connector.
+- **The user's own library** comes from `alterlab-pyzotero` (Zotero's local API or an
+  exported file), so the citation and writing skills read the user's actual references
+  instead of re-deriving them from memory.
 
-## Configuration (`userConfig`)
+## Configuration
 
-These servers read their secrets from `${user_config.*}` substitutions. The keys are
-declared once in the plugin's `userConfig` block (in `.claude-plugin/marketplace.json`),
-and Claude Code prompts for them when the plugin is enabled — users never hand-edit
-`settings.json`. The declared settings are:
-
-```json
-{
-  "userConfig": {
-    "openalex_api_key": {
-      "type": "string",
-      "title": "OpenAlex API key (recommended)",
-      "description": "Free key from https://openalex.org/settings/api. OpenAlex meters usage per day (since February 2026); keyless requests share a small per-IP budget and fail with HTTP 429 once it is spent.",
-      "sensitive": true,
-      "default": ""
-    },
-    "zotero_library_id": {
-      "type": "string",
-      "title": "Zotero library ID (optional)",
-      "description": "Numeric user or group library ID, shown at https://www.zotero.org/settings/keys",
-      "default": ""
-    },
-    "zotero_library_type": {
-      "type": "string",
-      "title": "Zotero library type",
-      "description": "Either 'user' (personal library) or 'group'.",
-      "default": "user"
-    },
-    "zotero_api_key": {
-      "type": "string",
-      "title": "Zotero API key (optional)",
-      "description": "Read access key from https://www.zotero.org/settings/keys",
-      "sensitive": true,
-      "default": ""
-    }
-  }
-}
-```
-
-`sensitive: true` values are stored in the system keychain, not `settings.json`.
-The manifests map them to server environment variables: `openalex` gets
-`OPENALEX_BEARER_TOKEN`, and `zotero` gets `ZOTERO_LIBRARY_ID` / `ZOTERO_LIBRARY_TYPE` / `ZOTERO_API_KEY`.
+Nothing to configure. The `crossref` server reads no environment variables, so the
+plugins declare no `userConfig` settings and Claude Code prompts for nothing when they
+are enabled.
 
 ## Key acquisition
 
@@ -87,33 +59,17 @@ Management**) and export it as `NCBI_API_KEY`: it raises the E-utilities limit f
 to 10 requests/second. NCBI asks scripts to identify themselves with a contact email
 (`NCBI_EMAIL` in the `mcp-servers/` connectors).
 
-### OpenAlex (`openalex`)
-Optional but recommended. Since February 2026 OpenAlex ignores the old `mailto`
-"polite pool" and meters usage in US dollars per day: keyless requests share a
-budget of $0.10/day per IP address (single-record lookups such as a DOI are free;
-list/filter calls cost $0.0001 and searches $0.001 each) and return HTTP 429 once
-it is spent. A free key from <https://openalex.org/settings/api> gets its own
-$1/day budget. The plugin passes the key to the server as `OPENALEX_BEARER_TOKEN`
-(sent as `Authorization: Bearer <key>`); scripts such as
-`alterlab-citation-verifier/scripts/verify_citations.py` read `OPENALEX_API_KEY`.
-See <https://help.openalex.org/api/authentication/> and
-<https://help.openalex.org/access/pricing/>.
-
 ### Crossref (`crossref`)
-No key, and the MCP server takes no configuration. Crossref still runs a polite
-pool (10 requests/second, 3 concurrent) for clients that identify themselves, so
-scripts calling the REST API directly should send a `mailto` query parameter or
-User-Agent contact. See
+No key, and the MCP server takes no configuration. Crossref also runs a polite pool
+(10 requests/second, 3 concurrent) for clients that identify themselves with a contact
+address; scripts add one (a `mailto` query parameter or User-Agent contact) only when
+the user has set it, for example in `ALTERLAB_CONTACT_EMAIL`. Without it they use the
+public pool. See
 <https://www.crossref.org/documentation/retrieve-metadata/rest-api/access-and-authentication/>.
 
-### Zotero (`zotero`)
-1. **Library ID** — go to <https://www.zotero.org/settings/keys>; your numeric
-   *userID* is shown there. For a group library, use the group's numeric ID.
-2. **Library type** — `user` (personal) or `group` (shared).
-3. **API key** — on the same page, **Create new private key**, grant at least
-   *Allow library access (read)*, and copy the key.
-4. **Local alternative** — `zotero-mcp` also honours `ZOTERO_LOCAL` to read a running
-   Zotero desktop app instead of the web API.
+### Semantic Scholar (no bundled server — used by the scripts)
+Keyless, but the keyless pool is shared by every user and rate-limited, so scripts back
+off on HTTP 429. An optional `S2_API_KEY` gives a dedicated rate; nothing needs it.
 
 ## Fallback: no MCP server, no network
 
@@ -123,14 +79,18 @@ fallback order is:
 
 1. **MCP server** (preferred) — used when the plugin is enabled and the server is up.
 2. **`requests` direct to the public REST APIs** — when no MCP server is present but
-   the network is reachable. These back-ends (and PubMed) expose free REST endpoints:
+   the network is reachable. These keyless back-ends expose free REST endpoints
+   (the web APIs were checked keyless, with no contact address, on 2026-11-02):
    - PubMed: `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/` (E-utilities)
-   - OpenAlex: `https://api.openalex.org/works`
    - Crossref: `https://api.crossref.org/works`
-   - Zotero: `https://api.zotero.org/`
+   - Semantic Scholar Graph API: `https://api.semanticscholar.org/graph/v1/`
+   - OpenCitations Index v2 (citing / cited DOIs, citation counts): `https://api.opencitations.net/index/v2/`
+   - Europe PMC: `https://www.ebi.ac.uk/europepmc/webservices/rest/search`
+   - arXiv: `https://export.arxiv.org/api/query`
+   - Zotero desktop (local, when the app is running): `http://localhost:23119/api/`
    Drive any helper script through `uv run python ...` (uv owns the env). Identify the
-   client where the API asks for it — NCBI `email`/`tool`, Crossref `mailto` — and use
-   an `OPENALEX_API_KEY` for OpenAlex, which ignores `mailto`. Treat an HTTP 429 as
+   client where the API asks for it — NCBI `tool`, plus NCBI `email` or Crossref
+   `mailto` only from a contact address the user set. Treat an HTTP 429 as
    "this source could not answer", never as "not found".
 3. **WebSearch / WebFetch** — last resort when `requests` is unavailable or a host is
    unreachable. Lower-confidence; the skill must say so explicitly in its output and
@@ -141,7 +101,7 @@ so the user knows the result was not produced by the deterministic MCP path.
 
 ## Aggregated data connectors (mcp-servers/)
 
-Beyond the three academic servers above, the repo ships standalone **aggregated MCP
+Beyond the academic server above, the repo ships standalone **aggregated MCP
 connectors** under `mcp-servers/` (see [`mcp-servers/README.md`](../../../mcp-servers/README.md)).
 Each wraps a high-traffic scientific-data cluster behind a typed tool surface and is added to
 an MCP client via its own `.mcp.json`:

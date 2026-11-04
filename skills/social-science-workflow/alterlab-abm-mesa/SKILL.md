@@ -2,7 +2,7 @@
 name: alterlab-abm-mesa
 description: "Builds agent-based models of social systems with Mesa 3 — the current AgentSet API (model.agents.shuffle_do('step'), auto-assigned unique_id, mandatory super().__init__(rng=...)), cell spaces (mesa.discrete_space OrthogonalMooreGrid / classic mesa.space grids), the DataCollector, batch_run parameter sweeps, and SolaraViz — for emergence, segregation, diffusion, opinion dynamics, and cooperation models. It uses the Mesa 3.x API (the old mesa.time schedulers like RandomActivation are removed) and treats the model as a generative theory to be validated, not just run. Use when the request mentions an agent-based model, Mesa, simulating interacting agents, or emergent macro behavior from micro rules. For discrete-event (queueing/process) simulation prefer alterlab-simpy; for reinforcement learning prefer alterlab-stable-baselines3. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "Requires mesa>=3.4 (current 3.5.1 as of 2026-09; Mesa 4.0 is still alpha). API changed substantially from Mesa 2 — mesa.time schedulers removed; Mesa 3.5 deprecates Model(seed=) for Model(rng=). Optional SolaraViz via `uv pip install 'mesa[rec]'`. No API key; runs locally via `uv run python`. On the Anthropic API (no runtime install) declare mesa as a dependency."
 metadata:
     skill-author: AlterLab
@@ -38,6 +38,10 @@ THE MODEL IS A THEORY OF HOW MACRO EMERGES FROM MICRO. USE MESA 3 CORRECTLY, THE
 | Reinforcement learning (an agent learning a policy) | `alterlab-stable-baselines3` | Policy optimization, not generative social simulation. |
 | Whether ABM is the right method at all | `alterlab-ssci-design-gate` | Design routing, upstream. |
 | System-dynamics / ODE compartment models | `alterlab-statistical-analysis` | Aggregate dynamics, not agent-level. |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-simpy`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+**Running the code.** In Claude Code, run analysis code in a throwaway environment instead of installing packages: `uv run --python ">=3.12" --with "mesa[network]>=3.4" python model.py` (Mesa 3.4+ needs Python 3.12; `import mesa` needs networkx). This needs no install approval and leaves the user's environment untouched. If `uv` or the network is unavailable, say so and hand over the script; never report results you did not compute.
 
 ## The Mesa 3 API (verified — do not ship Mesa 2 patterns)
 

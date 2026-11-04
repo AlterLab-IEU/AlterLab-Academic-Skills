@@ -33,8 +33,11 @@ Use this skill when:
 | Single-cell differential expression or cluster marker genes | `alterlab-scanpy` (markers) or `alterlab-scvi-tools` (model-based DE) |
 | Turning FASTQ into the count matrix (salmon/kallisto/STAR quantification, tximport) | `alterlab-rnaseq-quant` |
 | Generic regression / GLM / mixed models on non-count data | `alterlab-statsmodels` |
+| Gene regulatory network inference (which TFs drive which target genes) from expression | `alterlab-arboreto` |
 | Somatic or germline variant calling from sequencing reads | `alterlab-nf-core-sarek` |
 | Microbiome feature-table differential abundance | `alterlab-qiime2-amplicon` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-scanpy`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Installation and Requirements
 

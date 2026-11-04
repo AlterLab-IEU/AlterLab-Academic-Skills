@@ -7,17 +7,20 @@
       "expected_output": "Triggers the JASPAR skill. Fetches the CTCF matrix (e.g. MA0139.1) from the JASPAR REST API, converts the PFM to a log-odds PWM, and scans the given sequence on both strands at the requested relative-score threshold, reporting hit positions, scores, and matched subsequences.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "PWM" },
+        { "type": "output_contains", "value": ["PWM", "position weight matrix", "log-odds", "log2-odds", "PSSM", "scoring matrix"] },
         { "type": "behavior", "value": "Fetches a TF PFM, converts to PWM, and scans a DNA sequence on both strands for binding sites." }
       ]
     },
     {
       "id": "regulatory-variant-impact",
+      "files": ["fixtures/gwas_snp_ref_alt.fa"],
       "prompt": "I have a non-coding GWAS SNP. Does the alternate allele disrupt or create a transcription factor binding site? Here are the ref and alt sequences with ±20 bp flanking context.",
       "expected_output": "Triggers the JASPAR skill. Builds ref and alt sequences centered on the variant, scans both with the relevant TF PWMs (variant_tfbs_impact), and reports which TF motifs are gained or disrupted by comparing max ref vs alt scores. Provides flanking context of at least motif_length-1 bp.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Compares ref vs alt sequence PWM scores to determine whether a variant disrupts or creates a TF binding motif." }
+        { "type": "behavior", "value": "Compares ref vs alt sequence PWM scores to determine whether a variant disrupts or creates a TF binding motif." },
+        { "type": "output_contains", "value": ["CEBP", "C/EBP"] },
+        { "type": "behavior", "value": "Scans the two sequences from the attached FASTA and reports that the T allele creates or strengthens a C/EBP-family site (TTGCTCAAT, beginning at the T allele), rather than asking for the sequences." }
       ]
     },
     {

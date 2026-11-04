@@ -3,10 +3,11 @@ name: alterlab-gget
 description: "Run fast one-liner queries to 20+ bioinformatics databases from the gget CLI or Python — gene info (Ensembl), BLAST, AlphaFold structures, Enrichr enrichment, and more. Use for quick interactive lookups of genes, sequences, structures, or pathways — for batch processing or advanced BLAST use biopython, for multi-database Python workflows use bioservices. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Install with `uv pip install gget` (0.30.8 as of 2026-09; requires Python >= 3.12). Core modules need no API key or account. cosmic needs a COSMIC account; gpt needs an OpenAI key; alphafold, cellxgene, elm, gpt and cbio need a one-time `gget setup <module>`."
+compatibility: "No API key required: the core modules (info, search, seq, ref, blast, blat, pdb, alphafold, enrichr, archs4, opentargets, bgee, ...) query public databases with no account, under `uv pip install gget` (0.30.8 as of 2026-09; Python >= 3.12). Two optional modules can use a credential — cosmic (a COSMIC account for licensed somatic-mutation data) and gpt (an OpenAI key) — and alphafold, cellxgene, elm, gpt and cbio run a one-time `gget setup <module>` first."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    credentials: "optional: COSMIC account email/password (cosmic module's licensed somatic-mutation data; every other module is keyless); OPENAI_API_KEY (gpt module's text generation)"
+    version: "1.1.1"
     last_updated: "2026-09-23"
 ---
 
@@ -109,6 +110,8 @@ examples and `references/module_reference.md` for the full parameter table.
 | One workflow spanning many web services in Python | `alterlab-bioservices` |
 | Serious CELLxGENE Census querying beyond a one-liner | `alterlab-cellxgene` |
 | Running AlphaFold properly (complexes, confidence analysis) | `alterlab-alphafold` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-blast`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 - **Chaining several gget modules into a pipeline** → see `references/workflows.md`
   and the ready-made `scripts/` (gene_analysis, batch_sequence_analysis,
   enrichment_pipeline).

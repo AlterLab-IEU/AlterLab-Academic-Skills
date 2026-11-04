@@ -16,11 +16,67 @@ analysis and it does NOT compute post-hoc power (which carries no information).
 
 Clustered/stratified designs: multiply the printed n by your design effect (see
 references/sampling_and_power.md). SRS is assumed here.
+
+Accepted input domains (anything else is rejected: the library functions raise ValueError,
+the CLI prints the reason on stderr and exits 2):
+  every value     a finite real number (nan / inf are rejected)
+  alpha           0 < alpha < 1
+  power           0 < power < 1 and power > alpha (a two-sided level-alpha test already
+                  rejects with probability alpha when there is no effect, so power <= alpha is
+                  not a planning target; below alpha/2 the formula has no solution at all)
+  d               non-zero (sign ignored: the test is two-sided). d = 0 is a zero effect, and
+                  no finite sample size achieves the requested power.
+  p1, p2          0 < p < 1, and p1 != p2 (equal proportions are a zero effect)
+  p (precision)   0 < p < 1
+  margin          0 < margin < 1, on the proportion scale (0.03 = +/-3 percentage points)
 """
 from __future__ import annotations
 
 import argparse
 import math
+import numbers
+
+
+def _real(name: str, x: object) -> float:
+    """Return x as a finite float, or raise ValueError naming the parameter."""
+    if isinstance(x, bool) or not isinstance(x, numbers.Real):
+        raise ValueError(f"{name} must be a real number, got {x!r}")
+    try:
+        value = float(x)
+    except OverflowError:
+        raise ValueError(f"{name} is too large to represent as a float: {x!r}") from None
+    if not math.isfinite(value):
+        raise ValueError(f"{name} must be finite, got {x!r}")
+    return value
+
+
+def _open_unit(name: str, x: object) -> float:
+    value = _real(name, x)
+    if not 0.0 < value < 1.0:
+        raise ValueError(f"{name} must be strictly between 0 and 1, got {x!r}")
+    return value
+
+
+def _check_alpha_power(alpha: object, power: object) -> None:
+    a = _open_unit("alpha", alpha)
+    b = _open_unit("power", power)
+    if b <= a:
+        raise ValueError(
+            f"power ({power!r}) must be greater than alpha ({alpha!r}): a two-sided level-alpha "
+            "test already rejects with probability alpha when there is no effect, so a target "
+            "power <= alpha is not a meaningful planning target")
+
+
+def _finite_n(compute, what: str) -> int:
+    """Run the n formula; turn float overflow/underflow into a clear ValueError."""
+    try:
+        n = compute()
+    except (OverflowError, ZeroDivisionError):
+        n = math.inf
+    if not math.isfinite(n):
+        raise ValueError(f"{what}: the required sample size is too large to represent as a "
+                         "float (the effect is vanishingly small relative to its variance)")
+    return math.ceil(n)
 
 
 def _norm_ppf(p: float) -> float:
@@ -58,22 +114,48 @@ def _z_pair(alpha: float, power: float) -> tuple[float, float]:
 
 
 def n_mean(d: float, alpha: float, power: float) -> int:
-    """Per-group n for a two-sided two-sample mean comparison (Cohen's d)."""
+    """Per-group n for a two-sided two-sample mean comparison (Cohen's d).
+
+    Raises ValueError for d == 0 (no finite n achieves the power), non-finite input, or
+    alpha/power outside their domains (see the module docstring).
+    """
+    _check_alpha_power(alpha, power)
+    if _real("d", d) == 0:
+        raise ValueError("effect size d must be non-zero: with a zero effect no finite sample "
+                         "size achieves the requested power")
     za, zb = _z_pair(alpha, power)
-    return math.ceil(2 * (za + zb) ** 2 / d ** 2)
+    return _finite_n(lambda: 2 * (za + zb) ** 2 / d ** 2, f"d={d!r}")
 
 
 def n_prop(p1: float, p2: float, alpha: float, power: float) -> int:
-    """Per-group n for a two-sided two-proportion comparison."""
+    """Per-group n for a two-sided two-proportion comparison.
+
+    Raises ValueError for p1 == p2 (zero effect), proportions outside (0, 1), non-finite
+    input, or alpha/power outside their domains (see the module docstring).
+    """
+    _check_alpha_power(alpha, power)
+    if _open_unit("p1", p1) == _open_unit("p2", p2):
+        raise ValueError(f"p1 and p2 must differ (both {p1!r}): equal proportions are a zero "
+                         "effect, and no finite sample size achieves the requested power")
     za, zb = _z_pair(alpha, power)
     num = (za + zb) ** 2 * (p1 * (1 - p1) + p2 * (1 - p2))
-    return math.ceil(num / (p1 - p2) ** 2)
+    return _finite_n(lambda: num / (p1 - p2) ** 2, f"p1={p1!r}, p2={p2!r}")
 
 
 def n_precision(margin: float, p: float, alpha: float) -> int:
-    """Total n to estimate a proportion within +/- margin at confidence 1 - alpha."""
+    """Total n to estimate a proportion within +/- margin at confidence 1 - alpha.
+
+    margin is a half-width on the proportion scale, 0 < margin < 1 (0.03 = +/-3 points);
+    p must lie in (0, 1). Raises ValueError otherwise, or for non-finite input.
+    """
+    _open_unit("alpha", alpha)
+    _open_unit("p", p)
+    m = _real("margin", margin)
+    if not 0.0 < m < 1.0:
+        raise ValueError(f"margin must be > 0 and < 1 on the proportion scale (e.g. 0.03 for "
+                         f"+/-3 percentage points), got {margin!r}")
     za = _norm_ppf(1 - alpha / 2)
-    return math.ceil(za ** 2 * p * (1 - p) / margin ** 2)
+    return _finite_n(lambda: za ** 2 * p * (1 - p) / margin ** 2, f"margin={margin!r}")
 
 
 def main() -> int:
@@ -97,17 +179,24 @@ def main() -> int:
     pc.add_argument("--alpha", type=float, default=0.05)
 
     args = ap.parse_args()
+    sub_parser = {"mean": m, "prop": pr, "precision": pc}[args.mode]
+    try:
+        if args.mode == "mean":
+            n = n_mean(args.d, args.alpha, args.power)
+        elif args.mode == "prop":
+            n = n_prop(args.p1, args.p2, args.alpha, args.power)
+        else:
+            n = n_precision(args.margin, args.p, args.alpha)
+    except ValueError as exc:
+        sub_parser.error(str(exc))  # prints usage + message on stderr, exits 2
     if args.mode == "mean":
-        n = n_mean(args.d, args.alpha, args.power)
         print(f"Two-group mean comparison | d={args.d}, alpha={args.alpha}, power={args.power}")
         print(f"  per group n = {n}   (total = {2 * n})")
         print("  Power on the SMALLEST meaningful effect, not a pilot's inflated one.")
     elif args.mode == "prop":
-        n = n_prop(args.p1, args.p2, args.alpha, args.power)
         print(f"Two-proportion comparison | p1={args.p1}, p2={args.p2}, alpha={args.alpha}, power={args.power}")
         print(f"  per group n = {n}   (total = {2 * n})")
     else:
-        n = n_precision(args.margin, args.p, args.alpha)
         print(f"Estimate a proportion | margin=+/-{args.margin}, p={args.p}, conf={1 - args.alpha:.0%}")
         print(f"  total n = {n}")
     print("SRS assumed. For clustered/stratified designs multiply by the design effect (DEFF).")

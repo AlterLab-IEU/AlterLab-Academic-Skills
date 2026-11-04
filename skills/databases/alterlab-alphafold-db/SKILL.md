@@ -2,12 +2,12 @@
 name: alterlab-alphafold-db
 description: Access the AlphaFold DB of 240M+ AI-PREDICTED protein structures (v6, plus precomputed homodimer/heterodimer complexes) — retrieve models by UniProt accession, download PDB/mmCIF files, and analyze prediction confidence metrics (pLDDT, PAE). Use when a UniProt ID needs a computationally predicted 3D structure or when no experimental structure exists, for homology modeling, protein engineering, or structure-based drug discovery; for EXPERIMENTALLY determined structures (X-ray, cryo-EM, NMR) prefer alterlab-pdb, to fold a NEW sequence or complex yourself prefer alterlab-alphafold, and for protein sequences, annotations, or accession ID mapping prefer alterlab-uniprot instead. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
 compatibility: Keyless AlphaFold DB (EBI) REST API (v6 models); EMBL-EBI FTP (v6) or Google Cloud/BigQuery (v4) for bulk proteome downloads
 metadata:
     skill-author: AlterLab
-    version: "1.2.0"
-    last_updated: "2026-09-23"
+    version: "1.3.0"
+    last_updated: "2026-10-23"
 ---
 
 # AlphaFold Database
@@ -37,6 +37,8 @@ This skill should be used when working with AI-predicted protein structures in s
 | Folding a new or mutated sequence, or a custom protein–protein complex, yourself (ColabFold / AF2-Multimer) | `alterlab-alphafold` |
 | Protein–ligand or protein–nucleic-acid co-folding | `alterlab-boltz` |
 | Protein sequence, functional annotation, or accession ID mapping only | `alterlab-uniprot` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-pdb`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 
@@ -74,6 +76,11 @@ hand-build a `_v{N}` suffix.** The DB version advances (currently v6) and old
 - `plddtDocUrl` — per-residue pLDDT scores (0-100).
 - `paeDocUrl` — PAE matrix.
 
+**`/files/` returns HTTP 403 to curl's default User-Agent** (checked 2026-10-23; the API,
+Python, wget and any named client get 200). Use `scripts/query_alphafold.py`, which sends
+its own User-Agent, or give curl one: `curl -A "alterlab-alphafold-db/1.2" <plddtDocUrl>`.
+A 403 here is not an access block — retry with a User-Agent before reporting it.
+
 Download recipe (resolve URLs from the API, write bytes) in `code_examples.md` §2.
 
 ### 3. Working with Confidence Metrics
@@ -85,6 +92,11 @@ Download recipe (resolve URLs from the API, write bytes) in `code_examples.md` �
   one object, so index `[0]` before the key
   (`pae[0]['predicted_aligned_error']`). Visualization recipe in
   `code_examples.md` §3.
+- **Both at once:** `python scripts/query_alphafold.py confidence <acc> --summary` gives
+  mean pLDDT, the fraction in each band and the residue segments per band;
+  `python scripts/query_alphafold.py pae <acc> --summary` gives mean PAE within and between
+  the confident segments (pLDDT > 70, ≥ 20 residues), or between ranges you name with
+  `--domains 94-292,325-356`, labelled confident (< 5 Å) / intermediate / uncertain (> 15 Å).
 
 ### 4. Bulk Data Access (FTP v6 or Google Cloud v4)
 
@@ -113,10 +125,13 @@ example in `code_examples.md` §6.
 
 ## Installation and Setup
 
+`scripts/query_alphafold.py` is standard-library only (`python scripts/query_alphafold.py ...`).
+The recipes in `code_examples.md` need packages; run them install-free:
+
 ```bash
-uv pip install biopython requests          # core: structure access + API
-uv pip install numpy matplotlib pandas scipy  # analysis + PAE plots
-uv pip install google-cloud-bigquery gsutil   # optional: bulk GCP access
+uv run --with biopython --with requests python fetch.py                 # structure access + API
+uv run --with numpy --with matplotlib --with pandas --with scipy python pae_plot.py
+uv run --with google-cloud-bigquery python bq_query.py                  # optional: bulk GCP access
 ```
 
 **3D-Beacons alternative:** AlphaFold is also reachable via the 3D-Beacons
@@ -252,7 +267,9 @@ Consult this reference for detailed API information, bulk download strategies, o
 
 ```bash
 python scripts/query_alphafold.py prediction P00520
-python scripts/query_alphafold.py confidence P00520 --summary
+python scripts/query_alphafold.py confidence P04637 --summary          # pLDDT bands + segments
+python scripts/query_alphafold.py pae P04637 --summary                 # PAE between confident segments
+python scripts/query_alphafold.py pae P04637 --domains 94-292,325-356  # PAE between named ranges
 python scripts/query_alphafold.py download P00520 --fmt cif -o ./structures
 ```
 

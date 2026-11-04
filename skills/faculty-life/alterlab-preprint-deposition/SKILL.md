@@ -1,13 +1,14 @@
 ---
 name: alterlab-preprint-deposition
-description: "Drives preprint deposition across servers (arXiv, bioRxiv, medRxiv, ChemRxiv, SSRN, Research Square, OSF Preprints): picks the server by field, prepares submission metadata and arXiv categories, sets the license from each server's real option set (arXiv non-exclusive license or CC BY/BY-SA/BY-NC-SA/BY-NC-ND/CC0; bioRxiv/medRxiv CC variants or No-reuse) against funder mandates (NIH, NSF, Gates, Plan S), handles immutable versioning and preprint DOIs, checks a journal's preprint policy via the Jisc Open Policy Finder API (formerly Sherpa Romeo), and links the preprint to the published article. Reuses alterlab-arxiv and alterlab-biorxiv for metadata. Use when depositing a preprint, choosing a preprint server, preparing an arXiv, bioRxiv, or medRxiv submission, setting a preprint license, or checking journal preprint policy; for Zenodo/Dryad/Figshare data deposition prefer alterlab-open-science, for TÜBİTAK Aperta prefer alterlab-aperta. Part of the AlterLab Academic Skills suite."
+description: "Drives preprint deposition across servers (arXiv, bioRxiv, medRxiv, ChemRxiv, SSRN, Research Square, OSF Preprints): picks the server by field, prepares submission metadata and arXiv categories, sets the license from each server's real option set (arXiv non-exclusive license or CC BY/BY-SA/BY-NC-SA/BY-NC-ND/CC0; bioRxiv/medRxiv CC variants or No-reuse) against funder mandates (NIH, NSF, Gates, Plan S), handles immutable versioning and preprint DOIs, checks a journal's preprint policy live in Jisc Open Policy Finder (formerly Sherpa Romeo; no key needed), and links the preprint to the published article. Reuses alterlab-arxiv and alterlab-biorxiv for metadata. Use when depositing a preprint, choosing a preprint server, preparing an arXiv, bioRxiv, or medRxiv submission, setting a preprint license, or checking journal preprint policy; for Zenodo/Dryad/Figshare data deposition prefer alterlab-open-science, for TÜBİTAK Aperta prefer alterlab-aperta. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*) WebFetch
-compatibility: "No API key required for the deposition workflow itself. Optional Python helpers run via `uv run python` (stdlib-only, requests optional). The journal-policy check uses the Jisc Open Policy Finder API (successor to the Sherpa Romeo v2 API, which was switched off in 2026), which needs a free non-commercial API key sent as an x-api-key header; the bioRxiv/medRxiv preprint-to-publication check uses the keyless api.biorxiv.org content API."
+allowed-tools: Read Write Edit Bash(python:*) WebFetch Bash(uv run:*)
+compatibility: "No API key required. Optional Python helpers run via `uv run python` (stdlib-only, requests optional). The journal-policy check reads Jisc Open Policy Finder's public record pages keyless (an optional key switches it to the documented API); the bioRxiv/medRxiv preprint-to-publication check uses the keyless api.biorxiv.org content API."
 metadata:
   skill-author: AlterLab
-  version: "1.1.0"
-  last_updated: "2026-09-23"
+  version: "1.2.0"
+  last_updated: "2026-10-22"
+  credentials: "optional: OPEN_POLICY_FINDER_API_KEY (free non-commercial key; switches the journal-policy check from the public record pages to Jisc's documented retrieve API)"
   depends_on: "alterlab-arxiv, alterlab-biorxiv (metadata/search), alterlab-open-science (data-repository & DMP choice)"
 ---
 
@@ -63,9 +64,9 @@ published version. Core jobs:
    (`10.48550/arXiv.<id>`). bioRxiv/medRxiv assign a Crossref DOI on posting
    (prefix `10.64898` since Dec 2025 under openRxiv, `10.1101` before) and accept
    revisions under the same DOI.
-5. **Journal preprint policy** — query the **Jisc Open Policy Finder API**
-   (formerly Sherpa Romeo) for the target journal's prearchiving (preprint)
-   policy before posting. See `references/journal_policy.md`.
+5. **Journal preprint policy** — read the target journal's prearchiving
+   (preprint) policy live from **Jisc Open Policy Finder** (formerly Sherpa
+   Romeo; keyless) before posting. See `references/journal_policy.md`.
 6. **Post-publication linking** — connect the preprint to the published article
    (publisher field on the server; the keyless `api.biorxiv.org` `/details/`
    record carries a `published` DOI once bioRxiv/medRxiv detect the article).
@@ -81,6 +82,8 @@ published version. Core jobs:
 | Whether cited references actually **exist** / hallucinated DOIs | `alterlab-citation-verifier` | Existence-verification, not deposition |
 | **Dead-link / 404** checks across a bibliography | `alterlab-link-health` | HTTP reachability, not preprint posting |
 | Picking a **target journal** / formatting for journal submission | `alterlab-open-science` (OA route) then the journal's own guide | This skill only checks whether a journal *permits* a preprint |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-arxiv`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 This skill answers **"how and where do I deposit this manuscript as a preprint,
 and is that compatible with my journal plans?"** It makes no claim about
@@ -127,14 +130,18 @@ bioRxiv/medRxiv will not post a manuscript that a journal has already accepted.
 
 ### 2. Run the journal-policy check FIRST (if a target journal is known)
 
-Before posting, confirm the intended journal permits preprints. Use
-`scripts/journal_policy.py` to query the **Jisc Open Policy Finder API**
-(`https://api.openpolicyfinder.jisc.ac.uk/retrieve`, `item-type=publication`,
-key in an `x-api-key` header; the old `v2.sherpa.ac.uk` Sherpa Romeo API was
-switched off at the end of July 2026). Report the journal's **prearchiving** (preprint)
-permission, any conditions (embargo, version allowed, required statement), and
-link the source. If no key is available, fall back to WebFetch on the publisher's
-policy page and say so. Details: `references/journal_policy.md`.
+Before posting, confirm the intended journal permits preprints. Run
+`uv run python scripts/journal_policy.py --issn NNNN-NNNN` (or `--title "Exact Title"`).
+With no key it reads the journal's public **Jisc Open Policy Finder** record page
+(`https://openpolicyfinder.jisc.ac.uk/publication/<id>`, found through the site's own
+journal search) and returns the submitted-version (preprint) pathways and the
+accepted-version pathways; with `OPEN_POLICY_FINDER_API_KEY` set it uses the documented
+**Open Policy Finder API** (`https://api.openpolicyfinder.jisc.ac.uk/retrieve`, key in an
+`x-api-key` header; the old `v2.sherpa.ac.uk` Sherpa Romeo API was switched off at the end
+of July 2026). Report the journal's **prearchiving** (preprint) permission, any
+conditions (embargo, version allowed, required statement), what the *accepted* version
+may do, and link the record. If the script returns `unverified` or `no_match`, WebFetch
+the publisher's own policy page and quote it, and say so. Details: `references/journal_policy.md`.
 
 > Most major publishers permit preprints, but conditions vary (some bar posting
 > the *accepted* version, some require a DOI link or a specific notice). Never
@@ -197,11 +204,13 @@ preprint and vice versa.
 
 ## Scripts
 
-- `scripts/journal_policy.py` — query the Jisc Open Policy Finder API for a
-  journal's preprint/self-archiving policy by ISSN or title (needs a free key via
-  `--api-key` or the `OPEN_POLICY_FINDER_API_KEY` environment variable; prints a
-  structured summary incl. embargo and locations; degrades to a manual-check
-  instruction offline).
+- `scripts/journal_policy.py` — look up a journal's preprint/self-archiving policy
+  in Jisc Open Policy Finder by ISSN or title. Keyless by default (`--backend web`:
+  the public record page); an optional free key (`--api-key` or
+  `OPEN_POLICY_FINDER_API_KEY`) selects the documented API (`--backend api`, which
+  exits 2 rather than falling back when the key is missing). Prints a structured
+  summary of the submitted- and accepted-version pathways incl. embargo, conditions
+  and locations; degrades to a manual-check instruction offline.
 - `scripts/server_recommender.py` — given a few flags (`--field`, `--needs-doi`,
   `--target-journal-known`, `--funder-requires-cc-by`), prints a recommended
   server + license shortlist with the trade-offs and gatekeeping notes, from the
@@ -212,8 +221,7 @@ preprint and vice versa.
   link; works for both `10.1101` and `10.64898` DOIs.
 
 All scripts are stdlib-first (use `requests` if present, else `urllib`), run in a
-bare `uv run python`, and never require a key except the Open Policy Finder
-lookup.
+bare `uv run python`, and need no key.
 
 ---
 

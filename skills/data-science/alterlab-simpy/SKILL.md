@@ -3,7 +3,7 @@ name: alterlab-simpy
 description: Process-based discrete-event simulation in Python with SimPy — processes, queues, shared resources, and time-based events. Use when simulating systems where entities contend for shared resources over time, such as manufacturing systems, service operations, network traffic, or logistics. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires simpy 4.x (current 4.1.2 as of 2026-09; pure Python, no other dependencies).
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with simpy python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires simpy 4.x (current 4.1.2 as of 2026-09; pure Python, no other dependencies).
 metadata:
     skill-author: AlterLab
     version: "1.0.1"
@@ -45,9 +45,11 @@ Use the SimPy skill when:
 | Scenario | Use Instead |
 |----------|-------------|
 | Agent-based models of social systems with heterogeneous agents on grids or networks (segregation, opinion dynamics, diffusion) | `alterlab-abm-mesa` |
-| Searching for Pareto-optimal designs or parameters (e.g. cost vs. waiting time) with evolutionary algorithms | `alterlab-pymoo` |
+| Searching for Pareto-optimal designs or parameters (e.g. staffing cost vs. waiting time) with evolutionary algorithms. The whole request goes there, wait-time objective included; build a SimPy evaluator only if the user asks for a simulation-based objective | `alterlab-pymoo` |
 | Fitting time-series or regression models to observed queue or throughput data | `alterlab-statsmodels` |
 | Training a reinforcement-learning agent to control a system | `alterlab-stable-baselines3` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-abm-mesa`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Quick Start
 

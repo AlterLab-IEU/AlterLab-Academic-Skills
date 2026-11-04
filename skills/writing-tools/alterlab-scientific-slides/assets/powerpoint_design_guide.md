@@ -1,5 +1,7 @@
 # PowerPoint Design Guide for Scientific Presentations
 
+> **Dependency.** "The PPTX skill" here is Anthropic's `pptx` skill, installed separately; it is not part of this suite. Its scripts (`thumbnail.py`, `inventory.py`, `rearrange.py`, `replace.py`) and `html2pptx.md` live in that skill's folder, not in this one. If it is not installed, export the deck to PDF (`soffice --headless --convert-to pdf deck.pptx`) and review it with this skill's own `scripts/pdf_to_images.py`.
+
 ## Overview
 
 This guide provides comprehensive instructions for creating professional scientific presentations using PowerPoint, with emphasis on integration with the pptx skill for programmatic creation and best practices for scientific content.
