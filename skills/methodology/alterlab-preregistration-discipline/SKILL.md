@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Judgment/discipline skill; the optional helper runs locally via `uv run python` (stdlib only). Defers all registration mechanics and statistics to the sibling skills it orchestrates.
 metadata:
   skill-author: AlterLab
-  version: "1.0.1"
-  last_updated: "2026-09-23"
+  version: "1.0.2"
+  last_updated: "2026-11-04"
   depends_on: "alterlab-open-science, alterlab-statistical-analysis, alterlab-scientific-thinking"
 ---
 
@@ -74,6 +74,8 @@ everything mechanical away. Route adjacent requests as follows:
 | Research ethics approval / KVKK / data-management compliance | `alterlab-tr-research-ethics` / `alterlab-kvkk-dmp` | Ethics & data governance, distinct from analysis-plan freezing. |
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-open-science`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+In scope here means a request to freeze or check a plan before data, or to judge an analysis run without a plan, a peek, or a change made after results; a plan the user only mentions ("my settled plan", "for my pre-registered plan") is context, so a hand-off adds none of this skill's checks — no freeze checklist, decision-rule template or confirmatory/exploratory verdict.
 
 **REQUIRED BACKGROUND** (this skill orchestrates, it does not reimplement):
 `alterlab-open-science` for the registration artifact, `alterlab-statistical-analysis`
