@@ -6,7 +6,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [4.0.0] — 2026-11-02
+## [4.0.0] — 2026-11-04
 
 **Why a major version.** These changes alter what existing users, scripts and installs get back:
 

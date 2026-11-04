@@ -8,7 +8,7 @@ abstract: >-
   scientific-agent-skills, re-aimed at the academic faculty and research-lifecycle audience.
 type: software
 version: 4.0.0
-date-released: "2026-11-02"
+date-released: "2026-11-04"
 license: MIT
 repository-code: "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills"
 url: "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills"
