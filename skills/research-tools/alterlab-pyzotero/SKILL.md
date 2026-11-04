@@ -6,8 +6,8 @@ license: MIT
 compatibility: No API key required. Reads the running Zotero 7+ desktop app through its local API (pyzotero >= 1.15, Python >= 3.10, local=True), or exported .bib / CSL JSON / RIS files offline with a stdlib script; new items go out as an importable file. Optional - ZOTERO_API_KEY + ZOTERO_LIBRARY_ID for the zotero.org Web API (remote/group libraries, web writes); local writes use Zotero 10+ and a locally granted key. Runs via `uv run python`.
 metadata:
     skill-author: AlterLab
-    version: "1.2.1"
-    last_updated: "2026-11-02"
+    version: "1.2.2"
+    last_updated: "2026-11-04"
     credentials: "optional: ZOTERO_API_KEY and ZOTERO_LIBRARY_ID (zotero.org Web API v3 — remote and group libraries, web writes, file uploads), PYZOTERO_LOCAL_API_KEY (writes to the local Zotero 10+ library, granted in Zotero's own Allow dialog; not a zotero.org key)"
 ---
 
@@ -111,7 +111,7 @@ python $S export  my_library.json --type article-journal --year-from 2020 --to b
 python $S new-item --doi 10.1038/nature14539 --tag to-read --to ris -o to_import.ris   # Crossref metadata
 ```
 
-Report results by citation key (and DOI) so the user can find each item in Zotero. `export` keeps Better BibTeX keys and turns CSL item URIs into `author+year+word` keys. "Writes" on this path never touch the library: they produce a file the user imports with File > Import… — or, for a few DOIs, tell them to paste the DOIs into Zotero's **Add Item by Identifier** (magic-wand) button, which is keyless too. Fixing metadata, merging duplicates and moving items between collections in place need the local API (Zotero 10+ writes) or the Web API.
+Report results by citation key and DOI (title when an item has none), one line per item, so the user can check the selection and find each item in Zotero; `export -o` prints that list for what it wrote. `export` keeps Better BibTeX keys and turns CSL item URIs into `author+year+word` keys. "Writes" on this path never touch the library: they produce a file the user imports with File > Import… — or, for a few DOIs, tell them to paste the DOIs into Zotero's **Add Item by Identifier** (magic-wand) button, which is keyless too. Fixing metadata, merging duplicates and moving items between collections in place need the local API (Zotero 10+ writes) or the Web API.
 
 ## Core Concepts
 

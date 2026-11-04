@@ -405,6 +405,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         (args.output.write_text(text, encoding="utf-8") if args.output else sys.stdout.write(text))
         print(f"exported {len(hits)} of {len(items)} items as {args.to}"
               + (f" to {args.output}" if args.output else ""), file=sys.stderr)
+        if args.output:  # list what went into the file: key as written, year, DOI, title
+            for it, key in _unique_keys(hits):
+                print(f"{key if args.to != 'ris' else '-'}\t{it['year'] or 'n.d.'}\t"
+                      f"{('doi:' + it['doi']) if it['doi'] else 'NO DOI'}\t{it['title'][:90]}")
         return 0 if hits else 1
     if args.json:
         print(json.dumps(hits, indent=2, ensure_ascii=False))
