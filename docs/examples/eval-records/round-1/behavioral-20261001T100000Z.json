@@ -1,0 +1,450 @@
+{
+  "synthetic_example": true,
+  "synthetic_note": "SYNTHETIC example record for testing scripts/aggregate_results.py. Every skill name, commit, hash, answer and outcome here is invented; this is not a result of any skill.",
+  "schema_version": 1,
+  "kind": "behavioral",
+  "model": "claude-opus-5-5",
+  "model_source": "default",
+  "endpoint": "claude-cli-login",
+  "collect_only": false,
+  "claude_cli_version": "0.0.0-synthetic (Claude Code)",
+  "repo_commit": "0000000000000000000000000000000000000001",
+  "repo_dirty": false,
+  "python": "3.13.0",
+  "platform": "linux",
+  "runs_per_arm": 1,
+  "timeout_s": 600,
+  "isolation": {
+    "cli_flags": [
+      "--safe-mode",
+      "--disable-slash-commands",
+      "--strict-mcp-config",
+      "--no-session-persistence"
+    ],
+    "confinement": {
+      "mode": "namespace",
+      "hidden_paths": 1,
+      "why_not_namespace": null,
+      "tripwire": "checkout fingerprinted before the run and after every case; a change aborts the run"
+    }
+  },
+  "selection": {
+    "skill_filter": null,
+    "skill_dir": null,
+    "shard": null,
+    "cases": null
+  },
+  "started_at": "2026-10-01T10:00:00+00:00",
+  "finished_at": "2026-10-01T10:40:00+00:00",
+  "status": "failed",
+  "status_reasons": [],
+  "summary": {
+    "selected": 7,
+    "attempted": 6,
+    "answered": 4,
+    "usable_verdicts": 3,
+    "coverage": 0.4286,
+    "skilled": {
+      "PASS": 1,
+      "FAIL": 2,
+      "INCONCLUSIVE": 1,
+      "REFUSED": 1,
+      "INFRA_ERROR": 1,
+      "NOT_RUN": 1
+    },
+    "bare": {
+      "PASS": 2,
+      "FAIL": 3,
+      "INCONCLUSIVE": 0,
+      "REFUSED": 1,
+      "INFRA_ERROR": 0,
+      "NOT_RUN": 1
+    }
+  },
+  "usage": {
+    "calls": 14,
+    "cost_note": "synthetic"
+  },
+  "cases": [
+    {
+      "case_id": "alterlab-example-alpha:trigger-1",
+      "skill": "alterlab-example-alpha",
+      "skill_version": "1.0.0",
+      "eval_id": "trigger-1",
+      "fixtures": [],
+      "allowed_tools": [
+        "Read"
+      ],
+      "skilled": {
+        "outcome": "PASS",
+        "reason": null,
+        "assertion_verdict": "PASS",
+        "rubric_majority": "PASS",
+        "answered_runs": 1,
+        "runs": [
+          {
+            "run": 1,
+            "call_outcome": "answer",
+            "error": null,
+            "duration_ms": 1000,
+            "num_turns": 1,
+            "permission_denials": 0,
+            "denied_tools": [],
+            "cost_usd": null,
+            "usage": null,
+            "rubric_verdict": "PASS",
+            "assertions": [],
+            "response_excerpt": "Synthetic answer.",
+            "response": "Synthetic answer."
+          }
+        ]
+      },
+      "bare": {
+        "outcome": "FAIL",
+        "reason": null,
+        "assertion_verdict": null,
+        "rubric_majority": "FAIL",
+        "answered_runs": 1,
+        "runs": [
+          {
+            "run": 1,
+            "call_outcome": "answer",
+            "error": null,
+            "duration_ms": 1000,
+            "num_turns": 1,
+            "permission_denials": 0,
+            "denied_tools": [],
+            "cost_usd": null,
+            "usage": null,
+            "rubric_verdict": "FAIL",
+            "assertions": [],
+            "response_excerpt": "Synthetic answer.",
+            "response": "Synthetic answer."
+          }
+        ]
+      },
+      "rubric_delta": "rubric: SKILL HELPED (bare FAIL -> skilled PASS)"
+    },
+    {
+      "case_id": "alterlab-example-alpha:trigger-2",
+      "skill": "alterlab-example-alpha",
+      "skill_version": "1.0.0",
+      "eval_id": "trigger-2",
+      "fixtures": [],
+      "allowed_tools": [
+        "Read"
+      ],
+      "skilled": {
+        "outcome": "FAIL",
+        "reason": null,
+        "assertion_verdict": "PASS",
+        "rubric_majority": "FAIL",
+        "answered_runs": 1,
+        "runs": [
+          {
+            "run": 1,
+            "call_outcome": "answer",
+            "error": null,
+            "duration_ms": 1000,
+            "num_turns": 1,
+            "permission_denials": 0,
+            "denied_tools": [],
+            "cost_usd": null,
+            "usage": null,
+            "rubric_verdict": "FAIL",
+            "assertions": [],
+            "response_excerpt": "Synthetic answer.",
+            "response": "Synthetic answer."
+          }
+        ]
+      },
+      "bare": {
+        "outcome": "FAIL",
+        "reason": null,
+        "assertion_verdict": null,
+        "rubric_majority": "FAIL",
+        "answered_runs": 1,
+        "runs": [
+          {
+            "run": 1,
+            "call_outcome": "answer",
+            "error": null,
+            "duration_ms": 1000,
+            "num_turns": 1,
+            "permission_denials": 0,
+            "denied_tools": [],
+            "cost_usd": null,
+            "usage": null,
+            "rubric_verdict": "FAIL",
+            "assertions": [],
+            "response_excerpt": "Synthetic answer.",
+            "response": "Synthetic answer."
+          }
+        ]
+      },
+      "rubric_delta": "rubric: NO DELTA (both FAIL)"
+    },
+    {
+      "case_id": "alterlab-example-alpha:near-miss-1",
+      "skill": "alterlab-example-alpha",
+      "skill_version": "1.0.0",
+      "eval_id": "near-miss-1",
+      "fixtures": [],
+      "allowed_tools": [
+        "Read"
+      ],
+      "skilled": {
+        "outcome": "FAIL",
+        "reason": null,
+        "assertion_verdict": "FAIL",
+        "rubric_majority": "PASS",
+        "answered_runs": 1,
+        "runs": [
+          {
+            "run": 1,
+            "call_outcome": "answer",
+            "error": null,
+            "duration_ms": 1000,
+            "num_turns": 1,
+            "permission_denials": 0,
+            "denied_tools": [],
+            "cost_usd": null,
+            "usage": null,
+            "rubric_verdict": "PASS",
+            "assertions": [],
+            "response_excerpt": "Synthetic answer.",
+            "response": "Synthetic answer."
+          }
+        ]
+      },
+      "bare": {
+        "outcome": "PASS",
+        "reason": null,
+        "assertion_verdict": null,
+        "rubric_majority": "PASS",
+        "answered_runs": 1,
+        "runs": [
+          {
+            "run": 1,
+            "call_outcome": "answer",
+            "error": null,
+            "duration_ms": 1000,
+            "num_turns": 1,
+            "permission_denials": 0,
+            "denied_tools": [],
+            "cost_usd": null,
+            "usage": null,
+            "rubric_verdict": "PASS",
+            "assertions": [],
+            "response_excerpt": "Synthetic answer.",
+            "response": "Synthetic answer."
+          }
+        ]
+      },
+      "rubric_delta": "rubric: NO DELTA (both PASS)"
+    },
+    {
+      "case_id": "alterlab-example-beta:trigger-1",
+      "skill": "alterlab-example-beta",
+      "skill_version": "1.0.0",
+      "eval_id": "trigger-1",
+      "fixtures": [],
+      "allowed_tools": [
+        "Read"
+      ],
+      "skilled": {
+        "outcome": "REFUSED",
+        "reason": "synthetic usage-policy refusal",
+        "assertion_verdict": null,
+        "rubric_majority": "NA",
+        "answered_runs": 0,
+        "runs": [
+          {
+            "run": 1,
+            "call_outcome": "refused",
+            "error": "synthetic refused",
+            "duration_ms": 1000,
+            "num_turns": 1,
+            "permission_denials": 0,
+            "denied_tools": [],
+            "cost_usd": null,
+            "usage": null,
+            "rubric_verdict": "NA",
+            "assertions": [],
+            "response_excerpt": null,
+            "response": null
+          }
+        ]
+      },
+      "bare": {
+        "outcome": "REFUSED",
+        "reason": "synthetic usage-policy refusal",
+        "assertion_verdict": null,
+        "rubric_majority": "NA",
+        "answered_runs": 0,
+        "runs": [
+          {
+            "run": 1,
+            "call_outcome": "refused",
+            "error": "synthetic refused",
+            "duration_ms": 1000,
+            "num_turns": 1,
+            "permission_denials": 0,
+            "denied_tools": [],
+            "cost_usd": null,
+            "usage": null,
+            "rubric_verdict": "NA",
+            "assertions": [],
+            "response_excerpt": null,
+            "response": null
+          }
+        ]
+      },
+      "rubric_delta": "rubric: INCONCLUSIVE (bare=NA, skilled=NA)"
+    },
+    {
+      "case_id": "alterlab-example-beta:trigger-2",
+      "skill": "alterlab-example-beta",
+      "skill_version": "1.0.0",
+      "eval_id": "trigger-2",
+      "fixtures": [],
+      "allowed_tools": [
+        "Read"
+      ],
+      "skilled": {
+        "outcome": "INFRA_ERROR",
+        "reason": "timed out after 600s",
+        "assertion_verdict": null,
+        "rubric_majority": "NA",
+        "answered_runs": 0,
+        "runs": [
+          {
+            "run": 1,
+            "call_outcome": "infra_error",
+            "error": "synthetic infra_error",
+            "duration_ms": 1000,
+            "num_turns": 1,
+            "permission_denials": 0,
+            "denied_tools": [],
+            "cost_usd": null,
+            "usage": null,
+            "rubric_verdict": "NA",
+            "assertions": [],
+            "response_excerpt": null,
+            "response": null
+          }
+        ]
+      },
+      "bare": {
+        "outcome": "PASS",
+        "reason": null,
+        "assertion_verdict": null,
+        "rubric_majority": "PASS",
+        "answered_runs": 1,
+        "runs": [
+          {
+            "run": 1,
+            "call_outcome": "answer",
+            "error": null,
+            "duration_ms": 1000,
+            "num_turns": 1,
+            "permission_denials": 0,
+            "denied_tools": [],
+            "cost_usd": null,
+            "usage": null,
+            "rubric_verdict": "PASS",
+            "assertions": [],
+            "response_excerpt": "Synthetic answer.",
+            "response": "Synthetic answer."
+          }
+        ]
+      },
+      "rubric_delta": "rubric: INCONCLUSIVE (bare=PASS, skilled=NA)"
+    },
+    {
+      "case_id": "alterlab-example-beta:trigger-3",
+      "skill": "alterlab-example-beta",
+      "skill_version": "1.0.0",
+      "eval_id": "trigger-3",
+      "fixtures": [],
+      "allowed_tools": [
+        "Read"
+      ],
+      "skilled": {
+        "outcome": "INCONCLUSIVE",
+        "reason": "judges returned no majority verdict",
+        "assertion_verdict": "NA",
+        "rubric_majority": "NA",
+        "answered_runs": 1,
+        "runs": [
+          {
+            "run": 1,
+            "call_outcome": "answer",
+            "error": null,
+            "duration_ms": 1000,
+            "num_turns": 1,
+            "permission_denials": 0,
+            "denied_tools": [],
+            "cost_usd": null,
+            "usage": null,
+            "rubric_verdict": "NA",
+            "assertions": [],
+            "response_excerpt": "Synthetic answer.",
+            "response": "Synthetic answer."
+          }
+        ]
+      },
+      "bare": {
+        "outcome": "FAIL",
+        "reason": null,
+        "assertion_verdict": null,
+        "rubric_majority": "FAIL",
+        "answered_runs": 1,
+        "runs": [
+          {
+            "run": 1,
+            "call_outcome": "answer",
+            "error": null,
+            "duration_ms": 1000,
+            "num_turns": 1,
+            "permission_denials": 0,
+            "denied_tools": [],
+            "cost_usd": null,
+            "usage": null,
+            "rubric_verdict": "FAIL",
+            "assertions": [],
+            "response_excerpt": "Synthetic answer.",
+            "response": "Synthetic answer."
+          }
+        ]
+      },
+      "rubric_delta": "rubric: INCONCLUSIVE (bare=FAIL, skilled=NA)"
+    },
+    {
+      "case_id": "alterlab-example-beta:keyed-1",
+      "skill": "alterlab-example-beta",
+      "skill_version": "1.0.0",
+      "eval_id": "keyed-1",
+      "fixtures": [],
+      "allowed_tools": [
+        "Read"
+      ],
+      "skilled": {
+        "outcome": "NOT_RUN",
+        "reason": "not runnable here: env: EXAMPLE_API_KEY",
+        "answered_runs": 0,
+        "runs": []
+      },
+      "bare": {
+        "outcome": "NOT_RUN",
+        "reason": "not runnable here: env: EXAMPLE_API_KEY",
+        "answered_runs": 0,
+        "runs": []
+      },
+      "rubric_delta": "rubric: INCONCLUSIVE (bare=NA, skilled=NA)",
+      "requires_unmet": [
+        "env: EXAMPLE_API_KEY"
+      ]
+    }
+  ]
+}

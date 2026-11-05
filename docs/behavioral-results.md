@@ -10,6 +10,19 @@ reported separately in [`benchmark-results.md`](benchmark-results.md).
 > use), so its cases are no longer counted, and every skill that used OpenAlex was rewritten and
 > re-run (see [Known limits](#known-limits)).
 
+> **Note on reproducibility (added 2026-11-05; no figure on this page was changed).** The raw
+> run records behind the totals on this page are not in the repository (`eval-results/` is
+> git-ignored), so these totals cannot be independently reconstructed from this checkout.
+> They were produced with the v1 methodology: `run_evals.py` record `schema_version` 1, one
+> combined outcome per arm (the skilled arm's assertions and rubric folded into a single
+> PASS/FAIL), with the `expected_output` rubric and `behavior` clauses graded by the literal
+> judge on the ordinary `--behavioral` path, never re-graded (see
+> [How answers are graded](#how-answers-are-graded)). Runs were selected and aggregated with
+> the rules in [Which runs are counted](#which-runs-are-counted) by a process that is not in
+> this repository. Future summaries should be generated with `scripts/aggregate_results.py`
+> from versioned records; see [`eval-aggregation.md`](eval-aggregation.md), which also lists
+> the rules above that the records cannot express.
+
 A PASS means an answer met the checks its case's author wrote, on this runner, on the day it
 ran. It does not show research correctness beyond what those checks ask, and it is not a
 guarantee that a skill's output is right for your data. Check what a skill produces as you
@@ -406,4 +419,6 @@ uv run python scripts/defect_scan.py RESULTS_DIR
   means a case failed, `2` blocked, `3` partial ([details](evals.md#reading-a---behavioral-run)).
 - Run records go to `eval-results/` (or `--results-dir`). The tables on this page were
   aggregated from those records with the rules in [Which runs are counted](#which-runs-are-counted);
-  that aggregation is not yet a script in this repository.
+  that aggregation is not yet a script in this repository. (Annotation, 2026-11-05: the
+  aggregation behind these tables is still not in the repository; new summaries should use
+  `scripts/aggregate_results.py`, described in [`eval-aggregation.md`](eval-aggregation.md).)
