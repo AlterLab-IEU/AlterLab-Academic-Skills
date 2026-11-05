@@ -1,0 +1,17 @@
+{
+  "_comment": "MOCK RUNTIME SCENARIO, not live output. Pins agent results in scripts/workflow_dryrun.mjs to the shape the synthetic fixture should produce, for mock-derived agent counts and the checker tests. Says nothing about live model behaviour.",
+  "rules": [
+    {"match": "^extract headline claims", "return": {
+      "claims": [
+        {"id": "C1", "claim": "Weekly quizzing caused the higher exam scores.", "evidence": "7.9-point difference between two non-randomized sections, d = 0.45", "design": "two-section quasi-experiment"},
+        {"id": "C2", "claim": "The effect will generalize to every STEM course.", "evidence": "laboratory retrieval-practice findings [1]", "design": "single statistics course, one semester"}
+      ],
+      "total_found": 2
+    }},
+    {"match": "^C1 · counter-evidence", "return": {"refuted": false, "severity": "none", "argument": "Classroom meta-analyses also find quizzing benefits."}},
+    {"match": "^C1 · citation-support", "return": {"refuted": true, "severity": "weakening", "argument": "The cited laboratory study does not test course exams."}},
+    {"match": "^C1 · inference", "return": {"refuted": true, "severity": "weakening", "argument": "Non-randomized sections with different instructors cannot license causal language."}},
+    {"match": "^C2 · ", "return": {"refuted": true, "severity": "fatal", "argument": "One statistics course cannot support a claim about every STEM course."}},
+    {"match": "^confirm report on disk", "return": {"exists": true, "bytes": 3072, "first_heading": "# Claim stress test", "states_status": "COMPLETE"}}
+  ]
+}

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/skills/core/shared/schemas/integrity_report.schema.json",
   "title": "Integrity Report",
-  "description": "Handoff Schema 5. Producer: alterlab-research-pipeline/integrity_verification_agent. Consumer: alterlab-research-pipeline/pipeline_orchestrator_agent | alterlab-paper-writer/draft_writer_agent (for revision).",
+  "description": "Handoff Schema 5. Producer: alterlab-research-pipeline/integrity_verification_agent. Consumer: alterlab-research-pipeline/pipeline_orchestrator_agent | alterlab-paper-writer/draft_writer_agent (for revision). schema_version 2 adds optional per-reference existence / identifier / metadata / retraction fields and phases.A_references.verifier_verdict, mirroring verify_citations.py report schema 2; v1 reports still validate.",
   "type": "object",
   "required": [
     "verdict",
@@ -14,9 +14,15 @@
     "timestamp"
   ],
   "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Absent = 1. 2 = optional per-reference existence / identifier / metadata / retraction fields and phases.A_references.verifier_verdict (verify_citations.py report schema 2)."
+    },
     "verdict": {
       "type": "string",
-      "enum": ["PASS", "PASS_WITH_CONDITIONS", "FAIL"]
+      "enum": ["PASS", "PASS_WITH_CONDITIONS", "FAIL"],
+      "description": "The integrity GATE verdict decided by integrity_verification_agent, not verify_citations.py's run verdict (that is phases.A_references.verifier_verdict). Any SERIOUS or MEDIUM issue, including a NOT_FOUND reference awaiting manual check, makes the gate FAIL."
     },
     "mode": {
       "type": "string",
@@ -33,6 +39,11 @@
             "checked": { "type": "integer", "minimum": 0 },
             "passed": { "type": "integer", "minimum": 0 },
             "failed": { "type": "integer", "minimum": 0 },
+            "verifier_verdict": {
+              "type": "string",
+              "enum": ["FAIL", "PARTIAL", "REVIEW_REQUIRED", "UNVERIFIED", "PASS_WITH_CONDITIONS", "PASS"],
+              "description": "Optional: summary.verdict of the verify_citations.py run behind Phase A, most severe first. Only PASS and PASS_WITH_CONDITIONS are passes; REVIEW_REQUIRED means at least one NOT_FOUND entry needs a manual check."
+            },
             "issues": {
               "type": "array",
               "items": {
@@ -40,9 +51,43 @@
                 "required": ["ref_id", "issue_type", "severity", "detail"],
                 "properties": {
                   "ref_id": { "type": "string" },
-                  "issue_type": { "type": "string" },
+                  "issue_type": {
+                    "type": "string",
+                    "description": "Verifier or gate code, e.g. PAC, IH, ID_INVALID (identifier wrong, work undetermined), NOT_FOUND (absent from the checked sources; not proof of fabrication), PH, unverified, RETRACTED, MISMATCH. TF only for an analyst's conclusion after a documented manual search."
+                  },
                   "severity": { "$ref": "#/$defs/severity" },
-                  "detail": { "type": "string" }
+                  "detail": { "type": "string" },
+                  "existence": {
+                    "type": "object",
+                    "description": "Optional (schema 2): verify_citations.py existence block.",
+                    "properties": {
+                      "status": { "type": "string", "enum": ["found", "identifier_mismatch", "identifier_invalid", "not_found", "not_determined", "unavailable", "placeholder", "not_checked"] },
+                      "sources_answered": { "type": "array", "items": { "type": "string" } },
+                      "sources_not_checked": { "type": "array", "items": { "type": "string" } }
+                    }
+                  },
+                  "identifier": {
+                    "type": "object",
+                    "description": "Optional (schema 2): per-identifier status (doi / arxiv), e.g. resolves_to_cited_work, resolves_to_other_work, does_not_resolve_to_cited_work, unregistered, registered_unindexed, malformed, not_found, not_cited, unknown, exists_unretrieved."
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "description": "Optional (schema 2): title / authors / year agreement (agrees | disagrees | not_checked | unknown); authors also list supported and unsupported names."
+                  },
+                  "retraction": {
+                    "type": "object",
+                    "description": "Optional (schema 2). unknown means the check did not happen (Crossref did not answer or holds no record) and is never 'not retracted'.",
+                    "properties": {
+                      "status": { "type": "string", "enum": ["flagged", "not_flagged_in_checked_sources", "unknown"] },
+                      "sources_answered": { "type": "array", "items": { "type": "string" } },
+                      "checked_at": { "type": ["string", "null"] },
+                      "reason": { "type": ["string", "null"] }
+                    }
+                  },
+                  "retracted": {
+                    "type": ["boolean", "null"],
+                    "description": "Optional v1 key: true / false, or null when the retraction status is unknown."
+                  }
                 }
               }
             }
@@ -150,7 +195,7 @@
       "type": "number",
       "minimum": 0.0,
       "maximum": 1.0,
-      "description": "0 = no risk detected."
+      "description": "0 = no risk detected. When taken from verify_citations.py: (IH + PH + ID_INVALID + NOT_FOUND [+ legacy TF]) / total, a risk indicator, not proof of fabrication."
     },
     "timestamp": {
       "type": "string",
@@ -162,7 +207,7 @@
     "severity": {
       "type": "string",
       "enum": ["SERIOUS", "MEDIUM", "MINOR"],
-      "description": "SERIOUS = fabricated reference/falsified data/gross distortion (blocks pipeline). MEDIUM = wrong DOI/page/misattribution (blocks pipeline). MINOR = missing co-author/formatting (advisory)."
+      "description": "SERIOUS = invalid or hijacked identifier (ID_INVALID / IH), placeholder, retraction, fabrication confirmed by a documented manual search (TF), falsified data, gross distortion (blocks pipeline). MEDIUM = reference not found in the checked sources (NOT_FOUND; manual check, not proof of fabrication), wrong DOI/page/misattribution (blocks pipeline). MINOR = missing co-author/formatting (advisory)."
     }
   }
 }

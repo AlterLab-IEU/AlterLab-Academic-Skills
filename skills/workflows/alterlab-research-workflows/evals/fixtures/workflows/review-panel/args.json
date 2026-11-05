@@ -1,0 +1,9 @@
+{
+  "path": "skills/workflows/alterlab-research-workflows/evals/fixtures/workflows/_shared/synthetic-manuscript.md",
+  "field": "educational psychology",
+  "lenses": [
+    "Methodology reviewer: design, confounding, measurement, and attrition",
+    "Devil's-advocate reviewer: attack the central causal and generalization claims"
+  ],
+  "out": "${OUT_DIR}/review-panel.md"
+}

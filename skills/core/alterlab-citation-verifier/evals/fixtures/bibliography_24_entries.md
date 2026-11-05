@@ -1,11 +1,11 @@
 # Reference List — Literature Review Draft (APA 7.0)
 
 A 24-entry bibliography submitted for a citation-existence audit. It is a deliberate
-fixture: most entries are real, and a handful seed the TF/PAC/IH taxonomy and a
+fixture: most entries are real, and a handful seed the NOT_FOUND/ID_INVALID/PAC/IH verdicts and a
 retraction so the verifier has something to catch. The verifier should resolve each entry
 against Crossref / Semantic Scholar / Europe PMC / arXiv (Open Library for books, doi.org
 for DOIs) and return a per-entry verdict. Expected verdicts were re-checked against the live
-APIs on 2026-09-23 and 2026-11-02; entries marked TF come back `unverified` only when no index
+APIs on 2026-09-23 and 2026-11-02; entries marked NOT_FOUND come back `unverified` only when no index
 besides Crossref answered, and must then go through the WebSearch fallback. The real books
 (6, 14, 15) are matched through Open Library; when it does not answer they may come back PAC
 or unverified, because Crossref holds only a later edition or a book review of them.
@@ -18,7 +18,7 @@ or unverified, because Crossref holds only a later edition or a book review of t
 
 4. Brown, T. B., Mann, B., Ryder, N., Subbiah, M., Kaplan, J., Dhariwal, P., et al. (2020). Language models are few-shot learners. *Advances in Neural Information Processing Systems, 33*, 1877-1901. [REAL — expected VERIFIED]
 
-5. Henderson, M. K., & Albrecht, J. P. (2021). Transformer architectures for low-resource morphological parsing in agglutinative languages. *Journal of Computational Linguistics Research, 14*(3), 220-241. [FABRICATED — no such journal/article; expected NOT_FOUND / TF]
+5. Henderson, M. K., & Albrecht, J. P. (2021). Transformer architectures for low-resource morphological parsing in agglutinative languages. *Journal of Computational Linguistics Research, 14*(3), 220-241. [FABRICATED — no such journal/article; expected NOT_FOUND (verifier report schema 2; v1 called this TF)]
 
 6. Selwyn, N. (2016). *Education and technology: Key issues and debates* (2nd ed.). Bloomsbury. [REAL — expected VERIFIED]
 
@@ -28,13 +28,13 @@ or unverified, because Crossref holds only a later edition or a book review of t
 
 9. Zawacki-Richter, O., Marin, V. I., Bond, M., & Gouverneur, F. (2019). Systematic review of research on artificial intelligence applications in higher education. *International Journal of Educational Technology in Higher Education, 16*(1), 39. https://doi.org/10.1186/s41239-019-0171-0 [REAL — expected VERIFIED]
 
-10. Garcia, M. (2022). Student perceptions of emergency remote teaching. *Studies in Higher Education, 47*(8), 1620-1638. [No matching article in Studies in Higher Education or elsewhere in Crossref (checked 2026-09-23); expected TF]
+10. Garcia, M. (2022). Student perceptions of emergency remote teaching. *Studies in Higher Education, 47*(8), 1620-1638. [No matching article in Studies in Higher Education or elsewhere in Crossref (checked 2026-09-23); expected NOT_FOUND (v1: TF)]
 
 11. Lin, A. S. R., Hou, A. Y. C., Chan, S. J., & Chiang, T. L. (2021). Quality assurance in Taiwan higher education: Regulation, model shift, and future prospect. In A. Y. C. Hou et al. (Eds.), *Higher education in Taiwan* (pp. 65-81). Springer. https://doi.org/10.1007/978-981-15-4554-2_4 [REAL — expected VERIFIED]
 
 12. Lin, Y. H., Hou, A. Y. C., & Chiang, T. L. (2020). Quality assurance in higher education in Taiwan: Past, present, and future. In A. Curaj et al. (Eds.), *European higher education area* (pp. 589-606). Springer. [MASHUP of entry 11 + an unrelated Curaj volume; expected MISMATCH / PAC]
 
-13. Mitchell, R. (2018). *Designing effective assessment rubrics*. [Stub with no venue or publisher and no matching record; expected TF (a human reviewer may also call it a placeholder stub)]
+13. Mitchell, R. (2018). *Designing effective assessment rubrics*. [Stub with no venue or publisher and no matching record; expected NOT_FOUND or unverified (v1: TF; a human reviewer may also call it a placeholder stub)]
 
 14. Holmes, W., Bialik, M., & Fadel, C. (2019). *Artificial intelligence in education: Promises and implications for teaching and learning*. Center for Curriculum Redesign. [REAL — expected VERIFIED]
 
@@ -42,7 +42,7 @@ or unverified, because Crossref holds only a later edition or a book review of t
 
 16. OECD. (2021). *OECD digital education outlook 2021: Pushing the frontiers with artificial intelligence, blockchain and robots*. OECD Publishing. https://doi.org/10.1787/589b283f-en [REAL — expected VERIFIED]
 
-17. Wong, K., & Liu, S. K. (2023). Blockchain-based micro-credentials in Asian higher education: A multi-site case study. *Higher Education Policy, 36*(4), 612-629. https://doi.org/10.1057/s41307-023-00318-5 [DOI not registered at doi.org and no matching title (checked 2026-09-23); expected TF]
+17. Wong, K., & Liu, S. K. (2023). Blockchain-based micro-credentials in Asian higher education: A multi-site case study. *Higher Education Policy, 36*(4), 612-629. https://doi.org/10.1057/s41307-023-00318-5 [DOI not registered at doi.org and no matching title (checked 2026-09-23); expected ID_INVALID (v1: TF)]
 
 18. Floridi, L., & Chiriatti, M. (2020). GPT-3: Its nature, scope, limits, and consequences. *Minds and Machines, 30*(4), 681-694. https://doi.org/10.1007/s11023-020-09548-1 [REAL — expected VERIFIED]
 

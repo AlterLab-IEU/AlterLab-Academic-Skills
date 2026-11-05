@@ -1,0 +1,5 @@
+{
+  "path": "skills/workflows/alterlab-research-workflows/evals/fixtures/workflows/_shared/synthetic-manuscript.md",
+  "max_claims": 2,
+  "out": "${OUT_DIR}/claim-stress-test.md"
+}

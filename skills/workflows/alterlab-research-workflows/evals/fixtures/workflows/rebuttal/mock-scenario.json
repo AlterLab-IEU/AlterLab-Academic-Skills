@@ -1,0 +1,21 @@
+{
+  "_comment": "MOCK RUNTIME SCENARIO, not live output. Pins agent results in scripts/workflow_dryrun.mjs to the shape the synthetic fixture should produce, for mock-derived agent counts and the checker tests. Says nothing about live model behaviour.",
+  "rules": [
+    {"match": "^split reviews", "return": {"comments": [
+      {"id": "R1.0", "reviewer": "Reviewer 1", "text": "The study addresses a practical question, and the common final exam is a strength of the design.", "kind": "praise", "asks_for": "none"},
+      {"id": "R1.1", "reviewer": "Reviewer 1", "text": "The sections were not randomized and had different instructors ... this language is not supported by the design.", "kind": "major", "asks_for": "rewrite"},
+      {"id": "R1.2", "reviewer": "Reviewer 1", "text": "Please re-analyse the final-exam scores adjusting for prior GPA and report the adjusted difference.", "kind": "major", "asks_for": "new_analysis"},
+      {"id": "R2.1", "reviewer": "Reviewer 2", "text": "The claim that the effect will generalize to every STEM course goes far beyond a single statistics course.", "kind": "major", "asks_for": "rewrite"},
+      {"id": "R2.2", "reviewer": "Reviewer 2", "text": "Please report how many students withdrew from each section, and discuss differential attrition.", "kind": "minor", "asks_for": "clarification"}
+    ]}},
+    {"match": "^R1\\.1$", "return": {"id": "R1.1", "stance": "agree_changed", "response": "We agree and now describe the association without causal language.", "change": {"location": "Abstract; Discussion", "description": "causal wording replaced", "new_text": "The quizzed section scored higher on the final exam."}, "author_action": "none"}},
+    {"match": "^R1\\.2$", "return": {"id": "R1.2", "stance": "agree_changed", "response": "We have added an ANCOVA adjusting for prior GPA: [AUTHORS: report the adjusted difference and its 95% CI].", "change": {"location": "Results", "description": "adjusted analysis added"}, "author_action": "Run the ANCOVA adjusting for prior GPA and report the adjusted difference."}},
+    {"match": "^R2\\.1$", "return": {"id": "R2.1", "stance": "agree_changed", "response": "We removed the generalization claim.", "change": {"location": "Abstract; Conclusion", "description": "generalization sentence removed"}, "author_action": "none"}},
+    {"match": "^R2\\.2$", "return": {"id": "R2.2", "stance": "clarified", "response": "The Method reports 4 withdrawals in the quiz section and 8 in the re-read section; we now discuss differential attrition.", "change": {"location": "Discussion, Limitations", "description": "attrition paragraph added"}, "author_action": "none"}},
+    {"match": "^consistency pass", "return": {"issues": []}},
+    {"match": "^confirm report on disk", "return": {"exists": true, "bytes": 4096, "first_heading": "# Response to reviewers", "states_status": "COMPLETE", "others": [
+      {"path": "${OUT_DIR}/change-log.md", "exists": true, "lines": 12},
+      {"path": "${OUT_DIR}/author-actions.md", "exists": true, "lines": 8}
+    ]}}
+  ]
+}

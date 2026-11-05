@@ -1,13 +1,13 @@
 ---
 name: alterlab-citation-verifier
-description: "Verifies that every bibliography entry actually exists by cross-checking Crossref, Semantic Scholar, Europe PMC, and arXiv, with Open Library for books (no API key required), plus doi.org DOI registration, fuzzy-matching title and authors (difflib ratio >= 0.70), flagging retractions recorded by Crossref (including Retraction Watch data), and emitting per-entry JSON verdicts in the AlterLab citation-hallucination taxonomy (TF/PAC/IH/PH/SH); a companion script scores whether a cited abstract supports a claim (SH). Accepts BibTeX, DOI/arXiv lists, or pasted references, and reports unverified instead of passing anything it could not check. Use when the request mentions verify citations, check references, fabricated or hallucinated references, fake DOI, retraction check, bibliography audit, reference existence check, or whether a source supports a claim. For drafting a manuscript prefer alterlab-paper-writer; for dead hyperlinks prefer alterlab-link-health. Part of the AlterLab Academic Skills suite."
+description: "Verifies every bibliography entry actually exists by checking Crossref, Semantic Scholar, Europe PMC, and arXiv, with Open Library for books (no API key required), plus doi.org DOI registration, fuzzy-matching title and authors, flagging retractions recorded by Crossref (incl. Retraction Watch), and emitting per-entry JSON verdicts in the AlterLab citation-hallucination taxonomy (PAC/IH/PH/SH/ID_INVALID; index absence is NOT_FOUND, never fabrication); a companion script scores whether a cited abstract supports a claim (SH). Accepts BibTeX, DOI/arXiv lists, or pasted references, and reports unverified instead of passing anything it could not check. Use when the request mentions verify citations, check references, fabricated or hallucinated references, fake DOI, retraction check, bibliography audit, reference existence check, or whether a source supports a claim. For drafting a manuscript prefer alterlab-paper-writer; for dead hyperlinks prefer alterlab-link-health. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash WebSearch WebFetch
 compatibility: "No API key required — stdlib Python (`requests` optional) via `uv run python` against Crossref, Semantic Scholar, Europe PMC, arXiv, Open Library and the doi.org Handle API; optional S2_API_KEY only raises Semantic Scholar's rate limit; offline runs return 'unverified' verdicts"
 metadata:
   skill-author: AlterLab
-  version: "1.2.5"
-  last_updated: "2026-11-02"
+  version: "1.3.0"
+  last_updated: "2026-11-05"
   credentials: "optional: S2_API_KEY or SEMANTIC_SCHOLAR_API_KEY (raises Semantic Scholar's shared keyless rate limit: a dedicated 1 request/s; never needed for a verdict)"
   depends_on: "alterlab-research-pipeline (shares the integrity taxonomy), alterlab-deep-research"
 ---
@@ -101,8 +101,10 @@ For each bibliography entry the script:
    `source: retraction-watch`, the Retraction Watch database that Crossref serves in
    its REST API since 2025). Expressions of concern get a separate flag.
 6. **Emits a verdict** per entry mapped to the taxonomy below, with a
-   `source_status` map showing which sources answered, plus a repo-level
-   `summary.verdict` (PASS / PASS_WITH_CONDITIONS / FAIL / UNVERIFIED).
+   `source_status` map showing which sources answered, separate `existence`,
+   `identifier`, `metadata` and `retraction` blocks, plus a repo-level
+   `summary.verdict` (FAIL / PARTIAL / REVIEW_REQUIRED / UNVERIFIED /
+   PASS_WITH_CONDITIONS / PASS).
 
 ### Sources (no key required; checked 2026-11-02)
 
@@ -139,33 +141,49 @@ SERIOUS / MEDIUM / MINOR scale used in the Integrity Report schema.
 
 | Code | Name | Severity | Script trigger |
 |------|------|----------|----------------|
-| `verified` | — (exists, matches) | NONE | Title ratio >= threshold AND author overlap OK AND year consistent in >=1 authoritative source |
-| `TF` | Total Fabrication | **SERIOUS** | Cited DOI is not registered at doi.org, or cited arXiv ID does not exist on arXiv, and no close title match exists; OR (no identifier) no record matches title + authors in Crossref plus at least one other index that actually answered (Semantic Scholar, Europe PMC, arXiv or Open Library); `detail` names the indexes that answered and those not checked. If only Crossref answered, or a free-form entry lacks a title plus an author or year, the entry is `unverified` |
-| `PAC` | Partial Attribute Corruption | MEDIUM | Entry found but >=1 metadata field disagrees (year, author overlap < 50%, a cited identifier that does not resolve to it, or a garbled title whose closest record shares the authors — possible mashup) |
+| `verified` | — (exists, matches) | NONE | Found in >=1 authoritative source and every supplied field that could be checked (title ratio >= threshold, authors, year) agrees |
+| `PAC` | Partial Attribute Corruption | MEDIUM | Entry found but >=1 supplied field disagrees: a cited author the record does not list (`metadata.authors.unsupported`, flag `UNSUPPORTED_AUTHOR`), a wrong year, a cited identifier that does not resolve to it (`IDENTIFIER_DOES_NOT_RESOLVE`), or a garbled title whose closest record shares the authors (`POSSIBLE_MASHUP`). "et al." / BibTeX "and others" is honoured; an abbreviated list without it is noted, not an error |
+| `ID_INVALID` | Invalid identifier | **SERIOUS** | Cited DOI is not registered at doi.org, or cited arXiv ID does not exist on arXiv, and no close title match exists. The identifier is wrong; **whether the work exists is undetermined** |
+| `NOT_FOUND` | Not found in the checked sources | MEDIUM | No identifier, and no record matches title + authors in Crossref plus at least one other index that actually answered (Semantic Scholar, Europe PMC, arXiv or Open Library); `detail` names the indexes that answered and those not checked. **Absence from indexes is not proof of fabrication** (books, grey literature, theses, regional venues) — check manually. If only Crossref answered, or a free-form entry lacks a title plus an author or year, the entry is `unverified` |
 | `IH` | Identifier Hijacking | **SERIOUS** | Cited DOI/arXiv ID **resolved** (method=id) but the resolved record's title is unrelated (ratio < threshold) |
 | `PH` | Placeholder Hallucination | **SERIOUS** | Unresolved template/placeholder (`[CITATION NEEDED]`, `\cite{}`, `et al., YYYY`, `TODO`, `forthcoming`, `in press`) — caught pre-network |
 | `SH` | Semantic Hallucination | **SERIOUS** | Entry resolves but does not support its claim — **advisory only** here; asserted via `claim_faithfulness.py` / Phase E |
 | `unverified` | — (could not check) | MEDIUM | Offline, the sources needed for a decision errored, or a registered DOI that no index returned. **Never treated as passing.** |
+| `TF` | Total Fabrication | **SERIOUS** | **Never emitted by the script.** Reserved for an analyst's conclusion after a documented manual search (the fallback below) finds no trace of a `NOT_FOUND` / `ID_INVALID` work |
 
 A `RETRACTED` flag is attached (and severity bumped to SERIOUS) whenever Crossref
 (publisher notice or Retraction Watch) marks the *matched* work as retracted, independent of the existence
-verdict; an unrelated closest hit never lends its flag to the cited entry.
+verdict; an unrelated closest hit never lends its flag to the cited entry. Every found entry
+carries `retraction.status` — `flagged`, `not_flagged_in_checked_sources` (Crossref answered
+with no notice; other retraction databases were not checked) or `unknown` (Crossref did not
+answer or holds no record) — and the v1 `retracted` key is `true` / `false` / `null`
+(`null` = unknown). Never report `unknown` / `null` as "not retracted";
+`summary.retraction` counts the three states.
 
-`TF` is a serious accusation, so the script only asserts it on authoritative
-evidence. When the deciding sources were rate-limited or down, the entry is
+Since report schema 2 (`verify_citations.py` 2.0.0) the script no longer reports `TF` for a
+reference absent from the indexes (v1 did): that is `NOT_FOUND`, and an unregistered DOI or
+nonexistent arXiv ID is `ID_INVALID`. `TF` is a serious accusation that only a documented
+manual search can support. When the deciding sources were rate-limited or down, the entry is
 `unverified` with the reason and `source_status`, and it goes to the fallback below.
 
 ### Repo-level verdict
 
-- **PASS** — every entry `verified`, no SERIOUS/MEDIUM flags.
-- **PASS_WITH_CONDITIONS** — only `PAC` / MEDIUM metadata issues (fixable), and every entry was checked.
-- **FAIL** — any SERIOUS verdict (`TF` / `IH` / `PH` / retraction).
+Most severe first: FAIL > PARTIAL > REVIEW_REQUIRED > UNVERIFIED > PASS_WITH_CONDITIONS >
+PASS. Only PASS and PASS_WITH_CONDITIONS are passes.
+
+- **PASS** — every entry `verified`, no SERIOUS/MEDIUM flags. Retraction status is reported
+  separately (`summary.retraction`) and may be `unknown` for some entries.
+- **PASS_WITH_CONDITIONS** — only `PAC` / MEDIUM metadata issues (fixable), and every entry was found.
+- **FAIL** — any SERIOUS finding (`IH` / `ID_INVALID` / `PH` / retraction).
+- **REVIEW_REQUIRED** — nothing SERIOUS, but at least one entry is `NOT_FOUND`. Not a pass:
+  check those entries manually (absence is not proof of fabrication).
 - **UNVERIFIED** — nothing SERIOUS was found but at least one entry could not be
   checked (e.g. an offline run or rate-limited sources). This is **not** a pass —
   re-run with network access or an API key, or resolve those entries manually.
 - **PARTIAL** — at least one detected entry was rejected, unsupported, or left
   unprocessed (`status: partial`, exit code 3). Not a pass: fix the entries listed in
-  `input_accounting` and re-run. FAIL still takes precedence.
+  `input_accounting` and re-run. FAIL still takes precedence; PARTIAL outranks
+  REVIEW_REQUIRED.
 
 ---
 
@@ -211,19 +229,25 @@ Check `status` first: if it is `partial`, list `input_accounting.rejected_entrie
 
 1. The **headline verdict** and counts (`verdict_counts`, `severity_counts`).
 2. A **table of every non-`verified` entry** with its code, severity, and `detail`.
-3. For each `TF` / `IH` / `PH`: quote the cited entry and explain the evidence
-   (e.g. "DOI 10.x resolved to an unrelated paper titled '…'", "DOI not registered
-   at doi.org").
-4. Any `RETRACTED` / `EXPRESSION_OF_CONCERN` flags, prominently.
+3. For each `ID_INVALID` / `IH` / `PH` / `NOT_FOUND`: quote the cited entry and explain the
+   evidence (e.g. "DOI 10.x resolved to an unrelated paper titled '…'", "DOI not registered
+   at doi.org — identifier wrong, work undetermined", "not found in crossref, europepmc,
+   arxiv — needs a manual check").
+4. Any `RETRACTED` / `EXPRESSION_OF_CONCERN` flags, prominently, and how many found entries
+   have `retraction.status: unknown` (not checked — not "not retracted").
 5. For `unverified` entries: say which sources failed (`source_status`), relay the
    `manual_instructions` and any `summary.notes` (for example, a Semantic Scholar
    HTTP 429 means its shared keyless pool was busy: that source was not checked,
-   which is not "not found"), and run the fallback below. For a `TF` without an
-   identifier, quote the indexes its `detail` says answered with no match.
+   which is not "not found"), and run the fallback below. For a `NOT_FOUND` entry,
+   quote the indexes its `detail` says answered with no match, and run the same fallback.
 
 ### 4. Route fixes
 
-- `TF` / `PH` → the reference must be removed or replaced; it does not exist.
+- `PH` → the reference must be completed, or removed or replaced.
+- `ID_INVALID` → the identifier is wrong; find the correct DOI/arXiv ID by title, or check
+  whether the work exists at all. Do not call it fabricated on this evidence alone.
+- `NOT_FOUND` → manual check (fallback below). Only a documented manual search that finds
+  nothing supports `TF` (remove or replace the reference).
 - `IH` → the DOI/arXiv ID is wrong; find and substitute the correct identifier.
 - `PAC` → correct the specific metadata field(s) named in `detail`; a possible
   mashup needs the real source identified before it can stay.
@@ -238,19 +262,20 @@ Failures are never swallowed into a pass:
 - A DNS/connection failure raises `NetworkUnavailable`; the entry becomes
   `unverified` with a populated `manual_instructions` field.
 - A rate-limited or failing source is recorded in `source_status`; if the sources
-  needed for a decision did not answer, the entry is `unverified`, not `TF`.
+  needed for a decision did not answer, the entry is `unverified`, not `NOT_FOUND`.
 - `--offline` forces every networked entry to `unverified` up front (placeholders
   are still caught locally as `PH`).
 - The repo-level verdict becomes `UNVERIFIED` whenever an entry is unverified and
   nothing SERIOUS was found.
 
-For each `unverified` entry, re-run with connectivity or a key if possible;
+For each `unverified` or `NOT_FOUND` entry, re-run with connectivity or a key if possible;
 otherwise look it up with the plugin's keyless `crossref` MCP tools when they
 are available (setup: `mcp_setup.md` in the alterlab-core plugin's `references/` folder), then fall back to WebSearch with
 three distinct queries (exact title in quotes; title + first author; first author +
 venue + year) and, for a DOI, open `https://doi.org/<DOI>`. If a record is found, report the verdict it supports
-and say it came from the fallback. If nothing is found, classify the entry as
-`TF` (NOT_FOUND). There is no "difficult to verify" outcome: the Lin et al.
+and say it came from the fallback. If nothing is found, report it as `NOT_FOUND` with the
+documented queries; concluding `TF` is the analyst's call on that documented search, never the
+script's. There is no "difficult to verify" outcome: the Lin et al.
 mashup this skill was built around slipped through three integrity rounds
 precisely because it was parked in that gray zone and never searched.
 
@@ -296,34 +321,44 @@ uv run python .../claim_faithfulness.py --input pairs.json --tier llm --json
 ```json
 {
   "tool": "alterlab-citation-verifier/verify_citations.py",
-  "version": "1.4.1",
+  "version": "2.0.0",
+  "schema_version": 2,
   "status": "complete",
   "warning": null,
   "summary": {
     "total": 2,
     "input": {"detected": 2, "parsed": 2, "rejected": 0, "unsupported": 0},
     "verdict": "FAIL",
-    "verdict_counts": {"verified": 1, "TF": 1, "PAC": 0, "IH": 0, "PH": 0, "SH": 0, "unverified": 0},
+    "verdict_counts": {"verified": 1, "PAC": 0, "IH": 0, "ID_INVALID": 1, "NOT_FOUND": 0, "PH": 0, "TF": 0, "SH": 0, "unverified": 0},
     "severity_counts": {"SERIOUS": 1, "MEDIUM": 0, "MINOR": 0},
     "citation_integrity_score": 0.5,
     "fabrication_risk_score": 0.5,
     "retracted": 0,
+    "retraction": {"flagged": 0, "not_flagged_in_checked_sources": 1, "unknown": 0},
+    "existence": {"found": 1, "identifier_invalid": 1},
     "source_errors": {"semanticscholar": 1},
     "notes": ["Semantic Scholar rate limit: not checked (which is not 'not found'); the keyless pool is shared ..."]
   },
   "entries": [
     {"ref_id": "walters2023", "verdict": "verified", "severity": "NONE",
-     "title_ratio": 1.0, "author_overlap": 1.0, "matches": [{"source": "crossref"}],
+     "existence": {"status": "found", "sources_answered": ["arxiv", "crossref", "europepmc"], "sources_not_checked": ["semanticscholar"]},
+     "identifier": {"doi": {"status": "resolves_to_cited_work"}, "arxiv": {"status": "not_cited"}},
+     "metadata": {"title": {"status": "agrees"}, "authors": {"status": "agrees"}, "year": {"status": "agrees"}},
+     "retraction": {"status": "not_flagged_in_checked_sources", "sources_answered": ["crossref"]},
+     "retracted": false, "title_ratio": 1.0, "author_overlap": 1.0, "matches": [{"source": "crossref"}],
      "source_status": {"crossref": "record", "semanticscholar": "error: HTTP 429 — Semantic Scholar rate limit: not checked ...", "europepmc": "no_record", "arxiv": "no_record"}},
-    {"ref_id": "ghostpaper2021", "verdict": "TF", "severity": "SERIOUS",
-     "detail": "DOI 10.xxxx/... is not registered with any DOI agency (doi.org Handle API)..."}
+    {"ref_id": "ghostpaper2021", "verdict": "ID_INVALID", "severity": "SERIOUS",
+     "existence": {"status": "identifier_invalid"},
+     "identifier": {"doi": {"status": "unregistered"}},
+     "detail": "DOI 10.xxxx/... is not registered with any DOI agency (doi.org Handle API), so the identifier is wrong ... Whether the work itself exists is undetermined ..."}
   ]
 }
 ```
 
 `citation_integrity_score` and `fabrication_risk_score` (both 0..1) align with
 the Integrity Report schema fields of the same name, so the report can feed
-`alterlab-research-pipeline`'s integrity gate directly.
+`alterlab-research-pipeline`'s integrity gate directly. `fabrication_risk_score` is
+(IH + PH + ID_INVALID + NOT_FOUND [+ legacy TF]) / total — a risk indicator, not proof.
 
 ---
 
@@ -337,8 +372,12 @@ the Integrity Report schema fields of the same name, so the report can feed
 - Did any entry score `IH`? Confirm the detail shows an **id-resolved** mismatch,
   not a loose title-search coincidence (the script enforces this distinction).
 - Is the headline verdict consistent with the per-entry codes (any SERIOUS → FAIL;
-  any `unverified` without SERIOUS → UNVERIFIED)?
-- Did every `unverified` entry get the WebSearch fallback and a final verdict?
+  any `NOT_FOUND` without SERIOUS → REVIEW_REQUIRED; any `unverified` without SERIOUS or
+  `NOT_FOUND` → UNVERIFIED)?
+- Did every `unverified` and `NOT_FOUND` entry get the WebSearch fallback and a final verdict?
+- Did you call anything "fabricated" or `TF`? Only after a documented manual search; never
+  on `NOT_FOUND` or `ID_INVALID` alone. Did you present `retraction.status: unknown` as "not
+  retracted"? Don't.
 
 ---
 

@@ -121,7 +121,7 @@ python scripts/generate_pdf.py crispr_sickle_cell_review.md \
 ### Writing Skills
 - **alterlab-scientific-writing**: Turn the structured synthesis into flowing manuscript prose (Introduction/Discussion sections).
 - **alterlab-citation-mgmt**: Convert DOIs to BibTeX and build the bibliography.
-- **alterlab-citation-verifier**: Audit that every reference actually exists and is not retracted.
+- **alterlab-citation-verifier**: Audit that every reference can be found in the scholarly indexes (a `NOT_FOUND` entry needs a manual check; absence is not proof of fabrication) and whether Crossref flags it as retracted (`unknown` retraction status is not a clearance).
 
 ## Dependencies
 

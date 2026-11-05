@@ -100,6 +100,7 @@ Consuming agents should validate input and request re-generation if schema viola
 | `annotation` | string | Yes | 2-3 sentence summary of key findings and relevance |
 | `verified` | boolean | No | Whether DOI/existence has been verified |
 | `retraction_check` | boolean | No | Whether checked against Retraction Watch |
+| `retraction_status` | enum | No | `flagged` / `not_flagged_in_checked_sources` / `unknown` (as `verify_citations.py` reports it). `unknown` means the check did not happen — never record it as "not retracted" |
 
 ### Optional Fields
 
@@ -252,12 +253,12 @@ AI-assisted assessment's primary advantage lies in the immediacy of feedback, re
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `verdict` | enum | `"PASS"` / `"PASS_WITH_CONDITIONS"` / `"FAIL"` |
+| `verdict` | enum | `"PASS"` / `"PASS_WITH_CONDITIONS"` / `"FAIL"` — the integrity **gate** verdict, not `verify_citations.py`'s run verdict (see `verifier_verdict` below). A NOT_FOUND reference awaiting manual check is a MEDIUM issue, so the gate is FAIL |
 | `mode` | enum | `"pre-review"` / `"final-check"` |
 | `phases` | object | See Phase Structure below |
 | `overall_issues` | object | `{SERIOUS: integer, MEDIUM: integer, MINOR: integer}` |
 | `citation_integrity_score` | float | 0.0-1.0 score for citation accuracy |
-| `fabrication_risk_score` | float | 0.0-1.0 score (0 = no risk detected) |
+| `fabrication_risk_score` | float | 0.0-1.0 score (0 = no risk detected); from `verify_citations.py` it is (IH + PH + ID_INVALID + NOT_FOUND [+ legacy TF]) / total — a risk indicator, not proof |
 | `timestamp` | string | ISO 8601 timestamp of verification |
 
 ### Phase Structure
@@ -268,7 +269,11 @@ phases: {
     checked: integer,
     passed: integer,
     failed: integer,
-    issues: [{ref_id: string, issue_type: string, severity: enum, detail: string}]
+    verifier_verdict?: enum,   // FAIL / PARTIAL / REVIEW_REQUIRED / UNVERIFIED / PASS_WITH_CONDITIONS / PASS
+    issues: [{ref_id: string, issue_type: string, severity: enum, detail: string,
+              existence?: object, identifier?: object, metadata?: object,
+              retraction?: {status: flagged | not_flagged_in_checked_sources | unknown, ...},
+              retracted?: boolean | null}]
   },
   B_citation_context: {
     sampled: integer,
@@ -292,12 +297,20 @@ phases: {
 }
 ```
 
+Since `schema_version` 2 (matching `verify_citations.py` report schema 2) the `?` fields above
+are optional additions; v1 reports remain valid. `issue_type` takes the verifier's codes:
+`ID_INVALID` (DOI unregistered / arXiv ID nonexistent — identifier wrong, work undetermined) and
+`NOT_FOUND` (absent from the checked sources — not proof of fabrication; manual check) replace
+the v1 practice of reporting index absence as `TF`. `TF` is reserved for an analyst's
+conclusion after a documented manual search. `retracted: null` means the retraction status is
+unknown, not "not retracted".
+
 ### Issue Severity Levels
 
 | Severity | Meaning | Pipeline Impact |
 |----------|---------|-----------------|
-| `SERIOUS` | Fabricated reference, falsified data, gross distortion | Blocks pipeline; MUST fix |
-| `MEDIUM` | Wrong DOI, incorrect page number, misattribution | Blocks pipeline; MUST fix |
+| `SERIOUS` | Invalid or hijacked identifier (`ID_INVALID` / `IH`), placeholder, retraction, fabrication confirmed by a documented manual search (`TF`), falsified data, gross distortion | Blocks pipeline; MUST fix |
+| `MEDIUM` | Reference not found in the checked sources (`NOT_FOUND`; manual check), wrong DOI, incorrect page number, misattribution | Blocks pipeline; MUST fix |
 | `MINOR` | Missing co-author, formatting inconsistency | Does NOT block; advisory |
 
 ---

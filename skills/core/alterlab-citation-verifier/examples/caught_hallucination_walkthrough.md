@@ -58,12 +58,14 @@ $ echo "Mueller, P. A., & Oppenheimer, D. M. (2014). The pen is mightier than th
   source_status:  crossref=record  semanticscholar=record  europepmc=record  arxiv=no_record
   title_ratio:    1.0   (Crossref stores the subtitle separately; the script rejoins it)
   author_overlap: 1.0   (Mueller, Oppenheimer)
-  retracted:      false (no retraction notice in Crossref updated-by / update-to)
+  retraction:     status=not_flagged_in_checked_sources, sources_answered=[crossref]
+                  (no retraction notice in Crossref updated-by / update-to; retracted: false)
 ```
 
 So far, **everything is green.** The paper is real, the DOI resolves, the metadata matches,
-it is not retracted. If the verifier stopped here — the way a bibliography-only check does —
-the citation would pass and the fabricated claim would sail into the manuscript.
+and Crossref carries no retraction notice for it. (Had Crossref not answered, the status would
+be `unknown` and `retracted` would be `null` — not checked, which is not "not retracted".)
+If the verifier stopped here — the way a bibliography-only check does — the citation would pass and the fabricated claim would sail into the manuscript.
 
 This is the key design point: **VERIFIED existence is necessary but not sufficient.** The
 verifier does not return a final PASS on existence alone when the user has supplied a *claim*.
@@ -133,7 +135,7 @@ number, zero support.
 Mueller, P. A., & Oppenheimer, D. M. (2014). The pen is mightier than the keyboard:
 Advantages of longhand over laptop note taking. Psychological Science, 25(6), 1159-1168.
 
-## Existence:  ✅ VERIFIED   (real paper, DOI 10.1177/0956797614524581, not retracted)
+## Existence:  ✅ VERIFIED   (real paper, DOI 10.1177/0956797614524581, no retraction notice in Crossref)
 ## Faithfulness: ❌ FAIL — SH (Semantic Hallucination)
 
 ## Why it fails despite being a real paper

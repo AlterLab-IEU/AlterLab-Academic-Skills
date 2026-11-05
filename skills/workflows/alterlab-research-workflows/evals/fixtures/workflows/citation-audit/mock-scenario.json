@@ -1,0 +1,34 @@
+{
+  "_comment": "MOCK RUNTIME SCENARIO, not live output. Pins what each agent returns in scripts/workflow_dryrun.mjs so the mocked run follows the shape the synthetic fixture should produce (the answer key in expect.json). Used for mock-derived agent counts and the checker tests; it says nothing about how a live model behaves.",
+  "rules": [
+    {"match": "^extract references and claims", "return": {
+      "references": [
+        {"id": "R1", "text": "Roediger, H. L., III, & Karpicke, J. D. (2006). Test-enhanced learning: Taking memory tests improves long-term retention. Psychological Science, 17(3), 249-255.", "doi": "10.1111/j.1467-9280.2006.01693.x"},
+        {"id": "R2", "text": "Cohen, J. (1994). A power primer. Psychological Bulletin, 112(1), 155-159.", "doi": "10.1037/0033-2909.112.1.155"},
+        {"id": "R3", "text": "Marchetti-Oyelaran, T., & Lindqvist, H. (2021). Spaced retrieval lattices and examination performance in introductory courses: A fourteen-university replication. Journal of Applied Retrieval Science, 9(2), 113-131."}
+      ],
+      "claims": [
+        {"id": "C1", "claim": "Roediger and Karpicke (2006) showed that retrieval practice doubled final-exam grades in university statistics courses [1].", "refs": ["R1"], "location": "Introduction"},
+        {"id": "C2", "claim": "Under conventional benchmarks, d = 0.2, 0.5 and 0.8 are small, medium and large effects [2].", "refs": ["R2"], "location": "Introduction"},
+        {"id": "C3", "claim": "A recent multi-site replication reported that spaced retrieval schedules raised introductory-course exam scores by 12 points across 14 universities [3].", "refs": ["R3"], "location": "Introduction"},
+        {"id": "C4", "claim": "The quiz section outperformed the re-read section by almost eight points, a medium effect by conventional benchmarks [2].", "refs": ["R2"], "location": "Discussion"},
+        {"id": "C5", "claim": "Retrieval practice works in the laboratory [1].", "refs": ["R1"], "location": "Discussion"}
+      ],
+      "claims_total": 5,
+      "placeholders": []
+    }},
+    {"match": "^references 1-3", "return": {"results": [
+      {"id": "R1", "verdict": "VERIFIED", "evidence": "Crossref DOI 10.1111/j.1467-9280.2006.01693.x resolves; title, authors, year match", "retraction": "not_flagged_in_checked_sources"},
+      {"id": "R2", "verdict": "PAC", "evidence": "Crossref DOI 10.1037/0033-2909.112.1.155 resolves to Cohen, A power primer, published 1992", "corrected": "Cohen, J. (1992). A power primer. Psychological Bulletin, 112(1), 155-159.", "retraction": "not_flagged_in_checked_sources"},
+      {"id": "R3", "verdict": "NOT_FOUND", "evidence": "no match in Crossref or Europe PMC by title, by author and year, or by journal", "retraction": "unknown"}
+    ]}},
+    {"match": "^claims batch 1", "return": {"results": [
+      {"id": "C1", "verdict": "UNSUPPORTED", "evidence": "the source reports laboratory recall of prose passages, not course exam grades", "fix": "Laboratory studies show that retrieval practice improves long-term retention [1]."},
+      {"id": "C2", "verdict": "SUPPORTED", "evidence": "the source gives d = .20, .50 and .80 as small, medium and large"},
+      {"id": "C4", "verdict": "SUPPORTED", "evidence": "d = .50 is the medium benchmark"},
+      {"id": "C5", "verdict": "SUPPORTED", "evidence": "the source reports better retention after testing than after restudy"}
+    ]}},
+    {"match": "^recheck ", "return": {"overturned": false, "evidence": "title, author+year and identifier searches did not clear the flag"}},
+    {"match": "^confirm report on disk", "return": {"exists": true, "bytes": 4096, "first_heading": "# Citation integrity report", "states_status": "COMPLETE"}}
+  ]
+}

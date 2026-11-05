@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash WebFetch WebSearch Task
 compatibility: "No API key required. Claude Code with dynamic workflows (paid plans or API access; v2.1.203+) runs the /alterlab-workflows:* commands; installing this plugin also installs alterlab-core, whose skills the workflows call. Other surfaces use the staged playbooks in references/. Database-backed stages use keyless public scholarly APIs (Crossref, Semantic Scholar, Europe PMC, PubMed, arXiv) and need network access."
 metadata:
   skill-author: AlterLab
-  version: "1.1.3"
-  last_updated: "2026-11-04"
+  version: "1.1.4"
+  last_updated: "2026-11-05"
   credentials: "optional: S2_API_KEY (dedicated Semantic Scholar rate instead of the shared keyless pool), NCBI_API_KEY (PubMed E-utilities 10 instead of 3 requests/s for PubMed-heavy runs)"
   depends_on: "alterlab-citation-verifier, alterlab-paper-reviewer, alterlab-deep-research (alterlab-core); optionally alterlab-research-lookup, alterlab-pubmed, alterlab-arxiv, alterlab-literature-review, alterlab-meta-analysis, alterlab-research-grants, alterlab-tubitak-proposal, alterlab-paper-writer"
 ---
@@ -57,7 +57,7 @@ workflows in its orchestrate (`alterflow`) mode.
 
 | Command (Claude Code) | What it does | Input (`args`) | Agents, typical | Composes |
 |---|---|---|---|---|
-| `/alterlab-workflows:citation-audit` | Existence + metadata of every reference; support for up to 150 cited claims; a flag counts only after two separate re-checks both complete without clearing it (TF/PAC/IH/PH/SH taxonomy) | path, or `{path, mailto?, out?}` | 10–40 | alterlab-citation-verifier |
+| `/alterlab-workflows:citation-audit` | Existence + metadata of every reference; support for up to 150 cited claims; a flag counts only after two separate re-checks both complete without clearing it (NOT_FOUND/ID_INVALID/PAC/IH/PH/SH; NOT_FOUND is never relabelled TF) | path, or `{path, mailto?, out?}` | 10–40 | alterlab-citation-verifier |
 | `/alterlab-workflows:review-panel` | 4–6 blind reviewers chosen for the paper's field and design; every major concern re-read against the manuscript (unchecked ones go to the editor as unverified); editor decision + revision roadmap | path, or `{path, venue?, field?, lenses?, out?}` | 8–20 | alterlab-paper-reviewer (field analysis) |
 | `/alterlab-workflows:claim-stress-test` | 3 skeptics per headline claim (counter-evidence, citation support, inference); majority rating (or "unrated" when missing lenses could change it) + calibrated rewrites | path, or `{path?, claims?, max_claims?, out?}` | 10–30 | alterlab-deep-research, alterlab-citation-verifier |
 | `/alterlab-workflows:systematic-review-screening` | Codebook → optional database searches → de-duplication → two blinded screeners per batch → third-reviewer adjudication → PRISMA 2020 flow (unresolved records shown separately) + Cohen's κ | `{question, records?, include?, exclude?, databases?, max_per_database?, batch?, out_dir?}` | 2 per batch of 25 records, plus adjudication | alterlab-pubmed (Europe PMC by its public API) |
@@ -98,7 +98,8 @@ Whether you launch the workflow, run its playbook, or first need the user's inpu
 2. **States the acceptance rule and what happens to an item whose check did not complete**: a
    citation flag with fewer than two completed re-checks is *provisional*; a record without a
    resolved screening decision is *UNRESOLVED*; an unchecked review concern or grant weakness is
-   *unverified*. Name the categories it reports (citation-audit: the TF/PAC/IH/PH/SH taxonomy),
+   *unverified*. Name the categories it reports (citation-audit: NOT_FOUND / ID_INVALID / PAC / IH / PH / SH,
+   with absence from indexes reported as NOT_FOUND, not fabrication),
    the skills it calls (the Composes column) and the next step after it (for screening:
    `alterlab-literature-review`, then `alterlab-meta-analysis`).
 3. **Gives the cost**: the agent count and, for a large input (a whole thesis, hundreds of
@@ -143,7 +144,7 @@ unchecked, with status `partial` (for example "references 1–40 of 112 audited"
 |---|---|
 | Evidence before verdicts | Every flag, concern, or gap carries a source (DOI/URL) and a verbatim quote, or the searches that came up empty. |
 | No fabrication | Agents report only works they retrieved; results only the authors have become `[AUTHORS: …]` placeholders. |
-| Lookup failure ≠ fabrication | A reference that could not be checked (network, rate limit) is `UNVERIFIED`, never `NOT_FOUND`, and keeps the audit `partial`. |
+| Lookup failure ≠ fabrication | A reference that could not be checked (network, rate limit) is `UNVERIFIED`, never `NOT_FOUND`, and keeps the audit `partial`. A `NOT_FOUND` (absent from every source that answered) is not proof of fabrication either; an unknown retraction status is not "not retracted". |
 | No silent caps or failures | A capped, failed, or omitted item is counted as unresolved and listed — never as checked; the run is then `partial`, never `complete`. |
 | Human sign-off | Screening decisions, integrity flags, and review decisions are drafts for the researcher to confirm. |
 | AI disclosure | Every deliverable ends with an AI-assistance statement suitable for journal or funder policies. |

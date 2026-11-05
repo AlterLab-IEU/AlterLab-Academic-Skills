@@ -1,0 +1,17 @@
+{
+  "question": "In undergraduate STEM courses, does retrieval practice (quizzing or practice testing) improve course exam performance compared with restudy or no-quiz instruction?",
+  "records": "skills/workflows/alterlab-research-workflows/evals/fixtures/workflows/systematic-review-screening/records.csv",
+  "include": [
+    "Undergraduate students in a credit-bearing STEM, health-science, or statistics course",
+    "A retrieval-practice intervention (quizzing, practice testing, spaced retrieval)",
+    "A comparison condition (restudy, review, or no quizzing)",
+    "A course exam or course-embedded test as an outcome"
+  ],
+  "exclude": [
+    "K-12 or non-student populations",
+    "No new empirical data (narrative reviews, commentaries)",
+    "No intervention or no comparison condition",
+    "Laboratory-only outcomes not tied to a course"
+  ],
+  "out_dir": "${OUT_DIR}"
+}
