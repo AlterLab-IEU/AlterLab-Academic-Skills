@@ -110,3 +110,31 @@ invalid. A low activation rate never fails a run, because this is a measurement 
   are shown in full.
 - **Votes are not independent samples.** With a handful of runs per case, a rate on 40 cases
   has wide uncertainty. Report the counts and denominators, not only the percentage.
+
+## Recorded runs
+
+Live runs on 2026-11-05 through the Claude Code CLI login (no API key): model
+`claude-opus-5-5`, CLI 2.1.318, one vote per case (`--runs 1`), seed 20261105. The raw
+records, with every candidate list shown and every reply, are in
+[`benchmarks/activation/results/`](../benchmarks/activation/results/).
+
+| Run | Cases | Counted success | Strict correct | Wrong skill | Missed | False activation | No answer | CLI-reported cost |
+|---|---|---|---|---|---|---|---|---|
+| `20261105T095513Z` (whole set) | 40 | 39 / 40 | 38 / 40 | 0 | 0 | 1 | 0 | $4.11 |
+| `20261105T094957Z` (`--kind unavailable`) | 6 | 5 / 6 | 4 / 6 | 0 | 0 | 1 | 0 | $0.53 |
+| `20261105T095036Z` (`--language tr --limit 5`) | 5 | 5 / 5 | 5 / 5 | 0 | 0 | 0 | 0 | $0.59 |
+| `20261105T095055Z` (`--kind ambiguous --limit 3`) | 3 | 3 / 3 | 3 / 3 | 0 | 0 | 0 | 0 | $0.42 |
+
+"Counted success" includes acceptable alternates and correct `none` on unavailable-skill cases;
+"strict" counts only the expected answer. The three small runs repeat cases of the whole-set run
+and agree with it case by case.
+
+What this shows, within the limits above: on these 40 hand-written cases the model chose the
+expected installed skill every time (31 / 31), declined all three out-of-scope requests, and
+handled 5 of 6 requests whose right skill was not installed. The one failure reproduced in both
+runs that contained it: `unavailable-docentlik-essentials` (doçentlik pre-screening with
+`alterlab-docentlik-eligibility` not installed) activated `alterlab-academic-career`. The
+distractor cases scored 21 / 21, so this set is near its ceiling for this model and does not
+discriminate much; harder cases are needed before these rates can rank descriptions. One vote
+per case says nothing about vote stability beyond the 14 repeated cases, and none of this
+measures Claude Code's real skill loader.
