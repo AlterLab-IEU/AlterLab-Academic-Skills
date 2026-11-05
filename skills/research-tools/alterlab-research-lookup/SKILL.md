@@ -6,8 +6,8 @@ license: MIT
 compatibility: No API key required. The scholarly backend is stdlib Python that queries Crossref, Europe PMC, arXiv and (best effort) Semantic Scholar keyless; general web questions use Claude's WebSearch/WebFetch. Optional backends, used only when their keys are set or forced - PARALLEL_API_KEY (Parallel Chat API, openai package) and OPENROUTER_API_KEY (Perplexity, requests package) - send queries to those services.
 metadata:
     skill-author: AlterLab
-    version: "1.2.2"
-    last_updated: "2026-11-02"
+    version: "1.3.0"
+    last_updated: "2026-11-05"
     credentials: "optional: PARALLEL_API_KEY (Parallel Chat API synthesized web research reports; paid), OPENROUTER_API_KEY (Perplexity sonar-pro-search synthesized academic answers via OpenRouter; paid), S2_API_KEY or SEMANTIC_SCHOLAR_API_KEY (raises Semantic Scholar's shared keyless rate limit; free). None is needed: the keyless scholarly backend and WebSearch/WebFetch do the lookup without them"
 ---
 
@@ -17,7 +17,7 @@ metadata:
 
 This skill provides real-time research information lookup with **intelligent backend routing**, and it works with no API key:
 
-- **Scholarly backend** (keyless, default for paper searches): `scripts/research_lookup.py` queries Crossref, Europe PMC, arXiv and Semantic Scholar, merges the hits by DOI, and returns index records — title, authors, year, venue, DOI, each index's citation count, an abstract snippet — ordered by influence (or relevance for "recent/latest" requests). You read the records, open the papers you cite, and write the synthesis.
+- **Scholarly backend** (keyless, default for paper searches): `scripts/research_lookup.py` queries Crossref, Europe PMC, arXiv and Semantic Scholar, merges the same work across indexes (DOI, then arXiv id / PMID / PMCID, then full title + year + first author), and returns index records — title, authors, year, venue, DOI, each index's citation count, an abstract snippet — in the indexes' relevance order (`--rank cited` orders by one declared index's citation count instead). You read the records, open the papers you cite, and write the synthesis.
 - **Keyless web lookup** (default for general questions — statistics, market data, news, documentation): you run the search with WebSearch, open the sources with WebFetch, and save the result to `sources/` (procedure below).
 - **Parallel Chat API** (`core` model, optional, `PARALLEL_API_KEY`): synthesized multi-source web research reports with inline citations (`https://api.parallel.ai/v1beta/chat/completions`).
 - **Perplexity sonar-pro-search** (optional, `OPENROUTER_API_KEY`): synthesized academic answers with citations.
@@ -56,6 +56,9 @@ The skill automatically routes queries to the best backend based on content:
 
 ```
 Query arrives
+    |
+    +-- --terms / --since / --until / --cite-index / --rank cited given?
+    |                              --> scholarly backend (only it applies them)
     |
     +-- Contains academic keywords? (papers, DOI, journal, peer-reviewed, etc.)
     |       OPENROUTER_API_KEY set --> Perplexity sonar-pro-search (academic mode)
@@ -127,7 +130,7 @@ Query Examples:
 ```
 
 **Keyless procedure:**
-1. Run `python scripts/research_lookup.py "<request>" -o sources/papers_YYYYMMDD_HHMMSS_<topic>.md`. It drops routing words ("find peer-reviewed papers on … with DOIs") before searching; pass `--terms '"exact phrase" OR "synonym"'` when you know the field's vocabulary, `--rank cited` to surface influential work (the default unless the request says recent/latest or names a year), `--limit N` for more records.
+1. Run `python scripts/research_lookup.py "<request>" -o sources/papers_YYYYMMDD_HHMMSS_<topic>.md`. It drops English routing words ("find peer-reviewed papers on … with DOIs") before searching and keeps words in every script as written (Turkish, Greek, CJK, … — never transliterated or translated). Pass `--terms '"exact phrase" OR "synonym"'` when you know the field's vocabulary (quotes, `AND`/`OR`/`NOT` in capitals, `-word`, parentheses), `--since YYYY` / `--until YYYY` (or `YYYY-MM-DD`) for a date window, `--rank cited` to order by citation count (the default order is relevance), `--limit N` for more records. Words such as "recent" or a year inside the topic never become a date filter — use `--since`.
 2. Read the records: they are real index entries (DOI, venue, year, the citation count each index reports, an abstract snippet), not generated citations. Keyword ranking can miss a field's classic — if you know it (e.g. the original BERT paper), confirm it with a DOI or title lookup (`--terms` with its title, or `https://api.crossref.org/works/<DOI>`) rather than citing from memory.
 3. Open each paper you summarise (WebFetch the DOI or the Europe PMC record) before stating its findings; the abstract snippet is enough only for a one-line description.
 4. Write 5–8 high-quality citations with authors, titles, venues, years, DOIs and citation counts (say which index each count is from), key findings and methods, and research gaps — the same response Perplexity's academic mode gives.
@@ -216,8 +219,11 @@ No key is needed. Ask the user to set a key themselves (never paste it into chat
 
 **Scholarly backend (keyless, `scripts/scholarly_backend.py`, stdlib only):**
 - Crossref `api.crossref.org/works` (`query.bibliographic`, `is-referenced-by-count`), Europe PMC REST (`TITLE_ABS:` query, `sort=CITED desc` in cited mode), arXiv `export.arxiv.org/api/query`, Semantic Scholar `graph/v1/paper/search`, best effort: its shared keyless search pool is often spent (HTTP 429 for minutes, checked 2026-11-02), so it gets one retry after 2 s, is then skipped for the rest of the run, and is reported as not checked; Crossref, Europe PMC and arXiv carry the query on their own. An optional `S2_API_KEY` (or `SEMANTIC_SCHOLAR_API_KEY`), sent as a header, raises its limit. OpenAlex is no longer queried: since 2026 its keyless search is metered per IP, so dependable use needed an account
-- A source that fails is listed under "Sources that did not answer" (a 429 there means not checked, not "no results"); the rest still return. Every record is merged by DOI and keeps each index's citation count separately
-- Checked live 2026-10-22 and again on 2026-11-02 without OpenAlex: "microplastics in human placenta" returned Ragusa et al. 2021, *Environment International*, DOI 10.1016/j.envint.2020.106274, first; `--terms '"testing effect" OR "retrieval practice"'` returned Roediger & Karpicke 2006, DOI 10.1111/j.1467-9280.2006.01693.x, first
+- A source that fails is listed under "Sources that did not answer" (a 429 there means not checked, not "no results"); the rest still return. Every record keeps each index's citation count separately and lists the index records it was merged from (`merged_from`)
+- **Search syntax** (`--terms`, or quotes / `AND` `OR` `NOT` / parentheses / leading `-` in the request) is parsed and translated per index: Europe PMC and arXiv receive the exact boolean query; Crossref and Semantic Scholar have no boolean search, so they get an *approximate* keyword query (labelled) or, when the expression excludes terms, are *skipped* with the reason. Each run prints and returns `query_translation` per index. `OR` binds tighter than `AND`; malformed `--terms` (unbalanced quote or parenthesis, dangling operator) is an error, nothing is searched
+- **Dates**: `--since`/`--until` go to every index (Crossref `from-/until-pub-date`, Europe PMC `FIRST_PDATE`, arXiv `submittedDate`, Semantic Scholar `year`) and are re-checked on the returned dates: out-of-range records are dropped and counted, undated ones kept and marked "date unknown"
+- **Order**: relevance by default; `--rank cited` sorts by one index's count (`--cite-index`, default crossref) with uncounted records after, never by comparing counts across indexes. Full rules (tokenization, grammar, dedup, preprint vs published, ranking, dates, output schema v2): `references/search_semantics.md`
+- Checked live 2026-10-22 and again on 2026-11-02 without OpenAlex (with v1.2.x, before the v1.3.0 query, date and ranking changes; not re-run since): "microplastics in human placenta" returned Ragusa et al. 2021, *Environment International*, DOI 10.1016/j.envint.2020.106274, first; `--terms '"testing effect" OR "retrieval practice"'` returned Roediger & Karpicke 2006, DOI 10.1111/j.1467-9280.2006.01693.x, first
 
 **Parallel Chat API (Beta):**
 - Endpoint: `POST https://api.parallel.ai/v1beta/chat/completions` (OpenAI SDK with `base_url="https://api.parallel.ai/v1beta"`)
@@ -245,6 +251,10 @@ python scripts/research_lookup.py "your query" -o sources/research_YYYYMMDD_HHMM
 # Paper search with exact terms, influence order, 15 records (keyless)
 python scripts/research_lookup.py "find papers" --terms '"testing effect" OR "retrieval practice"' \
   --rank cited --limit 15 -o sources/papers_<topic>.md
+
+# Boolean expression with an exclusion and a date window (keyless)
+python scripts/research_lookup.py "find papers" --terms '(memory OR learning) AND sleep NOT rodent' \
+  --since 2020 --until 2024 -o sources/papers_<topic>.md
 
 # Force specific backend
 python scripts/research_lookup.py "your query" --force-backend scholarly -o sources/papers_<topic>.md
@@ -374,7 +384,7 @@ Treat returned citations as leads: open and check any paper before citing it, be
 ## Error Handling and Limitations
 
 **Known Limitations:**
-- Scholarly backend: keyword search, so a field's classic can rank below newer work — use `--terms` and `--rank cited`, and confirm known classics by DOI; Europe PMC citation counts cover only its own corpus; Semantic Scholar's shared keyless search pool is often spent, so many runs answer from Crossref, Europe PMC and arXiv alone (the output names Semantic Scholar as not checked, never silently)
+- Scholarly backend: keyword search in the indexes' relevance order, so a field's classic can rank below newer work — use `--terms` and `--rank cited`, and confirm known classics by DOI; each index's citation count covers only its own corpus (they are labelled, never compared); Crossref and Semantic Scholar cannot run boolean queries (see `query_translation`); routing-word removal is English-only; Semantic Scholar's shared keyless search pool is often spent, so many runs answer from Crossref, Europe PMC and arXiv alone (the output names Semantic Scholar as not checked, never silently)
 - Parallel Chat API (core model): Complex queries may take up to 5 minutes
 - Perplexity: Information cutoff, may not access full text behind paywalls
 - All: Cannot access proprietary or restricted databases
@@ -382,6 +392,8 @@ Treat returned citations as leads: open and check any paper before citing it, be
 **Fallback Behavior:**
 - Auto-routing without a key uses the keyless scholarly backend (and, for general questions, tells you on stderr to use WebSearch/WebFetch)
 - A `--force-backend parallel|perplexity` whose key is missing exits 1 naming the variable; it never answers from another backend
+- `--terms`, `--since`, `--until`, `--cite-index` and `--rank cited` exist only in the scholarly backend: given one, auto-routing uses the scholarly backend even when a key is set, and `--force-backend parallel|perplexity` refuses (exit 1) instead of ignoring it
+- Malformed `--terms` or an invalid date exits 1 (`scholarly_backend.py` exits 2) before any request; a request whose own text has unparseable syntax is searched as plain words and the output says so
 - A call that fails is not retried on another backend; the result carries `success: false`, the error goes to stderr, and the script exits 1 — rerun with `--force-backend` to try another
 - Rephrase queries (or pass `--terms`) for better results if the initial response is insufficient
 

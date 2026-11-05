@@ -29,7 +29,7 @@ def format_response(result: Dict) -> str:
 **Query:** {result['query']}
 **Model:** {result['model']}
 **Timestamp:** {result['timestamp']}
-**Note:** Results prioritized by citation count, venue prestige, and author reputation
+**Note:** Order and per-index details are stated in the response header (scholarly backend: relevance order by default)
 
 ---
 
@@ -40,7 +40,7 @@ def format_response(result: Dict) -> str:
     # Display API-provided sources with venue/citation info
     if sources:
         output += f"\n📚 **Sources ({len(sources)}):**\n"
-        output += "_Prioritized by venue quality and citation impact_\n\n"
+        output += "_In the order the backend returned them_\n\n"
         for i, source in enumerate(sources, 1):
             title = source.get("title", "Untitled")
             url = source.get("url", "")

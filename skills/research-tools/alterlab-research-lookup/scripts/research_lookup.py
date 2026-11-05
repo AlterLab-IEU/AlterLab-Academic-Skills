@@ -74,18 +74,30 @@ class ResearchLookup:
     CHAT_BASE_URL = "https://api.parallel.ai/v1beta"
 
     def __init__(self, force_backend: Optional[str] = None, limit: int = 10,
-                 rank: str = "auto", terms: Optional[str] = None):
+                 rank: Optional[str] = None, terms: Optional[str] = None,
+                 since: Optional[str] = None, until: Optional[str] = None,
+                 cite_index: Optional[str] = None):
         """Initialize the research lookup tool. No API key is required.
 
         Args:
             force_backend: Force a specific backend ('scholarly', 'parallel' or 'perplexity').
                           If None, backend is auto-selected based on query content and keys.
-            limit, rank, terms: passed to the keyless scholarly backend.
+            limit, rank, terms, since, until, cite_index: passed to the keyless scholarly
+                          backend (rank defaults to 'relevance', cite_index to 'crossref').
+                          terms, since, until, cite_index and rank='cited' exist only there,
+                          so setting one routes an auto-selected query to it, and a forced
+                          keyed backend refuses them instead of ignoring them.
         """
         self.force_backend = force_backend
         self.parallel_available = bool(os.getenv("PARALLEL_API_KEY"))
         self.perplexity_available = bool(os.getenv("OPENROUTER_API_KEY"))
-        self.limit, self.rank, self.terms = limit, rank, terms
+        self.limit, self.terms = limit, terms
+        self.rank = rank or "relevance"
+        self.cite_index = cite_index or "crossref"
+        self.since, self.until = since, until
+        self.scholarly_only = [flag for flag, on in (
+            ("--terms", terms is not None), ("--since", bool(since)), ("--until", bool(until)),
+            ("--rank cited", rank == "cited"), ("--cite-index", cite_index is not None)) if on]
 
     def is_academic(self, query: str) -> bool:
         query_lower = query.lower()
@@ -98,6 +110,11 @@ class ResearchLookup:
             # answer from another one when its key is missing.
             if self.force_backend == "scholarly":
                 return "scholarly"
+            if self.scholarly_only and self.force_backend in ("perplexity", "parallel"):
+                raise ValueError(f"{', '.join(self.scholarly_only)} apply only to the scholarly "
+                                 f"backend; --force-backend {self.force_backend} would ignore "
+                                 "them. Not falling back to another backend: drop them, or use "
+                                 "--force-backend scholarly.")
             if self.force_backend == "perplexity":
                 if self.perplexity_available:
                     return "perplexity"
@@ -108,6 +125,14 @@ class ResearchLookup:
                     return "parallel"
                 raise ValueError("--force-backend parallel needs PARALLEL_API_KEY; "
                                  "not falling back to another backend. " + KEYLESS_HINT)
+
+        if self.scholarly_only:
+            # Options only the scholarly backend understands: honour them rather than letting
+            # a keyed backend silently ignore them.
+            if self.parallel_available or self.perplexity_available:
+                print(f"[Research] {', '.join(self.scholarly_only)} given: using the scholarly "
+                      "backend (the keyed backends cannot apply them).", file=sys.stderr)
+            return "scholarly"
 
         if self.is_academic(query):
             return "perplexity" if self.perplexity_available else "scholarly"
@@ -326,26 +351,44 @@ class ResearchLookup:
     def _scholarly_lookup(self, query: str) -> Dict[str, Any]:
         """Index records (no synthesis) from Crossref, Europe PMC, arXiv and Semantic Scholar."""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        res = scholarly_backend.search(query, limit=self.limit, terms=self.terms, rank=self.rank)
+        # QuerySyntaxError (malformed --terms) and bad dates raise before any request is sent.
+        res = scholarly_backend.search(query, limit=self.limit, terms=self.terms, rank=self.rank,
+                                       since=self.since, until=self.until,
+                                       cite_index=self.cite_index)
         model = "keyless/" + "+".join(s for s in res["queried"] if s not in res["errors"])
+        extra = {"search_terms": res["terms"], "rank": res["rank"], "source_errors": res["errors"],
+                 "skipped_sources": res["skipped"], "query_translation": res["query_translation"],
+                 "date_filter": res["date_filter"], "notes": res["notes"],
+                 "schema_version": res["schema_version"]}
         if not res["records"]:
-            why = ("every source failed: " + "; ".join(f"{k}: {v}" for k, v in res["errors"].items())
-                   if len(res["errors"]) == len(res["queried"]) else
-                   f"no records matched \"{res['terms']}\"; rephrase or pass --terms")
+            failed = "; ".join(f"{k}: {v}" for k, v in res["errors"].items())
+            skipped = "; ".join(f"{k} skipped ({v})" for k, v in res["skipped"].items())
+            df = res["date_filter"] or {}
+            if not res["queried"]:
+                why = "no source could run this query: " + skipped
+            elif len(res["errors"]) == len(res["queried"]):
+                why = "every source failed: " + "; ".join(x for x in (failed, skipped) if x)
+            else:
+                why = f"no records matched \"{res['terms']}\"; rephrase or pass --terms"
+                if df.get("dropped_out_of_range"):
+                    why += (f" ({df['dropped_out_of_range']} record(s) fell outside "
+                            "--since/--until)")
+                if skipped:
+                    why += f"; {skipped}"
             return {"success": False, "query": query, "error": why, "timestamp": timestamp,
-                    "backend": "scholarly", "model": model}
+                    "backend": "scholarly", "model": model, **extra}
         sources = [{
             "type": "source", "title": r["title"], "date": str(r["year"] or ""),
             "url": r["url"] or (f"https://doi.org/{r['doi']}" if r["doi"] else ""),
             "doi": r["doi"], "snippet": r["abstract"][:300], "cited_by": r["cited_by"],
-            "venue": r["venue"], "authors": r["authors"],
+            "venue": r["venue"], "authors": r["authors"], "found_in": r["found_in"],
+            "merged_from": r["merged_from"], **({"date_unknown": True} if r.get("date_unknown") else {}),
         } for r in res["records"]]
         citations = [{"type": "doi", "doi": r["doi"], "url": f"https://doi.org/{r['doi']}"}
                      for r in res["records"] if r["doi"]]
         return {"success": True, "query": query, "response": scholarly_backend.to_markdown(res),
                 "citations": citations, "sources": sources, "timestamp": timestamp,
-                "backend": "scholarly", "model": model, "search_terms": res["terms"],
-                "rank": res["rank"], "source_errors": res["errors"]}
+                "backend": "scholarly", "model": model, **extra}
 
     # ------------------------------------------------------------------
     # Shared utilities
@@ -532,8 +575,9 @@ Examples:
   # Academic paper search: keyless scholarly backend (Perplexity if OPENROUTER_API_KEY is set)
   python research_lookup.py "find papers on CRISPR off-target effects" -o sources/papers_x.md
 
-  # Exact search terms and ordering for the scholarly backend
+  # Explicit search expression, citation order and a date window (scholarly backend)
   python research_lookup.py "find papers" --terms '"testing effect" OR "retrieval practice"' --rank cited
+  python research_lookup.py "find papers" --terms '(memory OR learning) AND sleep NOT rodent' --since 2020
 
   # General research (Parallel Chat API when PARALLEL_API_KEY is set; without keys the
   # scholarly backend answers with papers only -- use WebSearch/WebFetch for web content)
@@ -558,11 +602,22 @@ Examples:
     )
     parser.add_argument("--limit", type=int, default=10,
                         help="scholarly backend: records to return (default 10)")
-    parser.add_argument("--rank", choices=["auto", "relevance", "cited"], default="auto",
-                        help="scholarly backend: 'cited' surfaces influential work; auto uses "
-                             "'relevance' for recent/latest/dated requests")
-    parser.add_argument("--terms", help="scholarly backend: exact search terms (quotes, OR "
-                                        "allowed) instead of the words left after routing words")
+    parser.add_argument("--rank", choices=list(scholarly_backend.RANKS), default=None,
+                        help="scholarly backend: 'relevance' (default) keeps the indexes' "
+                             "relevance order; 'cited' orders by one index's citation count "
+                             "(--cite-index), records without it last")
+    parser.add_argument("--cite-index", choices=list(scholarly_backend.CITE_INDEXES), default=None,
+                        help="scholarly backend: the one index whose count orders --rank cited "
+                             "(default crossref)")
+    parser.add_argument("--terms", help="scholarly backend: explicit search expression instead of "
+                                        "the request's topic words -- words, \"quoted phrases\", "
+                                        "AND/OR/NOT in capitals, -word, parentheses; parsed and "
+                                        "translated per index (see query_translation); no "
+                                        "routing-word filter; malformed syntax is an error")
+    parser.add_argument("--since", help="scholarly backend: earliest publication date (YYYY or "
+                                        "YYYY-MM-DD); sent to every index and re-checked")
+    parser.add_argument("--until", help="scholarly backend: latest publication date (YYYY or "
+                                        "YYYY-MM-DD)")
     parser.add_argument("-o", "--output", help="Write output to file")
     parser.add_argument("--json", action="store_true", help="Output as JSON")
 
@@ -579,7 +634,8 @@ Examples:
 
     try:
         research = ResearchLookup(force_backend=args.force_backend, limit=args.limit,
-                                  rank=args.rank, terms=args.terms)
+                                  rank=args.rank, terms=args.terms, since=args.since,
+                                  until=args.until, cite_index=args.cite_index)
 
         if args.batch:
             print(f"Running batch research for {len(args.batch)} queries...", file=sys.stderr)
