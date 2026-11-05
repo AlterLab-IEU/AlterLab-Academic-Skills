@@ -6,7 +6,7 @@ license: MIT
 compatibility: Needs network access to PubMed, arXiv, bioRxiv, and Semantic Scholar (searches follow the Entrez/Biopython and REST snippets in the references); verify_citations.py needs requests; PDF output requires pandoc and xelatex (check with --check-deps)
 metadata:
     skill-author: AlterLab
-    version: "1.1.2"
+    version: "1.1.3"
     last_updated: "2026-11-02"
 ---
 

@@ -6,7 +6,7 @@ license: MIT
 compatibility: "No API key required. PowerPoint output via `uv run --python \">=3.11\" --with python-pptx --with pillow`; LaTeX Beamer needs pdflatex; LibreOffice (soffice) exports PPTX to PDF for review; validation helpers use pymupdf, pypdf and Pillow; code-drawn visuals render with cairosvg. Optional AI slide images: OPENROUTER_API_KEY (prompts and attached figures go to Google Gemini models via OpenRouter)."
 metadata:
     skill-author: AlterLab
-    version: "1.1.2"
+    version: "1.2.0"
     last_updated: "2026-11-04"
     credentials: "optional: OPENROUTER_API_KEY (the AI slide-image backend, --backend ai: Nano Banana Pro full-slide images and Gemini review through OpenRouter)"
 ---

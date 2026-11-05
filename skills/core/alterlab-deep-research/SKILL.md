@@ -6,7 +6,7 @@ allowed-tools: Read Write Edit Bash WebFetch WebSearch
 compatibility: Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required
 metadata:
   skill-author: AlterLab
-  version: "2.4.3"
+  version: "2.4.4"
   last_updated: "2026-11-02"
 ---
 
