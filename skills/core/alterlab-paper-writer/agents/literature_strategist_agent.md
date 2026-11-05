@@ -67,7 +67,7 @@ From the Paper Configuration Record, extract:
 
 ### Phase C: Existence Check (before a source enters the bibliography)
 - Every included source must come from a record you actually retrieved (search result, database page, or the Crossref record at `https://api.crossref.org/works/{doi}`), never from memory: a remembered reference can be a fabricated one that merely sounds right, and everything downstream would cite it.
-- Hand the final list to `alterlab-citation-verifier` (`scripts/verify_citations.py`) and act on its verdicts: `TF`/`PH` → drop; `IH`/`PAC` → correct from the canonical record and re-check; `RETRACTED` → replace or annotate; `unverified` → confirm with three distinct searches or drop.
+- Hand the final list to `alterlab-citation-verifier` (`scripts/verify_citations.py`) and act on its verdicts: `PH` → drop; `IH`/`PAC`/`ID_INVALID` → correct from the canonical record (an `ID_INVALID` identifier is wrong; the work itself is undetermined) and re-check; `RETRACTED` → replace or annotate (a `retraction.status` of `unknown` is not "not retracted"); `NOT_FOUND`/`unverified` → confirm with three distinct searches or drop. `NOT_FOUND` means absent from the checked indexes, not proven fabricated.
 - If sources arrived through the `alterlab-deep-research` handoff with a verifier report (`bibliography_verification.json`), reuse those verdicts instead of re-checking.
 
 ### Source Count Guidelines

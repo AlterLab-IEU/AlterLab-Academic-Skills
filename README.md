@@ -227,10 +227,10 @@ not independent verification, and the reports say so.
 | Skills with a structurally valid eval file | **241 / 241** — 1,598 cases, checked in CI on every PR (schema and trigger coverage only; no model is called) |
 | Eval cases that supply input files | 145 cases in 85 skills, plus the benchmark fixtures below |
 | Skills evaluated behaviorally against a live model | **241 / 241** — every eval case answered once with the skill and once without it, through the Claude Code CLI login with no API key (2026-10-15 to 2026-11-04): 1,532 cases graded, 50 not runnable here (they need a key, connector, host or program the runner lacks). Results, method and limits: [`docs/behavioral-results.md`](docs/behavioral-results.md). (The nightly CI job that was meant to grade them graded nothing for weeks: its API key was missing and failures were reported as success. It has been removed, and a run that grades nothing now exits non-zero.) |
-| Skills shown to beat the bare model | On the same 1,532 graded cases, **90%** of answers with the skill passed against **52%** without it; the skill turned a bare FAIL into a PASS on 571 cases and the reverse on 2. The skilled answer faces more checks, grading reads only the final message, each case ran once, and a Claude model is the judge. Of the five benchmark tasks below, **1** beat the bare model (doçentlik pre-screening); on the other four the bare model was already at or near the ceiling. |
+| Skills shown to beat the bare model | On the same 1,532 graded cases, **90%** of answers with the skill passed against **52%** without it; the skill turned a bare FAIL into a PASS on 571 cases and the reverse on 2. The skilled answer faces more checks, grading reads only the final message, each case ran once, and a Claude model is the judge (the literal rubric judge, which also scored skill-specific vocabulary). These are 4.0.0 figures; their raw records are not in the repository, so they cannot be re-derived from this checkout, and results graded with the repaired method (schema 2: separate substance and routing scores) are not directly comparable. Of the five benchmark tasks below, **1** beat the bare model (doçentlik pre-screening); on the other four the bare model was already at or near the ceiling. |
 | Helper scripts | unit-tested: input validation, reference values, and fault paths (see `tests/`) |
-| Dynamic workflows (`/alterlab-workflows:*`) | dry-run against a mocked runtime, including injected failures; not run live |
-| Skill auto-selection (activation) | a harness exists (`run_evals.py --activation`); no current recorded run |
+| Dynamic workflows (`/alterlab-workflows:*`) | all seven dry-run against a mocked runtime, including injected failures; **2 of 7 run live** (2026-11-05): citation-audit on a synthetic fixture passed the output checker, claim-stress-test was checked by hand. The other five have not been run live. [`docs/workflow-validation.md`](docs/workflow-validation.md) |
+| Skill auto-selection (activation) | 40 hand-written cases (English and Turkish, ambiguous, distractor, skill-not-installed) over realistic install profiles, one vote each (2026-11-05): 39 / 40 counted successes, 1 false activation. A description-only proxy, not Claude Code's loader; the set is near its ceiling. [`docs/activation.md`](docs/activation.md) |
 
 <details>
 <summary><b>Five-task benchmark</b> (deterministic scoring, no LLM judge)</summary>
@@ -285,7 +285,12 @@ searchable: [alterlab-ieu.github.io/AlterLab-Academic-Skills](https://alterlab-i
 
 - **`alterlab-citation-verifier`** checks that references exist and that their metadata
   agrees with Crossref, Semantic Scholar, Europe PMC, arXiv (Open Library for books), and doi.org,
-  and flags retractions.
+  and flags retractions. Existence and metadata are reported separately: a resolving DOI does
+  not clear an author the record does not list (`PAC`, with the unsupported names). A reference
+  absent from every index that answered is `NOT_FOUND` — a prompt for a manual check, not a
+  finding of fabrication — and an unregistered DOI is `ID_INVALID` (the identifier is wrong; the
+  work is undetermined). Retraction status is `flagged`, `not_flagged_in_checked_sources` or
+  `unknown` (Crossref is the only retraction source checked).
   An entry it could not check is `unverified`, never a pass; input it could not parse makes the
   run `PARTIAL` (exit 3), never a pass.
 - **`claim_faithfulness.py`** compares a claim with the cited work's **abstract only**. It
@@ -342,7 +347,7 @@ commercially. Every installed or packaged skill carries `LICENSE`, `NOTICE`, and
   title   = {AlterLab Academic Skills},
   author  = {{AlterLab Creative Technologies Laboratory, Izmir University of Economics (IEU)}},
   year    = {2026},
-  version = {4.0.0},
+  version = {4.1.0},
   url     = {https://github.com/AlterLab-IEU/AlterLab-Academic-Skills}
 }
 ```

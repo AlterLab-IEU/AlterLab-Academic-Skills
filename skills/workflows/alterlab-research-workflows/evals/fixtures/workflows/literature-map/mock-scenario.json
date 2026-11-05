@@ -1,0 +1,24 @@
+{
+  "_comment": "MOCK RUNTIME SCENARIO, not live output. Pins agent results in scripts/workflow_dryrun.mjs to a minimal plausible shape (4 angles, 4 themes, 4 candidate gaps), for mock-derived agent counts and the checker tests. The works below are placeholders with no DOIs; a live run must retrieve real works.",
+  "rules": [
+    {"match": "^search plan", "return": {"angles": [
+      {"key": "core", "rationale": "core terminology", "query": "retrieval practice quizzing undergraduate statistics exam"},
+      {"key": "methods", "rationale": "classroom designs", "query": "testing effect classroom quasi-experiment"},
+      {"key": "stem", "rationale": "adjacent STEM courses", "query": "low-stakes quizzes STEM course exam performance"},
+      {"key": "reviews", "rationale": "syntheses", "query": "testing effect meta-analysis classroom"}
+    ]}},
+    {"match": "^sweep: ", "return": {"key": "angle", "count": 40, "top": [
+      {"title": "Mock landmark work on the testing effect", "year": 2006, "cited_by": 3000, "why": "placeholder"},
+      {"title": "Mock classroom quizzing study", "year": 2019, "cited_by": 40, "why": "placeholder"}
+    ]}},
+    {"match": "^cluster themes", "return": {"themes": [
+      {"name": "Laboratory testing effect", "summary": "placeholder", "key_works": ["Mock landmark work on the testing effect"], "open_questions": ["Does the laboratory effect size transfer to intact statistics courses?"]},
+      {"name": "Classroom quizzing", "summary": "placeholder", "key_works": ["Mock classroom quizzing study"], "open_questions": ["Does weekly quizzing help low-prior-achievement students more?"]},
+      {"name": "Feedback", "summary": "placeholder", "key_works": [], "open_questions": ["Does feedback timing moderate quizzing benefits in statistics?"]},
+      {"name": "Implementation", "summary": "placeholder", "key_works": [], "open_questions": ["What quiz frequency is optimal in a semester course?"]}
+    ]}},
+    {"match": "^gap: (Laboratory|Classroom)", "return": {"open": false, "searched": true, "evidence": "mock: answered by a classroom meta-analysis"}},
+    {"match": "^gap: (Feedback|Implementation)", "return": {"open": true, "searched": true, "evidence": "mock: searches empty", "sharpened": "placeholder sharpened question"}},
+    {"match": "^confirm report on disk", "return": {"exists": true, "bytes": 6144, "first_heading": "# Literature map", "states_status": "COMPLETE"}}
+  ]
+}

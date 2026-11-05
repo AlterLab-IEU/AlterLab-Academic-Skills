@@ -1,0 +1,6 @@
+{
+  "path": "skills/workflows/alterlab-research-workflows/evals/fixtures/r01_resubmission_a1.md",
+  "funder": "NIH",
+  "mechanism": "R01",
+  "out": "${OUT_DIR}/grant-panel.md"
+}

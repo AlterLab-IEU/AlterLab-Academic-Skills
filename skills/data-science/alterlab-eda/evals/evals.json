@@ -23,6 +23,55 @@
         { "type": "output_contains", "value": "missing" },
         { "type": "output_contains", "value": "183" },
         { "type": "behavior", "value": "Reports the attached experiment_results.csv as 183 rows x 10 columns and finds its specific problems: od600 missing in 12 rows, all in batch B3; ph missing in 5 rows; 3 exact duplicate rows; a temperature_c value of 370.0 (likely a 37.0 entry error); two cell_viability_pct values above 100 (104.2 and 101.7); and a constant incubation_h column (24)." }
+      ],
+      "artifact_checks": [
+        {
+          "path": "out/column_summary.csv",
+          "type": "csv",
+          "description": "one row per column of experiment_results.csv, with at least the columns column, dtype and missing_count (the number of empty cells in that column)",
+          "checks": [
+            {
+              "kind": "csv_columns",
+              "columns": [
+                "column",
+                "dtype",
+                "missing_count"
+              ]
+            },
+            {
+              "kind": "min_rows",
+              "min": 10,
+              "max": 10
+            },
+            {
+              "kind": "number_within",
+              "column": "missing_count",
+              "match": {
+                "column": "od600"
+              },
+              "expected": 12,
+              "tolerance": 0
+            },
+            {
+              "kind": "number_within",
+              "column": "missing_count",
+              "match": {
+                "column": "ph"
+              },
+              "expected": 5,
+              "tolerance": 0
+            },
+            {
+              "kind": "number_within",
+              "column": "missing_count",
+              "match": {
+                "column": "temperature_c"
+              },
+              "expected": 0,
+              "tolerance": 0
+            }
+          ]
+        }
       ]
     },
     {

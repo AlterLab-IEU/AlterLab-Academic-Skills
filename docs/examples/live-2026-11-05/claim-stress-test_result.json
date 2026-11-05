@@ -1,0 +1,56 @@
+{
+ "status": "complete",
+ "status_reasons": [],
+ "report": "/tmp/claude-0/-home-user-AlterLab-Academic-Skills/0607d841-8c7b-5fe9-b865-017c23f27c78/scratchpad/wf_claim_stress_test.md",
+ "ratings": {
+  "survives": 1
+ },
+ "claims": [
+  {
+   "id": "C1",
+   "rating": "survives",
+   "lenses_completed": 3,
+   "lenses_missing": []
+  }
+ ],
+ "summary": "I wrote the stress-test report to /tmp/claude-0/-home-user-AlterLab-Academic-Skills/0607d841-8c7b-5fe9-b865-017c23f27c78/scratchpad/wf_claim_stress_test.md. Its one claim, C1 (Roediger & Karpicke 2006, testing beats restudying), survives with all three lenses completed, because the citation is accurate, the randomized design gives large delayed-test effects (d = 0.83 to 1.26), \"long-term\" correctly excludes the 5-minute reversal, and four meta-analyses agree, so the report adds the scope qualifiers, meta-analytic citations and pooled effect size (about g = 0.5) as its three strengthening changes and flags that one Rowland 2014 quote has no confirmed source.",
+ "coverage": {
+  "claims": {
+   "found": 1,
+   "requested": 1,
+   "cap": 8,
+   "not_tested": 0,
+   "rated": 1,
+   "unrated": 0
+  },
+  "lenses": {
+   "requested": 3,
+   "dispatched": 3,
+   "completed": 3,
+   "failed": 0,
+   "unresolved": 0,
+   "retried": 0
+  },
+  "report": {
+   "path": "/tmp/claude-0/-home-user-AlterLab-Academic-Skills/0607d841-8c7b-5fe9-b865-017c23f27c78/scratchpad/wf_claim_stress_test.md",
+   "confirmed": true,
+   "attempts": 1,
+   "read_back": {
+    "exists": true,
+    "bytes": 13886,
+    "first_heading": "# Claim Stress-Test Report",
+    "states_status": "COMPLETE"
+   }
+  },
+  "agents": 5,
+  "retries": 0,
+  "failed_calls": 0,
+  "failed_call_labels": [],
+  "id_issues": {
+   "duplicate": 0,
+   "conflicting": 0,
+   "unknown": 0,
+   "missing": 0
+  }
+ }
+}

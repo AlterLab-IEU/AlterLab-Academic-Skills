@@ -1,0 +1,5 @@
+{
+  "manuscript": "skills/workflows/alterlab-research-workflows/evals/fixtures/workflows/_shared/synthetic-manuscript.md",
+  "reviews": "skills/workflows/alterlab-research-workflows/evals/fixtures/workflows/rebuttal/reviews.md",
+  "out_dir": "${OUT_DIR}"
+}

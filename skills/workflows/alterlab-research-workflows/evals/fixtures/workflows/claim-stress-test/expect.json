@@ -1,0 +1,23 @@
+{
+  "workflow": "claim-stress-test",
+  "synthetic": true,
+  "_comment": "What a live run of claim-stress-test on the synthetic manuscript (max_claims 2: 2 claims x 3 lenses) must produce. 'findings' are the answer key and never change pass/fail: the causal claim should not survive the inference lens, and 'generalizes to every STEM course' should be weakened or refuted.",
+  "args_file": "args.json",
+  "report": "claim-stress-test.md",
+  "mock_agent_count": 9,
+  "status": {"allowed": ["complete", "partial", "blocked"], "target": "complete"},
+  "outputs": [
+    {"path": "claim-stress-test.md", "type": "md", "role": "report"}
+  ],
+  "payload": {
+    "required_keys": ["status", "status_reasons", "report", "coverage"],
+    "required_keys_when_delivered": ["ratings", "claims", "summary"]
+  },
+  "coverage": {"required_stages": ["claims", "lenses", "report"]},
+  "findings": [
+    {"name": "two claims tested", "path": "coverage.claims.requested", "op": "==", "value": 2},
+    {"name": "no claim survives untouched", "path": "ratings.survives", "op": "absent_or_zero", "note": "absent key means no claim was rated survives"},
+    {"name": "report weakens or refutes a claim", "file": "claim-stress-test.md", "pattern": "weaken|refut|contested"},
+    {"name": "same-model caveat", "file": "claim-stress-test.md", "pattern": "same model"}
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "path": "skills/workflows/alterlab-research-workflows/evals/fixtures/workflows/_shared/synthetic-manuscript.md",
+  "out": "${OUT_DIR}/citation-audit.md"
+}

@@ -36,11 +36,20 @@ The corpus already ships the best prose taxonomy in the field (GPTZero × NeurIP
 
 | Type | Code | Share | Caught by |
 |------|------|-------|-----------|
-| Total Fabrication | **TF** | 66% | `verify_citations.py` (existence) |
+| Total Fabrication | **TF** | 66% | `verify_citations.py` flags the candidates (`NOT_FOUND`, `ID_INVALID`); TF itself is an analyst's conclusion after a documented manual search |
 | Partial Attribute Corruption | **PAC** | 27% | `verify_citations.py` (metadata cross-check) |
 | Identifier Hijacking | **IH** | 4% | `verify_citations.py` (DOI/arXiv resolution vs title+authors) |
 | Placeholder Hallucination | **PH** | 2% | `verify_citations.py` (placeholder/stub detection) |
 | **Semantic Hallucination** | **SH** | 1% | **`claim_faithfulness.py` (this tool)** |
+
+Since report schema 2 (`verify_citations.py` 2.0.0) the script never emits `TF`. A reference
+absent from every index that answered is `NOT_FOUND` (MEDIUM; the run verdict becomes
+`REVIEW_REQUIRED`): absence from Crossref, Europe PMC, arXiv or Open Library is not proof of
+fabrication, because books, grey literature and regional venues are often unindexed. A cited DOI
+that doi.org does not know, or an arXiv ID that does not exist, is `ID_INVALID` (SERIOUS): the
+identifier is wrong, and whether the work exists is undetermined. Retraction is reported per
+entry as `retraction.status` = `flagged` / `not_flagged_in_checked_sources` / `unknown`, and
+`retracted` is `null` when unknown — never read that as "not retracted".
 
 `claim_faithfulness.py` owns the **SH** row: the citation resolves to a real paper with
 correct metadata, but the paper *does not say what the citing text claims it says*. SH is the

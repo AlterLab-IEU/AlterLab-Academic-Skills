@@ -1,0 +1,1419 @@
+{
+  "schema_version": 1,
+  "kind": "activation-set",
+  "runner": {
+    "script": "scripts/run_evals.py",
+    "script_sha256": "093e1908ff545c2f190499bc1e0a9343d5bb8c04fd06db850e329fa55af6de44",
+    "artifact_checks_sha256": "8427493505f15ae6db73d60494855bc541c7c72bcc7f1a39c58de6bcfe0c4e70"
+  },
+  "model": "claude-opus-5-5",
+  "model_source": "default",
+  "endpoint": "claude-cli-login",
+  "collect_only": false,
+  "claude_cli_version": "2.1.318 (Claude Code)",
+  "repo_commit": "6fa26160d28f14ba3daf22a8cb30b91ea3d46837",
+  "repo_dirty": true,
+  "python": "3.13.18",
+  "platform": "linux",
+  "runs_per_arm": 1,
+  "timeout_s": 300,
+  "isolation": {
+    "cli_flags": [
+      "--safe-mode",
+      "--disable-slash-commands",
+      "--strict-mcp-config",
+      "--no-session-persistence"
+    ],
+    "confinement": {
+      "mode": "namespace",
+      "hidden_paths": 1,
+      "why_not_namespace": null,
+      "tripwire": "checkout fingerprinted before the run and after every case; a change aborts the run"
+    },
+    "working_directory": "fresh temporary directory per call"
+  },
+  "started_at": "2026-11-05T09:49:16+00:00",
+  "finished_at": "2026-11-05T09:49:57+00:00",
+  "status": "measured",
+  "runs": 1,
+  "seed": 20261105,
+  "case_set": {
+    "path": "benchmarks/activation/cases.json",
+    "version": 1,
+    "sha256": "136dd27c89d81f9b70ebad248182bdd474735fa079bc9f1fd752b02b2c955f72",
+    "selected": 6,
+    "total": 40
+  },
+  "filters": {
+    "case": null,
+    "kind": "unavailable",
+    "language": null,
+    "profile": null,
+    "limit": null
+  },
+  "profiles": {
+    "full": {
+      "requested": [
+        "alterlab-complete"
+      ],
+      "plugins": [
+        "alterlab-bioinformatics",
+        "alterlab-cheminformatics",
+        "alterlab-clinical-research",
+        "alterlab-complete",
+        "alterlab-core",
+        "alterlab-data-science",
+        "alterlab-databases",
+        "alterlab-document-tools",
+        "alterlab-domain-specific",
+        "alterlab-faculty-life",
+        "alterlab-finance-economics",
+        "alterlab-lab-integrations",
+        "alterlab-methodology",
+        "alterlab-research-tools",
+        "alterlab-social-science-workflow",
+        "alterlab-turkish-academia",
+        "alterlab-visualization",
+        "alterlab-workflows",
+        "alterlab-writing-tools"
+      ],
+      "skills": 241
+    },
+    "essentials": {
+      "requested": [
+        "alterlab-essentials"
+      ],
+      "plugins": [
+        "alterlab-core",
+        "alterlab-databases",
+        "alterlab-essentials",
+        "alterlab-methodology",
+        "alterlab-research-tools",
+        "alterlab-workflows",
+        "alterlab-writing-tools"
+      ],
+      "skills": 80
+    },
+    "core-only": {
+      "requested": [
+        "alterlab-core"
+      ],
+      "plugins": [
+        "alterlab-core"
+      ],
+      "skills": 10
+    },
+    "turkish-academia+core": {
+      "requested": [
+        "alterlab-turkish-academia",
+        "alterlab-core"
+      ],
+      "plugins": [
+        "alterlab-core",
+        "alterlab-turkish-academia"
+      ],
+      "skills": 23
+    },
+    "visualization-only": {
+      "requested": [
+        "alterlab-visualization"
+      ],
+      "plugins": [
+        "alterlab-visualization"
+      ],
+      "skills": 9
+    }
+  },
+  "candidate_policy": {
+    "full_list_max": 40,
+    "background_sample": 8,
+    "core_plugin": "alterlab-core",
+    "order": "sorted then shuffled per run with Random(f'{seed}|{case_id}|run{n}')",
+    "tie_break": "worst tied outcome"
+  },
+  "call_shape": "one text-only claude CLI call per vote via run_evals._claude (fresh temp dir, isolation flags, no skill files, no tools)",
+  "scope_note": "Description-only selection proxy on a small hand-written set; not Claude Code's skill loader. Labels need maintainer review.",
+  "summary": {
+    "overall": {
+      "cases": 6,
+      "answered": 6,
+      "counts": {
+        "correct": 0,
+        "acceptable_alternate": 1,
+        "correct_unavailable_handling": 4,
+        "wrong_skill": 0,
+        "missed": 0,
+        "false_activation": 1,
+        "no_answer": 0
+      },
+      "success": {
+        "n": 5,
+        "of": 6,
+        "rate": 0.8333
+      },
+      "strict": {
+        "n": 4,
+        "of": 6,
+        "rate": 0.6667
+      }
+    },
+    "by_kind": {
+      "unavailable": {
+        "cases": 6,
+        "answered": 6,
+        "counts": {
+          "correct": 0,
+          "acceptable_alternate": 1,
+          "correct_unavailable_handling": 4,
+          "wrong_skill": 0,
+          "missed": 0,
+          "false_activation": 1,
+          "no_answer": 0
+        },
+        "success": {
+          "n": 5,
+          "of": 6,
+          "rate": 0.8333
+        },
+        "strict": {
+          "n": 4,
+          "of": 6,
+          "rate": 0.6667
+        }
+      }
+    },
+    "by_language": {
+      "en": {
+        "cases": 4,
+        "answered": 4,
+        "counts": {
+          "correct": 0,
+          "acceptable_alternate": 0,
+          "correct_unavailable_handling": 3,
+          "wrong_skill": 0,
+          "missed": 0,
+          "false_activation": 1,
+          "no_answer": 0
+        },
+        "success": {
+          "n": 3,
+          "of": 4,
+          "rate": 0.75
+        },
+        "strict": {
+          "n": 3,
+          "of": 4,
+          "rate": 0.75
+        }
+      },
+      "tr": {
+        "cases": 2,
+        "answered": 2,
+        "counts": {
+          "correct": 0,
+          "acceptable_alternate": 1,
+          "correct_unavailable_handling": 1,
+          "wrong_skill": 0,
+          "missed": 0,
+          "false_activation": 0,
+          "no_answer": 0
+        },
+        "success": {
+          "n": 2,
+          "of": 2,
+          "rate": 1.0
+        },
+        "strict": {
+          "n": 1,
+          "of": 2,
+          "rate": 0.5
+        }
+      }
+    },
+    "by_profile": {
+      "core-only": {
+        "cases": 2,
+        "answered": 2,
+        "counts": {
+          "correct": 0,
+          "acceptable_alternate": 0,
+          "correct_unavailable_handling": 2,
+          "wrong_skill": 0,
+          "missed": 0,
+          "false_activation": 0,
+          "no_answer": 0
+        },
+        "success": {
+          "n": 2,
+          "of": 2,
+          "rate": 1.0
+        },
+        "strict": {
+          "n": 2,
+          "of": 2,
+          "rate": 1.0
+        }
+      },
+      "essentials": {
+        "cases": 2,
+        "answered": 2,
+        "counts": {
+          "correct": 0,
+          "acceptable_alternate": 1,
+          "correct_unavailable_handling": 0,
+          "wrong_skill": 0,
+          "missed": 0,
+          "false_activation": 1,
+          "no_answer": 0
+        },
+        "success": {
+          "n": 1,
+          "of": 2,
+          "rate": 0.5
+        },
+        "strict": {
+          "n": 0,
+          "of": 2,
+          "rate": 0.0
+        }
+      },
+      "turkish-academia+core": {
+        "cases": 1,
+        "answered": 1,
+        "counts": {
+          "correct": 0,
+          "acceptable_alternate": 0,
+          "correct_unavailable_handling": 1,
+          "wrong_skill": 0,
+          "missed": 0,
+          "false_activation": 0,
+          "no_answer": 0
+        },
+        "success": {
+          "n": 1,
+          "of": 1,
+          "rate": 1.0
+        },
+        "strict": {
+          "n": 1,
+          "of": 1,
+          "rate": 1.0
+        }
+      },
+      "visualization-only": {
+        "cases": 1,
+        "answered": 1,
+        "counts": {
+          "correct": 0,
+          "acceptable_alternate": 0,
+          "correct_unavailable_handling": 1,
+          "wrong_skill": 0,
+          "missed": 0,
+          "false_activation": 0,
+          "no_answer": 0
+        },
+        "success": {
+          "n": 1,
+          "of": 1,
+          "rate": 1.0
+        },
+        "strict": {
+          "n": 1,
+          "of": 1,
+          "rate": 1.0
+        }
+      }
+    },
+    "by_expectation": {
+      "unavailable": {
+        "cases": 6,
+        "answered": 6,
+        "counts": {
+          "correct": 0,
+          "acceptable_alternate": 1,
+          "correct_unavailable_handling": 4,
+          "wrong_skill": 0,
+          "missed": 0,
+          "false_activation": 1,
+          "no_answer": 0
+        },
+        "success": {
+          "n": 5,
+          "of": 6,
+          "rate": 0.8333
+        },
+        "strict": {
+          "n": 4,
+          "of": 6,
+          "rate": 0.6667
+        }
+      }
+    },
+    "definitions": {
+      "success": [
+        "correct",
+        "acceptable_alternate",
+        "correct_unavailable_handling"
+      ],
+      "strict": [
+        "correct",
+        "correct_unavailable_handling"
+      ],
+      "denominator": "answered = cases - no_answer"
+    }
+  },
+  "usage": {
+    "calls": 6,
+    "duration_ms": 33864,
+    "cost_usd": 0.5285372,
+    "cost_reported_calls": 6
+  },
+  "cases": [
+    {
+      "id": "unavailable-docentlik-essentials",
+      "prompt": "Pre-screen my publication list against the ÜAK doçentlik criteria for the Social Sciences field before the next application term.",
+      "language": "en",
+      "kind": "unavailable",
+      "installed_profile": "essentials",
+      "expected": "alterlab-docentlik-eligibility",
+      "acceptable": [],
+      "distractors": [
+        "alterlab-academic-career",
+        "alterlab-scholar-eval"
+      ],
+      "note": "The Turkish-academia plugin is not in essentials; career-document and scholarly-evaluation skills are not substitutes, so none is right.",
+      "installed_count": 80,
+      "shown_count": 32,
+      "candidates": [
+        {
+          "name": "alterlab-academic-career",
+          "why": [
+            "distractor-plugin",
+            "explicit-distractor"
+          ]
+        },
+        {
+          "name": "alterlab-ai-use-disclosure",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-alphafold-db",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-bgpt-search",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-citation-mgmt",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-citation-verifier",
+          "why": [
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-clinicaltrials",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-deep-research",
+          "why": [
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-ensembl",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-hypothesis-gen",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-latex-posters",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-link-health",
+          "why": [
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-literature-review",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-monarch",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-paper-2-web",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-paper-reviewer",
+          "why": [
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-paper-writer",
+          "why": [
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-peer-review",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-pptx-posters",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-pyzotero",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-research-grants",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-research-pipeline",
+          "why": [
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-scholar-eval",
+          "why": [
+            "distractor-plugin",
+            "explicit-distractor"
+          ]
+        },
+        {
+          "name": "alterlab-scientific-slides",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-scientific-thinking",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-scientific-writing",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-skill-finder",
+          "why": [
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-survey-design",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-teaching-design",
+          "why": [
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-thesis-supervisor",
+          "why": [
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-venue-templates",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-workflow-orchestration",
+          "why": [
+            "core-generalist"
+          ]
+        }
+      ],
+      "votes": [
+        {
+          "run": 1,
+          "order": [
+            "alterlab-workflow-orchestration",
+            "alterlab-research-grants",
+            "alterlab-clinicaltrials",
+            "alterlab-latex-posters",
+            "alterlab-peer-review",
+            "alterlab-research-pipeline",
+            "alterlab-venue-templates",
+            "alterlab-thesis-supervisor",
+            "alterlab-paper-reviewer",
+            "alterlab-teaching-design",
+            "alterlab-pptx-posters",
+            "alterlab-scientific-thinking",
+            "alterlab-ensembl",
+            "alterlab-paper-writer",
+            "alterlab-hypothesis-gen",
+            "alterlab-literature-review",
+            "alterlab-ai-use-disclosure",
+            "alterlab-bgpt-search",
+            "alterlab-alphafold-db",
+            "alterlab-citation-mgmt",
+            "alterlab-scholar-eval",
+            "alterlab-skill-finder",
+            "alterlab-link-health",
+            "alterlab-scientific-slides",
+            "alterlab-deep-research",
+            "alterlab-academic-career",
+            "alterlab-scientific-writing",
+            "alterlab-survey-design",
+            "alterlab-paper-2-web",
+            "alterlab-monarch",
+            "alterlab-pyzotero",
+            "alterlab-citation-verifier"
+          ],
+          "choice": "alterlab-academic-career",
+          "status": "answer",
+          "off_list": false,
+          "detail": "CHOICE: alterlab-academic-career\nA ÜAK doçentlik (associate professorship) application is an academic promotion dossier, and this skill is the only one that covers tenure and promotion dossiers and publication or impact metrics, although its description doesn't name the ÜAK criteria themselves."
+        }
+      ],
+      "vote_counts": {
+        "alterlab-academic-career": 1
+      },
+      "choice": "alterlab-academic-career",
+      "tie": false,
+      "off_list": false,
+      "outcome": "false_activation"
+    },
+    {
+      "id": "unavailable-tr-dergipark-core",
+      "prompt": "DergiPark'taki eğitim dergilerinden 2023-2025 arası yayımlanmış makalelerin özetlerini toplu olarak indirmek istiyorum.",
+      "language": "tr",
+      "kind": "unavailable",
+      "installed_profile": "core-only",
+      "expected": "alterlab-dergipark",
+      "acceptable": [],
+      "distractors": [
+        "alterlab-deep-research"
+      ],
+      "note": "Bulk OAI-PMH harvesting needs the DergiPark skill; deep-research is a research-report engine, not a harvester.",
+      "installed_count": 10,
+      "shown_count": 10,
+      "candidates": [
+        {
+          "name": "alterlab-citation-verifier",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-deep-research",
+          "why": [
+            "installed-profile",
+            "explicit-distractor"
+          ]
+        },
+        {
+          "name": "alterlab-link-health",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-paper-reviewer",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-paper-writer",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-research-pipeline",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-skill-finder",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-teaching-design",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-thesis-supervisor",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-workflow-orchestration",
+          "why": [
+            "installed-profile"
+          ]
+        }
+      ],
+      "votes": [
+        {
+          "run": 1,
+          "order": [
+            "alterlab-workflow-orchestration",
+            "alterlab-paper-reviewer",
+            "alterlab-thesis-supervisor",
+            "alterlab-skill-finder",
+            "alterlab-paper-writer",
+            "alterlab-link-health",
+            "alterlab-deep-research",
+            "alterlab-research-pipeline",
+            "alterlab-citation-verifier",
+            "alterlab-teaching-design"
+          ],
+          "choice": "none",
+          "status": "answer",
+          "off_list": false,
+          "detail": "CHOICE: none\n\nNone of the installed skills fits this request. You want to bulk-harvest abstracts from DergiPark, which is a scraping or metadata-download task (for example through OAI-PMH). alterlab-deep-research covers literature search and synthesis, not bulk metadata collection."
+        }
+      ],
+      "vote_counts": {
+        "none": 1
+      },
+      "choice": "none",
+      "tie": false,
+      "off_list": false,
+      "outcome": "correct_unavailable_handling"
+    },
+    {
+      "id": "unavailable-tubitak-essentials-fallback",
+      "prompt": "TÜBİTAK 1001 proje önerisi yazıyorum; özgün değer, yöntem ve iş paketleri bölümlerine yardım eder misin?",
+      "language": "tr",
+      "kind": "unavailable",
+      "installed_profile": "essentials",
+      "expected": "alterlab-tubitak-proposal",
+      "acceptable": [
+        "alterlab-research-grants"
+      ],
+      "distractors": [
+        "alterlab-paper-writer"
+      ],
+      "note": "The TÜBİTAK skill is missing; generic grant writing is a named acceptable fallback; none is also correct.",
+      "installed_count": 80,
+      "shown_count": 32,
+      "candidates": [
+        {
+          "name": "alterlab-academic-career",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-ai-use-disclosure",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-citation-mgmt",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-citation-verifier",
+          "why": [
+            "distractor-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-deep-research",
+          "why": [
+            "distractor-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-drugbank",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-hypothesis-gen",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-interpro",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-jaspar",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-latex-posters",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-link-health",
+          "why": [
+            "distractor-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-literature-review",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-metabolomics-wb",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-paper-2-web",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-paper-reviewer",
+          "why": [
+            "distractor-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-paper-writer",
+          "why": [
+            "distractor-plugin",
+            "core-generalist",
+            "explicit-distractor"
+          ]
+        },
+        {
+          "name": "alterlab-peer-review",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-pptx-posters",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-qualitative-methods",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-research-grants",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-research-pipeline",
+          "why": [
+            "distractor-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-research-workflows",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-results-transparency",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-scholar-eval",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-scientific-slides",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-scientific-writing",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-skill-finder",
+          "why": [
+            "distractor-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-teaching-design",
+          "why": [
+            "distractor-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-thesis-supervisor",
+          "why": [
+            "distractor-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-uniprot",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-venue-templates",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-workflow-orchestration",
+          "why": [
+            "distractor-plugin",
+            "core-generalist"
+          ]
+        }
+      ],
+      "votes": [
+        {
+          "run": 1,
+          "order": [
+            "alterlab-paper-2-web",
+            "alterlab-research-pipeline",
+            "alterlab-paper-writer",
+            "alterlab-teaching-design",
+            "alterlab-link-health",
+            "alterlab-metabolomics-wb",
+            "alterlab-uniprot",
+            "alterlab-scientific-slides",
+            "alterlab-jaspar",
+            "alterlab-workflow-orchestration",
+            "alterlab-thesis-supervisor",
+            "alterlab-hypothesis-gen",
+            "alterlab-citation-mgmt",
+            "alterlab-scientific-writing",
+            "alterlab-qualitative-methods",
+            "alterlab-research-workflows",
+            "alterlab-results-transparency",
+            "alterlab-citation-verifier",
+            "alterlab-scholar-eval",
+            "alterlab-research-grants",
+            "alterlab-drugbank",
+            "alterlab-skill-finder",
+            "alterlab-ai-use-disclosure",
+            "alterlab-paper-reviewer",
+            "alterlab-deep-research",
+            "alterlab-literature-review",
+            "alterlab-peer-review",
+            "alterlab-venue-templates",
+            "alterlab-pptx-posters",
+            "alterlab-latex-posters",
+            "alterlab-academic-career",
+            "alterlab-interpro"
+          ],
+          "choice": "alterlab-research-grants",
+          "status": "answer",
+          "off_list": false,
+          "detail": "CHOICE: alterlab-research-grants\nThe skill that names TÜBİTAK 1001, alterlab-tubitak-proposal, isn't installed, so I'd use alterlab-research-grants, which covers grant-proposal writing, including the original contribution (özgün değer), method (yöntem) and work-package (iş paketleri) narratives you "
+        }
+      ],
+      "vote_counts": {
+        "alterlab-research-grants": 1
+      },
+      "choice": "alterlab-research-grants",
+      "tie": false,
+      "off_list": false,
+      "outcome": "acceptable_alternate"
+    },
+    {
+      "id": "unavailable-pubmed-tr-core-fallback",
+      "prompt": "Run a MeSH-term PubMed search for \"Hypertension\"[MeSH] AND Turkey, limited to 2020 onwards, and list the PMIDs.",
+      "language": "en",
+      "kind": "unavailable",
+      "installed_profile": "turkish-academia+core",
+      "expected": "alterlab-pubmed",
+      "acceptable": [
+        "alterlab-deep-research"
+      ],
+      "distractors": [
+        "alterlab-dergipark",
+        "alterlab-trdizin"
+      ],
+      "note": "The PubMed connector is not installed; deep-research (which searches PubMed) is an acceptable fallback; Turkish indexes are wrong.",
+      "installed_count": 23,
+      "shown_count": 23,
+      "candidates": [
+        {
+          "name": "alterlab-akademik-tesvik",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-aperta",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-citation-verifier",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-deep-research",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-dergipark",
+          "why": [
+            "installed-profile",
+            "explicit-distractor"
+          ]
+        },
+        {
+          "name": "alterlab-docentlik-eligibility",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-kvkk-dmp",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-link-health",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-paper-reviewer",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-paper-writer",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-research-pipeline",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-skill-finder",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-teaching-design",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-thesis-supervisor",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-tr-academic-style",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-tr-research-ethics",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-trdizin",
+          "why": [
+            "installed-profile",
+            "explicit-distractor"
+          ]
+        },
+        {
+          "name": "alterlab-tubitak-bideb",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-tubitak-proposal",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-workflow-orchestration",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-yok-akademik",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-yok-tez",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-yokatlas",
+          "why": [
+            "installed-profile"
+          ]
+        }
+      ],
+      "votes": [
+        {
+          "run": 1,
+          "order": [
+            "alterlab-yok-tez",
+            "alterlab-tr-research-ethics",
+            "alterlab-trdizin",
+            "alterlab-yokatlas",
+            "alterlab-paper-writer",
+            "alterlab-thesis-supervisor",
+            "alterlab-research-pipeline",
+            "alterlab-yok-akademik",
+            "alterlab-workflow-orchestration",
+            "alterlab-docentlik-eligibility",
+            "alterlab-tr-academic-style",
+            "alterlab-link-health",
+            "alterlab-aperta",
+            "alterlab-dergipark",
+            "alterlab-tubitak-bideb",
+            "alterlab-akademik-tesvik",
+            "alterlab-skill-finder",
+            "alterlab-tubitak-proposal",
+            "alterlab-kvkk-dmp",
+            "alterlab-teaching-design",
+            "alterlab-deep-research",
+            "alterlab-citation-verifier",
+            "alterlab-paper-reviewer"
+          ],
+          "choice": "none",
+          "status": "answer",
+          "off_list": false,
+          "detail": "CHOICE: none\nNone of the installed skills runs PubMed or MeSH searches; they cover Turkish repositories (YÖK, TR Dizin, DergiPark), and alterlab-deep-research is a broad research pipeline rather than a tool for running one PubMed query."
+        }
+      ],
+      "vote_counts": {
+        "none": 1
+      },
+      "choice": "none",
+      "tie": false,
+      "off_list": false,
+      "outcome": "correct_unavailable_handling"
+    },
+    {
+      "id": "unavailable-matplotlib-core",
+      "prompt": "Make a matplotlib scatter plot of these two columns with a fitted regression line and 95% confidence band.",
+      "language": "en",
+      "kind": "unavailable",
+      "installed_profile": "core-only",
+      "expected": "alterlab-matplotlib",
+      "acceptable": [],
+      "distractors": [
+        "alterlab-paper-writer"
+      ],
+      "note": "No plotting skill installed; paper-writer has a figure agent but is a manuscript pipeline.",
+      "installed_count": 10,
+      "shown_count": 10,
+      "candidates": [
+        {
+          "name": "alterlab-citation-verifier",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-deep-research",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-link-health",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-paper-reviewer",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-paper-writer",
+          "why": [
+            "installed-profile",
+            "explicit-distractor"
+          ]
+        },
+        {
+          "name": "alterlab-research-pipeline",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-skill-finder",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-teaching-design",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-thesis-supervisor",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-workflow-orchestration",
+          "why": [
+            "installed-profile"
+          ]
+        }
+      ],
+      "votes": [
+        {
+          "run": 1,
+          "order": [
+            "alterlab-citation-verifier",
+            "alterlab-workflow-orchestration",
+            "alterlab-teaching-design",
+            "alterlab-link-health",
+            "alterlab-research-pipeline",
+            "alterlab-deep-research",
+            "alterlab-paper-writer",
+            "alterlab-thesis-supervisor",
+            "alterlab-paper-reviewer",
+            "alterlab-skill-finder"
+          ],
+          "choice": "none",
+          "status": "answer",
+          "off_list": false,
+          "detail": "CHOICE: none\nNone of the installed skills fits: they all cover academic research, writing, review, teaching or link checking, and none makes data plots such as a matplotlib scatter with a regression line and confidence band."
+        }
+      ],
+      "vote_counts": {
+        "none": 1
+      },
+      "choice": "none",
+      "tie": false,
+      "off_list": false,
+      "outcome": "correct_unavailable_handling"
+    },
+    {
+      "id": "unavailable-reviewer-visualization",
+      "prompt": "Review my manuscript the way a journal panel would and give me an accept/minor/major/reject decision.",
+      "language": "en",
+      "kind": "unavailable",
+      "installed_profile": "visualization-only",
+      "expected": "alterlab-paper-reviewer",
+      "acceptable": [],
+      "distractors": [
+        "alterlab-figure-qa"
+      ],
+      "note": "Only figure tools are installed; figure-qa proofs figures, not manuscripts.",
+      "installed_count": 9,
+      "shown_count": 9,
+      "candidates": [
+        {
+          "name": "alterlab-figure-qa",
+          "why": [
+            "installed-profile",
+            "explicit-distractor"
+          ]
+        },
+        {
+          "name": "alterlab-generate-image",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-infographics",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-matplotlib",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-mermaid",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-plotly",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-scientific-schematics",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-scientific-viz",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-seaborn",
+          "why": [
+            "installed-profile"
+          ]
+        }
+      ],
+      "votes": [
+        {
+          "run": 1,
+          "order": [
+            "alterlab-figure-qa",
+            "alterlab-scientific-viz",
+            "alterlab-scientific-schematics",
+            "alterlab-matplotlib",
+            "alterlab-infographics",
+            "alterlab-plotly",
+            "alterlab-seaborn",
+            "alterlab-mermaid",
+            "alterlab-generate-image"
+          ],
+          "choice": "none",
+          "status": "answer",
+          "off_list": false,
+          "detail": "CHOICE: none\nNone of the installed skills fits a full peer review of a manuscript with an accept/minor/major/reject decision, since they all cover making or checking figures, diagrams, infographics, images or Mermaid documents."
+        }
+      ],
+      "vote_counts": {
+        "none": 1
+      },
+      "choice": "none",
+      "tie": false,
+      "off_list": false,
+      "outcome": "correct_unavailable_handling"
+    }
+  ]
+}

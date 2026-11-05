@@ -1,0 +1,36 @@
+{
+  "_comment": "MOCK RUNTIME SCENARIO, not live output. Pins agent results in scripts/workflow_dryrun.mjs to the shape the synthetic records should produce (8 records, 1 duplicate, 7 screened; the answer key is in expect.json), for mock-derived agent counts and the checker tests. Screener B disagrees on sid 6 (the nursing record) so the adjudication path runs. Says nothing about live model behaviour.",
+  "rules": [
+    {"match": "^protocol \\+ codebook", "return": {"pico": "P undergraduates in STEM courses; I retrieval practice; C restudy/no quiz; O course exam", "criteria": [
+      {"code": "I1", "kind": "include", "rule": "undergraduates in a credit-bearing STEM, health-science, or statistics course"},
+      {"code": "E1", "kind": "exclude", "rule": "K-12 or non-student populations"},
+      {"code": "E2", "kind": "exclude", "rule": "no new empirical data"},
+      {"code": "E3", "kind": "exclude", "rule": "no intervention or no comparison"},
+      {"code": "E4", "kind": "exclude", "rule": "laboratory-only outcome"}
+    ], "queries": [{"database": "pubmed", "query": "retrieval practice[tiab] AND undergraduate[tiab]"}]}},
+    {"match": "^merge \\+ de-duplicate", "return": {"identified": [{"source": "records.csv", "n": 8}], "duplicates_removed": 1, "total": 7, "file": "${OUT_DIR}/records.jsonl"}},
+    {"match": "^batch 1 · screener A", "return": {"decisions": [
+      {"sid": 1, "decision": "include", "code": "I", "reason": "RCT in undergraduate chemistry with exam outcome"},
+      {"sid": 2, "decision": "exclude", "code": "E1", "reason": "seventh grade"},
+      {"sid": 3, "decision": "exclude", "code": "E2", "reason": "narrative review"},
+      {"sid": 4, "decision": "include", "code": "I", "reason": "statistics course quasi-experiment"},
+      {"sid": 5, "decision": "exclude", "code": "E3", "reason": "survey without intervention"},
+      {"sid": 6, "decision": "include", "code": "I", "reason": "nursing undergraduates, OSCE outcome"},
+      {"sid": 7, "decision": "exclude", "code": "E4", "reason": "crowdworker word lists"}
+    ]}},
+    {"match": "^batch 1 · screener B", "return": {"decisions": [
+      {"sid": 1, "decision": "include", "code": "I", "reason": "RCT"},
+      {"sid": 2, "decision": "exclude", "code": "E1", "reason": "K-12"},
+      {"sid": 3, "decision": "exclude", "code": "E2", "reason": "review"},
+      {"sid": 4, "decision": "include", "code": "I", "reason": "comparison section"},
+      {"sid": 5, "decision": "exclude", "code": "E3", "reason": "no intervention"},
+      {"sid": 6, "decision": "exclude", "code": "E4", "reason": "OSCE is not a course exam"},
+      {"sid": 7, "decision": "exclude", "code": "E1", "reason": "non-students"}
+    ]}},
+    {"match": "^adjudication 1", "return": {"decisions": [{"sid": 6, "decision": "unsure", "code": "I", "reason": "OSCE in a credit-bearing course; forward to full text"}]}},
+    {"match": "^confirm report on disk", "return": {"exists": true, "bytes": 5120, "first_heading": "# PRISMA 2020 title/abstract screening", "states_status": "COMPLETE", "others": [
+      {"path": "${OUT_DIR}/included.jsonl", "exists": true, "lines": 3},
+      {"path": "${OUT_DIR}/unresolved.jsonl", "exists": true, "lines": 0}
+    ]}}
+  ]
+}

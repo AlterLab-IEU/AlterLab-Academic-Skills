@@ -1,0 +1,1452 @@
+{
+  "schema_version": 1,
+  "kind": "activation-set",
+  "runner": {
+    "script": "scripts/run_evals.py",
+    "script_sha256": "4f5d7eea400e82eafba2121ac535e8cad0a6731960c7ca8f4906291468f9a394",
+    "artifact_checks_sha256": "8427493505f15ae6db73d60494855bc541c7c72bcc7f1a39c58de6bcfe0c4e70"
+  },
+  "model": "claude-opus-5-5",
+  "model_source": "default",
+  "endpoint": "claude-cli-login",
+  "collect_only": false,
+  "claude_cli_version": "2.1.318 (Claude Code)",
+  "repo_commit": "6fa26160d28f14ba3daf22a8cb30b91ea3d46837",
+  "repo_dirty": true,
+  "python": "3.13.18",
+  "platform": "linux",
+  "runs_per_arm": 1,
+  "timeout_s": 300,
+  "isolation": {
+    "cli_flags": [
+      "--safe-mode",
+      "--disable-slash-commands",
+      "--strict-mcp-config",
+      "--no-session-persistence"
+    ],
+    "confinement": {
+      "mode": "namespace",
+      "hidden_paths": 1,
+      "why_not_namespace": null,
+      "tripwire": "checkout fingerprinted before the run and after every case; a change aborts the run"
+    },
+    "working_directory": "fresh temporary directory per call"
+  },
+  "started_at": "2026-11-05T09:50:36+00:00",
+  "finished_at": "2026-11-05T09:50:55+00:00",
+  "status": "measured",
+  "runs": 1,
+  "seed": 20261105,
+  "case_set": {
+    "path": "benchmarks/activation/cases.json",
+    "version": 1,
+    "sha256": "136dd27c89d81f9b70ebad248182bdd474735fa079bc9f1fd752b02b2c955f72",
+    "selected": 3,
+    "total": 40
+  },
+  "filters": {
+    "case": null,
+    "kind": "ambiguous",
+    "language": null,
+    "profile": null,
+    "limit": 3
+  },
+  "profiles": {
+    "full": {
+      "requested": [
+        "alterlab-complete"
+      ],
+      "plugins": [
+        "alterlab-bioinformatics",
+        "alterlab-cheminformatics",
+        "alterlab-clinical-research",
+        "alterlab-complete",
+        "alterlab-core",
+        "alterlab-data-science",
+        "alterlab-databases",
+        "alterlab-document-tools",
+        "alterlab-domain-specific",
+        "alterlab-faculty-life",
+        "alterlab-finance-economics",
+        "alterlab-lab-integrations",
+        "alterlab-methodology",
+        "alterlab-research-tools",
+        "alterlab-social-science-workflow",
+        "alterlab-turkish-academia",
+        "alterlab-visualization",
+        "alterlab-workflows",
+        "alterlab-writing-tools"
+      ],
+      "skills": 241
+    },
+    "essentials": {
+      "requested": [
+        "alterlab-essentials"
+      ],
+      "plugins": [
+        "alterlab-core",
+        "alterlab-databases",
+        "alterlab-essentials",
+        "alterlab-methodology",
+        "alterlab-research-tools",
+        "alterlab-workflows",
+        "alterlab-writing-tools"
+      ],
+      "skills": 80
+    },
+    "core-only": {
+      "requested": [
+        "alterlab-core"
+      ],
+      "plugins": [
+        "alterlab-core"
+      ],
+      "skills": 10
+    },
+    "turkish-academia+core": {
+      "requested": [
+        "alterlab-turkish-academia",
+        "alterlab-core"
+      ],
+      "plugins": [
+        "alterlab-core",
+        "alterlab-turkish-academia"
+      ],
+      "skills": 23
+    },
+    "visualization-only": {
+      "requested": [
+        "alterlab-visualization"
+      ],
+      "plugins": [
+        "alterlab-visualization"
+      ],
+      "skills": 9
+    }
+  },
+  "candidate_policy": {
+    "full_list_max": 40,
+    "background_sample": 8,
+    "core_plugin": "alterlab-core",
+    "order": "sorted then shuffled per run with Random(f'{seed}|{case_id}|run{n}')",
+    "tie_break": "worst tied outcome"
+  },
+  "call_shape": "one text-only claude CLI call per vote via run_evals._claude (fresh temp dir, isolation flags, no skill files, no tools)",
+  "scope_note": "Description-only selection proxy on a small hand-written set; not Claude Code's skill loader. Labels need maintainer review.",
+  "summary": {
+    "overall": {
+      "cases": 3,
+      "answered": 3,
+      "counts": {
+        "correct": 3,
+        "acceptable_alternate": 0,
+        "correct_unavailable_handling": 0,
+        "wrong_skill": 0,
+        "missed": 0,
+        "false_activation": 0,
+        "no_answer": 0
+      },
+      "success": {
+        "n": 3,
+        "of": 3,
+        "rate": 1.0
+      },
+      "strict": {
+        "n": 3,
+        "of": 3,
+        "rate": 1.0
+      }
+    },
+    "by_kind": {
+      "ambiguous": {
+        "cases": 3,
+        "answered": 3,
+        "counts": {
+          "correct": 3,
+          "acceptable_alternate": 0,
+          "correct_unavailable_handling": 0,
+          "wrong_skill": 0,
+          "missed": 0,
+          "false_activation": 0,
+          "no_answer": 0
+        },
+        "success": {
+          "n": 3,
+          "of": 3,
+          "rate": 1.0
+        },
+        "strict": {
+          "n": 3,
+          "of": 3,
+          "rate": 1.0
+        }
+      }
+    },
+    "by_language": {
+      "en": {
+        "cases": 3,
+        "answered": 3,
+        "counts": {
+          "correct": 3,
+          "acceptable_alternate": 0,
+          "correct_unavailable_handling": 0,
+          "wrong_skill": 0,
+          "missed": 0,
+          "false_activation": 0,
+          "no_answer": 0
+        },
+        "success": {
+          "n": 3,
+          "of": 3,
+          "rate": 1.0
+        },
+        "strict": {
+          "n": 3,
+          "of": 3,
+          "rate": 1.0
+        }
+      }
+    },
+    "by_profile": {
+      "essentials": {
+        "cases": 1,
+        "answered": 1,
+        "counts": {
+          "correct": 1,
+          "acceptable_alternate": 0,
+          "correct_unavailable_handling": 0,
+          "wrong_skill": 0,
+          "missed": 0,
+          "false_activation": 0,
+          "no_answer": 0
+        },
+        "success": {
+          "n": 1,
+          "of": 1,
+          "rate": 1.0
+        },
+        "strict": {
+          "n": 1,
+          "of": 1,
+          "rate": 1.0
+        }
+      },
+      "full": {
+        "cases": 1,
+        "answered": 1,
+        "counts": {
+          "correct": 1,
+          "acceptable_alternate": 0,
+          "correct_unavailable_handling": 0,
+          "wrong_skill": 0,
+          "missed": 0,
+          "false_activation": 0,
+          "no_answer": 0
+        },
+        "success": {
+          "n": 1,
+          "of": 1,
+          "rate": 1.0
+        },
+        "strict": {
+          "n": 1,
+          "of": 1,
+          "rate": 1.0
+        }
+      },
+      "visualization-only": {
+        "cases": 1,
+        "answered": 1,
+        "counts": {
+          "correct": 1,
+          "acceptable_alternate": 0,
+          "correct_unavailable_handling": 0,
+          "wrong_skill": 0,
+          "missed": 0,
+          "false_activation": 0,
+          "no_answer": 0
+        },
+        "success": {
+          "n": 1,
+          "of": 1,
+          "rate": 1.0
+        },
+        "strict": {
+          "n": 1,
+          "of": 1,
+          "rate": 1.0
+        }
+      }
+    },
+    "by_expectation": {
+      "installed-skill": {
+        "cases": 3,
+        "answered": 3,
+        "counts": {
+          "correct": 3,
+          "acceptable_alternate": 0,
+          "correct_unavailable_handling": 0,
+          "wrong_skill": 0,
+          "missed": 0,
+          "false_activation": 0,
+          "no_answer": 0
+        },
+        "success": {
+          "n": 3,
+          "of": 3,
+          "rate": 1.0
+        },
+        "strict": {
+          "n": 3,
+          "of": 3,
+          "rate": 1.0
+        }
+      }
+    },
+    "definitions": {
+      "success": [
+        "correct",
+        "acceptable_alternate",
+        "correct_unavailable_handling"
+      ],
+      "strict": [
+        "correct",
+        "correct_unavailable_handling"
+      ],
+      "denominator": "answered = cases - no_answer"
+    }
+  },
+  "usage": {
+    "calls": 3,
+    "duration_ms": 14839,
+    "cost_usd": 0.4238092,
+    "cost_reported_calls": 3
+  },
+  "cases": [
+    {
+      "id": "ambiguous-recent-papers",
+      "prompt": "Quickly find me 3 to 5 recent papers (2024 or later) on retrieval-augmented generation for clinical notes, with proper citations.",
+      "language": "en",
+      "kind": "ambiguous",
+      "installed_profile": "essentials",
+      "expected": "alterlab-research-lookup",
+      "acceptable": [
+        "alterlab-perplexity",
+        "alterlab-pubmed"
+      ],
+      "distractors": [
+        "alterlab-deep-research",
+        "alterlab-literature-review"
+      ],
+      "note": "Quick current-literature lookup; perplexity-style grounded search and a PubMed search are both defensible.",
+      "installed_count": 80,
+      "shown_count": 80,
+      "candidates": [
+        {
+          "name": "alterlab-academic-career",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-ai-use-disclosure",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-alphafold-db",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-arxiv",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-bgpt-search",
+          "why": [
+            "expected-plugin",
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-bindingdb",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-biorxiv",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-brenda",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-cbioportal",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-chembl",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-citation-graph",
+          "why": [
+            "expected-plugin",
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-citation-mgmt",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-citation-verifier",
+          "why": [
+            "distractor-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-clinicaltrials",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-clinpgx",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-clinvar",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-cosmic",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-datacommons",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-deep-research",
+          "why": [
+            "distractor-plugin",
+            "core-generalist",
+            "explicit-distractor"
+          ]
+        },
+        {
+          "name": "alterlab-depmap",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-drugbank",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-ena",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-ensembl",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-fda",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-gene-db",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-geo",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-gnomad",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-gtex",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-gwas",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-hmdb",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-hypothesis-gen",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-imaging-data-commons",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-interpro",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-jaspar",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-kegg",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-latex-posters",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-link-health",
+          "why": [
+            "distractor-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-literature-review",
+          "why": [
+            "distractor-plugin",
+            "explicit-distractor"
+          ]
+        },
+        {
+          "name": "alterlab-metabolomics-wb",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-mixed-methods",
+          "why": [
+            "expected-plugin",
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-monarch",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-open-science",
+          "why": [
+            "expected-plugin",
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-opentargets",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-paper-2-web",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-paper-reviewer",
+          "why": [
+            "distractor-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-paper-writer",
+          "why": [
+            "distractor-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-parallel-web",
+          "why": [
+            "expected-plugin",
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-pdb",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-pdf-extract",
+          "why": [
+            "expected-plugin",
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-peer-review",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-perplexity",
+          "why": [
+            "expected-plugin",
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-pptx-posters",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-preregistration-discipline",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-pubchem",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-pubmed",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-pyzotero",
+          "why": [
+            "expected-plugin",
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-qualitative-methods",
+          "why": [
+            "expected-plugin",
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-reactome",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-research-ethics",
+          "why": [
+            "expected-plugin",
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-research-grants",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-research-lookup",
+          "why": [
+            "expected-plugin",
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-research-pipeline",
+          "why": [
+            "distractor-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-research-workflows",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-results-transparency",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-scholar-eval",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-scientific-brainstorm",
+          "why": [
+            "expected-plugin",
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-scientific-slides",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-scientific-thinking",
+          "why": [
+            "expected-plugin",
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-scientific-writing",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-skill-finder",
+          "why": [
+            "distractor-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-string-db",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-survey-design",
+          "why": [
+            "expected-plugin",
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-teaching-design",
+          "why": [
+            "distractor-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-test-selection-guard",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-thesis-supervisor",
+          "why": [
+            "distractor-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-uniprot",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-uspto",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-venue-templates",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-workflow-orchestration",
+          "why": [
+            "distractor-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-zinc-db",
+          "why": [
+            "acceptable-plugin"
+          ]
+        }
+      ],
+      "votes": [
+        {
+          "run": 1,
+          "order": [
+            "alterlab-clinpgx",
+            "alterlab-scientific-slides",
+            "alterlab-peer-review",
+            "alterlab-bindingdb",
+            "alterlab-perplexity",
+            "alterlab-pubmed",
+            "alterlab-paper-writer",
+            "alterlab-survey-design",
+            "alterlab-reactome",
+            "alterlab-literature-review",
+            "alterlab-datacommons",
+            "alterlab-citation-graph",
+            "alterlab-uniprot",
+            "alterlab-opentargets",
+            "alterlab-results-transparency",
+            "alterlab-pdb",
+            "alterlab-geo",
+            "alterlab-citation-verifier",
+            "alterlab-pdf-extract",
+            "alterlab-fda",
+            "alterlab-qualitative-methods",
+            "alterlab-kegg",
+            "alterlab-test-selection-guard",
+            "alterlab-open-science",
+            "alterlab-scholar-eval",
+            "alterlab-biorxiv",
+            "alterlab-clinvar",
+            "alterlab-citation-mgmt",
+            "alterlab-jaspar",
+            "alterlab-pptx-posters",
+            "alterlab-scientific-writing",
+            "alterlab-parallel-web",
+            "alterlab-arxiv",
+            "alterlab-string-db",
+            "alterlab-research-workflows",
+            "alterlab-metabolomics-wb",
+            "alterlab-imaging-data-commons",
+            "alterlab-workflow-orchestration",
+            "alterlab-ai-use-disclosure",
+            "alterlab-gwas",
+            "alterlab-drugbank",
+            "alterlab-monarch",
+            "alterlab-depmap",
+            "alterlab-uspto",
+            "alterlab-bgpt-search",
+            "alterlab-ena",
+            "alterlab-alphafold-db",
+            "alterlab-interpro",
+            "alterlab-gene-db",
+            "alterlab-hmdb",
+            "alterlab-pyzotero",
+            "alterlab-preregistration-discipline",
+            "alterlab-academic-career",
+            "alterlab-cbioportal",
+            "alterlab-link-health",
+            "alterlab-research-ethics",
+            "alterlab-scientific-thinking",
+            "alterlab-skill-finder",
+            "alterlab-research-lookup",
+            "alterlab-paper-2-web",
+            "alterlab-research-pipeline",
+            "alterlab-mixed-methods",
+            "alterlab-deep-research",
+            "alterlab-cosmic",
+            "alterlab-chembl",
+            "alterlab-paper-reviewer",
+            "alterlab-thesis-supervisor",
+            "alterlab-pubchem",
+            "alterlab-venue-templates",
+            "alterlab-brenda",
+            "alterlab-ensembl",
+            "alterlab-clinicaltrials",
+            "alterlab-latex-posters",
+            "alterlab-research-grants",
+            "alterlab-zinc-db",
+            "alterlab-gnomad",
+            "alterlab-gtex",
+            "alterlab-scientific-brainstorm",
+            "alterlab-teaching-design",
+            "alterlab-hypothesis-gen"
+          ],
+          "choice": "alterlab-research-lookup",
+          "status": "answer",
+          "off_list": false,
+          "detail": "CHOICE: alterlab-research-lookup\nThis is a quick search for a short list of recent cited papers, which is what this skill is for. Its keyless scholarly backend searches Crossref, Europe PMC, arXiv and Semantic Scholar, and returns records with real DOIs. That covers clinical-notes RAG papers from bo"
+        }
+      ],
+      "vote_counts": {
+        "alterlab-research-lookup": 1
+      },
+      "choice": "alterlab-research-lookup",
+      "tie": false,
+      "off_list": false,
+      "outcome": "correct"
+    },
+    {
+      "id": "ambiguous-journal-figure",
+      "prompt": "Prepare a four-panel figure for a Nature submission with bold panel labels, error bars and significance stars.",
+      "language": "en",
+      "kind": "ambiguous",
+      "installed_profile": "visualization-only",
+      "expected": "alterlab-scientific-viz",
+      "acceptable": [
+        "alterlab-matplotlib"
+      ],
+      "distractors": [
+        "alterlab-figure-qa"
+      ],
+      "note": "scientific-viz targets journal multi-panel figures; plain matplotlib can also do it.",
+      "installed_count": 9,
+      "shown_count": 9,
+      "candidates": [
+        {
+          "name": "alterlab-figure-qa",
+          "why": [
+            "installed-profile",
+            "explicit-distractor"
+          ]
+        },
+        {
+          "name": "alterlab-generate-image",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-infographics",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-matplotlib",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-mermaid",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-plotly",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-scientific-schematics",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-scientific-viz",
+          "why": [
+            "installed-profile"
+          ]
+        },
+        {
+          "name": "alterlab-seaborn",
+          "why": [
+            "installed-profile"
+          ]
+        }
+      ],
+      "votes": [
+        {
+          "run": 1,
+          "order": [
+            "alterlab-mermaid",
+            "alterlab-scientific-schematics",
+            "alterlab-seaborn",
+            "alterlab-plotly",
+            "alterlab-matplotlib",
+            "alterlab-scientific-viz",
+            "alterlab-generate-image",
+            "alterlab-figure-qa",
+            "alterlab-infographics"
+          ],
+          "choice": "alterlab-scientific-viz",
+          "status": "answer",
+          "off_list": false,
+          "detail": "CHOICE: alterlab-scientific-viz\nI'd load this skill because its description covers this exact request: journal-ready multi-panel figures with bold panel labels, error bars, significance annotations and Nature formatting."
+        }
+      ],
+      "vote_counts": {
+        "alterlab-scientific-viz": 1
+      },
+      "choice": "alterlab-scientific-viz",
+      "tie": false,
+      "off_list": false,
+      "outcome": "correct"
+    },
+    {
+      "id": "ambiguous-systematic-review",
+      "prompt": "I'm starting a systematic review on mindfulness interventions for nurse burnout and need PRISMA 2020 flow tracking and title/abstract screening.",
+      "language": "en",
+      "kind": "ambiguous",
+      "installed_profile": "full",
+      "expected": "alterlab-literature-review",
+      "acceptable": [
+        "alterlab-deep-research",
+        "alterlab-research-workflows"
+      ],
+      "distractors": [
+        "alterlab-meta-analysis"
+      ],
+      "note": "literature-review is the PRISMA skill; deep-research has a systematic-review mode and the workflows skill packages PRISMA dual screening.",
+      "installed_count": 241,
+      "shown_count": 50,
+      "candidates": [
+        {
+          "name": "alterlab-abm-mesa",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-academic-career",
+          "why": [
+            "expected-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-ai-use-disclosure",
+          "why": [
+            "expected-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-bioservices",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-causal-inference",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-citation-mgmt",
+          "why": [
+            "expected-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-citation-verifier",
+          "why": [
+            "acceptable-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-deep-research",
+          "why": [
+            "acceptable-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-gtex",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-hypothesis-gen",
+          "why": [
+            "expected-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-kvkk-dmp",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-latex-posters",
+          "why": [
+            "expected-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-link-health",
+          "why": [
+            "acceptable-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-literature-review",
+          "why": [
+            "expected-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-meta-analysis",
+          "why": [
+            "distractor-plugin",
+            "explicit-distractor"
+          ]
+        },
+        {
+          "name": "alterlab-missing-data",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-multilevel-models",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-paper-2-web",
+          "why": [
+            "expected-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-paper-reviewer",
+          "why": [
+            "acceptable-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-paper-writer",
+          "why": [
+            "acceptable-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-pathml",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-peer-review",
+          "why": [
+            "expected-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-pptx-posters",
+          "why": [
+            "expected-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-pyopenms",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-qca",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-qualitative-analysis",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-research-grants",
+          "why": [
+            "expected-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-research-pipeline",
+          "why": [
+            "acceptable-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-research-workflows",
+          "why": [
+            "acceptable-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-results-transparency",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-scholar-eval",
+          "why": [
+            "expected-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-scientific-slides",
+          "why": [
+            "expected-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-scientific-writing",
+          "why": [
+            "expected-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-seaborn",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-sem-psychometrics",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-skill-finder",
+          "why": [
+            "acceptable-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-sna",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-ssci-design-gate",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-ssci-inference-gate",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-ssci-measurement-gate",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-ssci-orchestrator",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-ssci-reflexivity-gate",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-ssci-sampling-gate",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-survey-analysis",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-teaching-design",
+          "why": [
+            "acceptable-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-text-as-data",
+          "why": [
+            "distractor-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-thesis-supervisor",
+          "why": [
+            "acceptable-plugin",
+            "core-generalist"
+          ]
+        },
+        {
+          "name": "alterlab-tubitak-proposal",
+          "why": [
+            "background-sample"
+          ]
+        },
+        {
+          "name": "alterlab-venue-templates",
+          "why": [
+            "expected-plugin"
+          ]
+        },
+        {
+          "name": "alterlab-workflow-orchestration",
+          "why": [
+            "acceptable-plugin",
+            "core-generalist"
+          ]
+        }
+      ],
+      "votes": [
+        {
+          "run": 1,
+          "order": [
+            "alterlab-pathml",
+            "alterlab-qca",
+            "alterlab-deep-research",
+            "alterlab-paper-writer",
+            "alterlab-research-pipeline",
+            "alterlab-causal-inference",
+            "alterlab-pptx-posters",
+            "alterlab-workflow-orchestration",
+            "alterlab-hypothesis-gen",
+            "alterlab-tubitak-proposal",
+            "alterlab-ssci-inference-gate",
+            "alterlab-venue-templates",
+            "alterlab-ssci-design-gate",
+            "alterlab-citation-mgmt",
+            "alterlab-scholar-eval",
+            "alterlab-sem-psychometrics",
+            "alterlab-multilevel-models",
+            "alterlab-survey-analysis",
+            "alterlab-ssci-reflexivity-gate",
+            "alterlab-abm-mesa",
+            "alterlab-paper-2-web",
+            "alterlab-meta-analysis",
+            "alterlab-research-workflows",
+            "alterlab-scientific-writing",
+            "alterlab-peer-review",
+            "alterlab-bioservices",
+            "alterlab-citation-verifier",
+            "alterlab-latex-posters",
+            "alterlab-pyopenms",
+            "alterlab-missing-data",
+            "alterlab-paper-reviewer",
+            "alterlab-ssci-sampling-gate",
+            "alterlab-link-health",
+            "alterlab-sna",
+            "alterlab-gtex",
+            "alterlab-ssci-orchestrator",
+            "alterlab-qualitative-analysis",
+            "alterlab-skill-finder",
+            "alterlab-ssci-measurement-gate",
+            "alterlab-thesis-supervisor",
+            "alterlab-ai-use-disclosure",
+            "alterlab-teaching-design",
+            "alterlab-academic-career",
+            "alterlab-text-as-data",
+            "alterlab-results-transparency",
+            "alterlab-seaborn",
+            "alterlab-research-grants",
+            "alterlab-scientific-slides",
+            "alterlab-literature-review",
+            "alterlab-kvkk-dmp"
+          ],
+          "choice": "alterlab-literature-review",
+          "status": "answer",
+          "off_list": false,
+          "detail": "CHOICE: alterlab-literature-review\nThis skill explicitly covers running a systematic literature review with PRISMA 2020 flow tracking and title/abstract screening, which is exactly what you asked for."
+        }
+      ],
+      "vote_counts": {
+        "alterlab-literature-review": 1
+      },
+      "choice": "alterlab-literature-review",
+      "tie": false,
+      "off_list": false,
+      "outcome": "correct"
+    }
+  ]
+}

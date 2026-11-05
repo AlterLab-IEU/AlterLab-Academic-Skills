@@ -19,6 +19,11 @@
     "false_approval_name": "invalid analysis passed as valid",
     "false_accusation_name": "valid analysis flagged as invalid"
   },
+  "evidence_checks": {
+    "min_quote_chars": 20,
+    "item_region": "anchor_line_refs",
+    "note": "Deterministic evidence checks only (scoring schema 2): quote_in_fixture and quote_in_item_region, the item region being the fixture lines each anchor cites right after a fixture file name. They never change a label's score; evidence passing neither is needs_review."
+  },
   "cases": [
     {
       "id": "log-a-standard",

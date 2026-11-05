@@ -6,6 +6,100 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [4.1.0] — 2026-11-05
+
+A second reliability repair, prompted by an external review of 4.0.0 (commit `6fa2616`). Every
+finding was reproduced on that commit before it was changed; the mapping of all 20 findings to
+fixes, tests and remaining limits is in
+[`docs/reliability-review-4.0.0.md`](docs/reliability-review-4.0.0.md). No skills were added
+or removed. This release changes report schemas and status vocabulary (see *Compatibility*).
+
+### Changed — citation verification (`alterlab-citation-verifier`, tool 2.0.0, report schema 2)
+
+- **Existence and metadata are separate.** A DOI that resolves no longer clears the cited
+  metadata: an author the record does not list makes the entry `PAC` (flag
+  `UNSUPPORTED_AUTHOR`, names in `metadata.authors.unsupported`). "et al." and BibTeX "and
+  others" are honoured; missing record metadata is `unknown` / `not_checked`, never agreement.
+- **Surnames are compared token-wise**, never by substring ("Li" no longer matches "Williams"),
+  with explicit variants: accents, LaTeX, German umlauts, particles, compound surnames,
+  organisations by name or acronym.
+- **Absence from indexes is not fabrication.** It is `NOT_FOUND` (run verdict
+  `REVIEW_REQUIRED`); an unregistered DOI or nonexistent arXiv ID is `ID_INVALID`. The script
+  no longer emits `TF`, which is reserved for an analyst's conclusion after a documented manual
+  search. Malformed DOIs are reported.
+- **One unreachable source no longer stops verification**: it is recorded as not checked, the
+  other sources are still asked, and the host is paused for 60 s.
+- **Retraction status is three-state** (`flagged`, `not_flagged_in_checked_sources`,
+  `unknown`) with the sources that answered and the time; `retracted` is `null` when unknown.
+- The citation-audit workflow reports `NOT_FOUND` and `ID_INVALID` instead of relabelling
+  absence as `TF`, and counts found works whose retraction status is unknown.
+
+### Changed — scholarly retrieval (`alterlab-research-lookup`, output schema 2)
+
+- Query terms keep every script (Turkish, Greek, CJK); nothing is transliterated.
+- Explicit search syntax (`--terms`, quotes, AND / OR / NOT, parentheses) is parsed and
+  translated per index; where an index cannot express it the query is labelled approximate or
+  the index is skipped with a reason (`query_translation`).
+- De-duplication never merges on an empty or truncated key; preprint and published versions
+  with different DOIs stay separate; every merged record keeps `merged_from` provenance.
+- The default order is relevance; `--rank cited` orders by one declared index (`--cite-index`).
+  `--rank auto` was removed.
+- New `--since` / `--until`, translated per index and re-checked client-side; "recent"
+  wording is disclosed, never turned into a hidden filter.
+
+### Changed — presentation validation (`alterlab-scientific-slides`)
+
+- `validate_presentation.py` reports `status` valid / invalid / blocked / partial with a
+  `checks` list and exits 0 / 1 / 2 / 3. A missing required parser, an unsupported format
+  (including `.ppt`) or a missing compiler is `blocked`, never a pass; `valid` is true only for
+  status valid. `--json` added.
+- PPTX font sizes are resolved through the inheritance chain (paragraph, list styles, layout and
+  master placeholders, master text styles, presentation default, autofit); grouped shapes and
+  table cells are checked; unresolved sizes make the check incomplete.
+
+### Changed — evaluation tooling
+
+- `run_benchmark.py` (scoring schema 2): conflicting duplicate answers for one item are
+  `unresolved_conflict`, never correct; evidence text is kept; label accuracy is reported
+  separately from two deterministic evidence checks, other evidence is `needs_review`
+  (`--export-evidence-review`). Published benchmark numbers are schema 1 and not directly
+  comparable.
+- `run_evals.py` (results schema 2): `--regrade` exit codes now reflect every requested file
+  (0 / 1 / 2 / 3, as `--behavioral`); `--judge` applies to `--behavioral` (default `substance`)
+  and is recorded with its prompt hash; both arms are graded on identical substantive criteria,
+  with routing and skill-vocabulary assertions as separate dimensions; `--audit-rubrics` lists
+  rubric text that requires internal names; declared output files are checked by
+  `scripts/artifact_checks.py` before the workspace is deleted and stored with hashes.
+- New `scripts/aggregate_results.py`: reproducible summaries from versioned records with
+  explicit selection rules and denominators. The raw records behind the published 4.0.0 totals
+  are not in the repository, so those totals cannot be reconstructed from this checkout.
+- New `scripts/activation_eval.py` with 40 hand-written activation cases (English and Turkish,
+  ambiguous, distractor and unavailable-skill cases over realistic install profiles).
+- New `scripts/check_workflow_run.py` and minimal fixtures for the seven dynamic workflows.
+- Dev dependencies gain `python-pptx`, `pypdf` and `pymupdf<2`, so the slide-validator tests run
+  instead of skipping.
+
+### Live validation recorded (2026-11-05, Claude Code CLI login, no API key)
+
+- Activation set, one vote per case: 39 / 40 counted successes; one false activation
+  (`docs/activation.md`, raw records in `benchmarks/activation/results/`).
+- Judge calibration: literal 12 / 13, substance 13 / 13 (`docs/evals.md`).
+- Dynamic workflows: see `docs/workflow-validation.md` for which workflows were run live and
+  which remain dry-run only.
+
+### Compatibility
+
+- Citation verifier: consumers that treated `TF` as "absent from the indexes" must read
+  `NOT_FOUND` / `ID_INVALID`; `summary.verdict` can now be `REVIEW_REQUIRED`; `retracted` can
+  be `null`. All v1 keys are still present.
+- citation-audit workflow: `counts.TF` is gone; read `counts.NOT_FOUND` and `counts.ID_INVALID`.
+- Research lookup: the default order changed from citation count to relevance; `--rank auto`
+  is an error.
+- Slide validator: exit codes and the meaning of `valid` changed.
+- Eval results: `run_evals.py` writes `schema_version` 2; the default rubric judge for
+  `--behavioral` is now `substance`, so new runs are not directly comparable with the 4.0.0
+  results (literal judge). Use `--judge literal` for comparison.
+
 ## [4.0.0] — 2026-11-04
 
 **Why a major version.** These changes alter what existing users, scripts and installs get back:

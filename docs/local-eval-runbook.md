@@ -49,8 +49,14 @@ backend answered.
    local model to judge as well, it must agree with every hand-labelled pair first:
 
    ```bash
-   uv run python scripts/run_evals.py --calibrate-judge    # must print 8/8 for the judge you use
+   uv run python scripts/run_evals.py --calibrate-judge --judge substance   # must exit 0
    ```
+
+   Exit `0` means the judge agreed with every pair in `docs/judge_calibration.json`; `1` it
+   contradicted a label; `2` no call returned a verdict (the judge is unavailable); `3` some
+   pairs got no verdict. Only `0` makes the judge usable. `substance` is the default judge of
+   `--behavioral` and `--regrade`; whichever you use is recorded in every results file
+   (`judge.name`, `prompt_version`, `prompt_sha256`).
 
 5. **Pilot on skills Claude has already been run on**, and compare the defect lists:
 
@@ -73,10 +79,28 @@ backend answered.
 
    `list.txt` has one skill directory per line. `--timeout 900` allows for a slower model.
 
-7. **Hand back** `eval-results/local-qwen/defects.json` and the results directory. Fixes go
+   Collect-only runs still check declared `artifact_checks` (deterministic, no judge) and
+   copy the files the arms wrote to `<results dir>/artifacts/<run-stamp>/<case>/<arm>/run-N/`,
+   so a missing or unparseable output file shows up in the sweep as well.
+
+7. **Grading collected answers, if wanted.** `--regrade` re-judges saved answers with the v2
+   rules (judge calls only) and writes `regrade-*.json` next to them:
+
+   ```bash
+   uv run python scripts/run_evals.py --regrade eval-results/local-qwen/sweep/*/behavioral-*.json \
+       --judge substance --results-dir eval-results/local-qwen/regraded
+   ```
+
+   Its exit code is about answer quality, over all files: `0` every regraded case passed, `1`
+   some case failed, `2` blocked (nothing could be regraded or judged: unusable files, or the
+   judge gave no verdict at all), `3` partial (some files, cases or arms without a usable
+   verdict). A per-file line and a final `REGRADE RESULT:` line say which. Local-model verdicts
+   describe the local model and stay out of reported numbers.
+
+8. **Hand back** `eval-results/local-qwen/defects.json` and the results directory. Fixes go
    into the skills and evals; the verdict run that is reported is a Claude run.
 
-8. **Stop the model server** afterwards and confirm VRAM is released.
+9. **Stop the model server** afterwards and confirm VRAM is released.
 
 ## What the defect categories mean
 
@@ -88,3 +112,8 @@ backend answered.
 | `script_error` | Fix the bundled script, or the call the skill documents |
 | `network_blocked` | Tag the eval `requires: ["net:<host>"]`, or give the skill an offline path |
 | `no_answer` | Timeout, CLI failure or usage limit: re-run, or raise `--timeout` |
+
+`defect_scan.py` does not read artifact checks. For a case that declares `artifact_checks`, read
+each run's `artifacts` in the results file: a file that was never written (`exists: false`)
+usually follows a denied tool or a crashed script; an unparseable one is a defect of the
+output itself.

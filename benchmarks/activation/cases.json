@@ -1,0 +1,469 @@
+{
+  "version": 1,
+  "description": "Hand-written skill-activation cases for scripts/activation_eval.py. Labels are the author's judgement and need maintainer review; see docs/activation.md.",
+  "default_seed": 20261105,
+  "profiles": {
+    "full": {
+      "plugins": ["alterlab-complete"],
+      "note": "The alterlab-complete bundle: every domain plugin (241 skills)."
+    },
+    "essentials": {
+      "plugins": ["alterlab-essentials"],
+      "note": "The faculty starter bundle: core, workflows, research-tools, writing-tools, methodology, databases."
+    },
+    "core-only": {
+      "plugins": ["alterlab-core"],
+      "note": "Only the core research-to-publication pipeline plugin."
+    },
+    "turkish-academia+core": {
+      "plugins": ["alterlab-turkish-academia", "alterlab-core"],
+      "note": "A Turkish faculty member who installed the Turkish-academia plugin next to core."
+    },
+    "visualization-only": {
+      "plugins": ["alterlab-visualization"],
+      "note": "Someone who only installed the plotting/figure plugin."
+    }
+  },
+  "cases": [
+    {
+      "id": "clear-teaching-syllabus",
+      "prompt": "Design a 14-week syllabus for my undergraduate research-methods course: learning outcomes aligned to Bloom's taxonomy, weekly topics, and an analytic rubric for the final project.",
+      "language": "en",
+      "kind": "clear",
+      "installed_profile": "core-only",
+      "expected": "alterlab-teaching-design",
+      "acceptable": [],
+      "distractors": [],
+      "note": "Course design with Bloom alignment and rubrics is exactly teaching-design's description."
+    },
+    {
+      "id": "clear-seaborn-violin",
+      "prompt": "I have a pandas DataFrame of reaction times by condition. Give me a quick violin plot with the individual points overlaid so I can eyeball the distributions.",
+      "language": "en",
+      "kind": "clear",
+      "installed_profile": "visualization-only",
+      "expected": "alterlab-seaborn",
+      "acceptable": [],
+      "distractors": [],
+      "note": "Quick DataFrame-native distribution plot (violin + strip) is seaborn's stated use."
+    },
+    {
+      "id": "distractor-thesis-supervision",
+      "prompt": "My master's student keeps sending me a methodology chapter that mixes results into the methods. How should I structure my supervision feedback and the chapter outline before her defense?",
+      "language": "en",
+      "kind": "distractor",
+      "installed_profile": "core-only",
+      "expected": "alterlab-thesis-supervisor",
+      "acceptable": [],
+      "distractors": ["alterlab-paper-writer"],
+      "note": "Thesis supervision, not paper drafting; paper-writer is the plausible confuser."
+    },
+    {
+      "id": "none-offtopic-travel",
+      "prompt": "What's a good two-day itinerary for a weekend in Lisbon? We like food markets and walking.",
+      "language": "en",
+      "kind": "clear",
+      "installed_profile": "full",
+      "expected": "none",
+      "acceptable": [],
+      "distractors": [],
+      "note": "Off-topic request; no academic skill should load."
+    },
+    {
+      "id": "none-react-bug",
+      "prompt": "Why does my React useEffect run twice in development mode, and how do I stop the duplicate fetch?",
+      "language": "en",
+      "kind": "distractor",
+      "installed_profile": "full",
+      "expected": "none",
+      "acceptable": [],
+      "distractors": ["alterlab-workflow-orchestration"],
+      "note": "Generic web-dev question; workflow-orchestration mentions code/agents but is about composing research skills."
+    },
+    {
+      "id": "distractor-recommendation-letter",
+      "prompt": "Draft a recommendation letter for my former PhD student who is applying for a tenure-track assistant professor position. I'll paste her publications and teaching record below.",
+      "language": "en",
+      "kind": "distractor",
+      "installed_profile": "full",
+      "expected": "alterlab-recommendation-letters",
+      "acceptable": [],
+      "distractors": ["alterlab-academic-career"],
+      "note": "Writing a letter ABOUT someone else; academic-career writes the candidate's own cover letters and statements."
+    },
+    {
+      "id": "clear-grant-report",
+      "prompt": "Our NSF award's annual project report is due on Research.gov next month. Help me draft the accomplishments, products and participants sections.",
+      "language": "en",
+      "kind": "clear",
+      "installed_profile": "full",
+      "expected": "alterlab-grant-reporting",
+      "acceptable": [],
+      "distractors": ["alterlab-research-grants"],
+      "note": "Post-award reporting vs pre-award proposal writing."
+    },
+    {
+      "id": "distractor-preprint-deposition",
+      "prompt": "I'm about to post my graph-neural-network paper as a preprint. Which arXiv category and which license should I pick, and what metadata do I need for submission?",
+      "language": "en",
+      "kind": "distractor",
+      "installed_profile": "full",
+      "expected": "alterlab-preprint-deposition",
+      "acceptable": [],
+      "distractors": ["alterlab-arxiv", "alterlab-open-science"],
+      "note": "Depositing, not searching arXiv; open-science covers licensing in general but not server submission."
+    },
+    {
+      "id": "distractor-citation-verifier",
+      "prompt": "Here is the reference list of a manuscript I'm reviewing. Check whether each of these 40 references actually exists; I suspect some were made up by a chatbot.",
+      "language": "en",
+      "kind": "distractor",
+      "installed_profile": "essentials",
+      "expected": "alterlab-citation-verifier",
+      "acceptable": ["alterlab-research-workflows"],
+      "distractors": ["alterlab-citation-mgmt", "alterlab-literature-review"],
+      "note": "Existence checking is citation-verifier; the packaged citation-audit workflow is an acceptable route."
+    },
+    {
+      "id": "distractor-citation-mgmt-bibtex",
+      "prompt": "Clean up my references.bib: fill in missing DOIs and fix entries that are missing required fields like journal or year.",
+      "language": "en",
+      "kind": "distractor",
+      "installed_profile": "essentials",
+      "expected": "alterlab-citation-mgmt",
+      "acceptable": [],
+      "distractors": ["alterlab-citation-verifier", "alterlab-pyzotero"],
+      "note": "BibTeX metadata repair, not existence verification and not a Zotero library."
+    },
+    {
+      "id": "distractor-paper-reviewer-panel",
+      "prompt": "Simulate a full journal review of my manuscript: an editor plus several reviewers who disagree, then an editorial decision and a prioritized revision roadmap.",
+      "language": "en",
+      "kind": "distractor",
+      "installed_profile": "essentials",
+      "expected": "alterlab-paper-reviewer",
+      "acceptable": ["alterlab-research-workflows"],
+      "distractors": ["alterlab-peer-review", "alterlab-scholar-eval"],
+      "note": "Multi-reviewer panel with decision letter; the packaged review-panel workflow is also reasonable."
+    },
+    {
+      "id": "distractor-peer-review-single",
+      "prompt": "I've been invited to referee an RCT manuscript for PLOS ONE. Help me write my reviewer report, including a CONSORT compliance check.",
+      "language": "en",
+      "kind": "distractor",
+      "installed_profile": "essentials",
+      "expected": "alterlab-peer-review",
+      "acceptable": [],
+      "distractors": ["alterlab-paper-reviewer"],
+      "note": "The user IS the single reviewer; paper-reviewer simulates a whole panel for an author."
+    },
+    {
+      "id": "distractor-deep-research",
+      "prompt": "I need a rigorous investigation of whether four-day work weeks improve productivity: evidence graded by quality, contradictions flagged, fact-checked, with an annotated bibliography.",
+      "language": "en",
+      "kind": "distractor",
+      "installed_profile": "essentials",
+      "expected": "alterlab-deep-research",
+      "acceptable": [],
+      "distractors": ["alterlab-research-lookup", "alterlab-perplexity", "alterlab-literature-review"],
+      "note": "Full evidence-graded research report vs quick lookup or a systematic literature review."
+    },
+    {
+      "id": "ambiguous-recent-papers",
+      "prompt": "Quickly find me 3 to 5 recent papers (2024 or later) on retrieval-augmented generation for clinical notes, with proper citations.",
+      "language": "en",
+      "kind": "ambiguous",
+      "installed_profile": "essentials",
+      "expected": "alterlab-research-lookup",
+      "acceptable": ["alterlab-perplexity", "alterlab-pubmed"],
+      "distractors": ["alterlab-deep-research", "alterlab-literature-review"],
+      "note": "Quick current-literature lookup; perplexity-style grounded search and a PubMed search are both defensible."
+    },
+    {
+      "id": "distractor-matplotlib-control",
+      "prompt": "I need exact control: a dual y-axis line plot with custom tick locators, a broken x-axis, and specific font sizes, exported as a vector PDF.",
+      "language": "en",
+      "kind": "distractor",
+      "installed_profile": "visualization-only",
+      "expected": "alterlab-matplotlib",
+      "acceptable": [],
+      "distractors": ["alterlab-seaborn", "alterlab-plotly", "alterlab-scientific-viz"],
+      "note": "Low-level element control is matplotlib's stated niche."
+    },
+    {
+      "id": "clear-plotly-interactive",
+      "prompt": "Make an interactive chart of our 20-year temperature series with hover tooltips and a range slider that I can embed on the lab website.",
+      "language": "en",
+      "kind": "clear",
+      "installed_profile": "visualization-only",
+      "expected": "alterlab-plotly",
+      "acceptable": [],
+      "distractors": ["alterlab-matplotlib", "alterlab-infographics"],
+      "note": "Interactive web-embeddable chart."
+    },
+    {
+      "id": "ambiguous-journal-figure",
+      "prompt": "Prepare a four-panel figure for a Nature submission with bold panel labels, error bars and significance stars.",
+      "language": "en",
+      "kind": "ambiguous",
+      "installed_profile": "visualization-only",
+      "expected": "alterlab-scientific-viz",
+      "acceptable": ["alterlab-matplotlib"],
+      "distractors": ["alterlab-figure-qa"],
+      "note": "scientific-viz targets journal multi-panel figures; plain matplotlib can also do it."
+    },
+    {
+      "id": "distractor-figure-qa",
+      "prompt": "Before I submit, check my figures: do the plotted values match the CSV, are any labels overlapping, and are they print-ready at 300 dpi?",
+      "language": "en",
+      "kind": "distractor",
+      "installed_profile": "visualization-only",
+      "expected": "alterlab-figure-qa",
+      "acceptable": [],
+      "distractors": ["alterlab-scientific-viz"],
+      "note": "Verifying existing figures, not making new ones."
+    },
+    {
+      "id": "ambiguous-systematic-review",
+      "prompt": "I'm starting a systematic review on mindfulness interventions for nurse burnout and need PRISMA 2020 flow tracking and title/abstract screening.",
+      "language": "en",
+      "kind": "ambiguous",
+      "installed_profile": "full",
+      "expected": "alterlab-literature-review",
+      "acceptable": ["alterlab-deep-research", "alterlab-research-workflows"],
+      "distractors": ["alterlab-meta-analysis"],
+      "note": "literature-review is the PRISMA skill; deep-research has a systematic-review mode and the workflows skill packages PRISMA dual screening."
+    },
+    {
+      "id": "distractor-meta-analysis",
+      "prompt": "Pool these 12 studies' standardized mean differences under a random-effects model and report I-squared, tau-squared and a funnel plot.",
+      "language": "en",
+      "kind": "distractor",
+      "installed_profile": "full",
+      "expected": "alterlab-meta-analysis",
+      "acceptable": [],
+      "distractors": ["alterlab-literature-review", "alterlab-statistical-analysis"],
+      "note": "Quantitative pooling, not searching/screening and not a general test."
+    },
+    {
+      "id": "ambiguous-test-choice",
+      "prompt": "I have two independent groups of 18 patients with heavily skewed outcomes. Which test should I use, and how do I report it in APA style?",
+      "language": "en",
+      "kind": "ambiguous",
+      "installed_profile": "full",
+      "expected": "alterlab-statistical-analysis",
+      "acceptable": ["alterlab-test-selection-guard"],
+      "distractors": ["alterlab-statsmodels"],
+      "note": "Test choice plus APA reporting; the methodology test-selection guard is a defensible pick."
+    },
+    {
+      "id": "distractor-survey-design",
+      "prompt": "Help me write a 20-item Likert questionnaire measuring teacher technostress and plan the pilot test.",
+      "language": "en",
+      "kind": "distractor",
+      "installed_profile": "full",
+      "expected": "alterlab-survey-design",
+      "acceptable": [],
+      "distractors": ["alterlab-survey-analysis", "alterlab-sem-psychometrics"],
+      "note": "Instrument construction, not weighted survey analysis or psychometric modelling."
+    },
+    {
+      "id": "distractor-survey-analysis",
+      "prompt": "I have household survey data with sampling weights, strata and PSUs. Estimate the share of households with internet access with correct design-based standard errors.",
+      "language": "en",
+      "kind": "distractor",
+      "installed_profile": "full",
+      "expected": "alterlab-survey-analysis",
+      "acceptable": [],
+      "distractors": ["alterlab-survey-design", "alterlab-statistical-analysis"],
+      "note": "Complex-sample design-based inference."
+    },
+    {
+      "id": "ambiguous-fingerprints",
+      "prompt": "Compute Morgan fingerprints for these 200 SMILES strings and give me the pairwise Tanimoto similarity matrix.",
+      "language": "en",
+      "kind": "ambiguous",
+      "installed_profile": "full",
+      "expected": "alterlab-rdkit",
+      "acceptable": ["alterlab-datamol", "alterlab-molfeat"],
+      "distractors": ["alterlab-pubchem"],
+      "note": "RDKit is canonical; datamol and molfeat wrap the same fingerprinting."
+    },
+    {
+      "id": "ambiguous-front-door",
+      "prompt": "I have a research idea and want to end up with a submitted paper. Which of the AlterLab tools should I use, and in what order?",
+      "language": "en",
+      "kind": "ambiguous",
+      "installed_profile": "full",
+      "expected": "alterlab-skill-finder",
+      "acceptable": ["alterlab-research-pipeline"],
+      "distractors": ["alterlab-workflow-orchestration"],
+      "note": "The user asks which tools to use: the router; the end-to-end pipeline is also reasonable."
+    },
+    {
+      "id": "tr-none-landlord-email",
+      "prompt": "Ev sahibime kira artışıyla ilgili yazdığım bu e-postayı daha kibar ve resmi bir dille yeniden yazar mısın?",
+      "language": "tr",
+      "kind": "distractor",
+      "installed_profile": "turkish-academia+core",
+      "expected": "none",
+      "acceptable": [],
+      "distractors": ["alterlab-tr-academic-style"],
+      "note": "Turkish, formal register, but not academic; tr-academic-style is the near-miss."
+    },
+    {
+      "id": "tr-docentlik-prescreen",
+      "prompt": "Doçentlik başvurusu için yayın listemi Mühendislik temel alanı kriterlerine göre ön değerlendirmeden geçirebilir misin? 2026 Mart dönemine başvurmayı düşünüyorum.",
+      "language": "tr",
+      "kind": "distractor",
+      "installed_profile": "turkish-academia+core",
+      "expected": "alterlab-docentlik-eligibility",
+      "acceptable": [],
+      "distractors": ["alterlab-akademik-tesvik", "alterlab-yok-akademik"],
+      "note": "ÜAK doçentlik pre-screen; teşvik scoring and YÖK Akademik profile lookup are confusers."
+    },
+    {
+      "id": "tr-akademik-tesvik",
+      "prompt": "Devlet üniversitesinde doktor öğretim üyesiyim. Bu yılki yayın ve proje faaliyetlerime göre akademik teşvik puanımı hesaplar mısın?",
+      "language": "tr",
+      "kind": "distractor",
+      "installed_profile": "turkish-academia+core",
+      "expected": "alterlab-akademik-tesvik",
+      "acceptable": [],
+      "distractors": ["alterlab-docentlik-eligibility"],
+      "note": "Annual incentive score, not doçentlik eligibility."
+    },
+    {
+      "id": "tr-tubitak-1001",
+      "prompt": "TÜBİTAK 1001 projesi yazıyorum. Özgün değer ve yöntem bölümlerini, iş paketleri ve B planıyla birlikte formdaki sıraya göre hazırlamama yardım et.",
+      "language": "tr",
+      "kind": "distractor",
+      "installed_profile": "full",
+      "expected": "alterlab-tubitak-proposal",
+      "acceptable": [],
+      "distractors": ["alterlab-tubitak-bideb", "alterlab-research-grants"],
+      "note": "ARDEB 1001 proposal; BİDEB fellowships and generic (US/Taiwan) grant writing are confusers."
+    },
+    {
+      "id": "tr-bideb-2219",
+      "prompt": "Yurt dışında doktora sonrası araştırma yapmak istiyorum. 2219 programına başvurmak için neler hazırlamalıyım?",
+      "language": "tr",
+      "kind": "clear",
+      "installed_profile": "turkish-academia+core",
+      "expected": "alterlab-tubitak-bideb",
+      "acceptable": [],
+      "distractors": ["alterlab-tubitak-proposal"],
+      "note": "2219 is a BİDEB postdoc programme, not an ARDEB project."
+    },
+    {
+      "id": "tr-yok-tez-search",
+      "prompt": "Tez önerimi vermeden önce YÖK Ulusal Tez Merkezi'nde konumla ilgili daha önce yazılmış tezleri taramak istiyorum: öğretmenlerde yapay zekâ okuryazarlığı.",
+      "language": "tr",
+      "kind": "distractor",
+      "installed_profile": "turkish-academia+core",
+      "expected": "alterlab-yok-tez",
+      "acceptable": [],
+      "distractors": ["alterlab-dergipark", "alterlab-trdizin"],
+      "note": "Thesis repository search; DergiPark and TR Dizin index articles, not theses."
+    },
+    {
+      "id": "tr-trdizin-journal-status",
+      "prompt": "Makalemi göndermeyi düşündüğüm 'Eğitim ve Bilim' dergisi şu anda TR Dizin'de indeksleniyor mu?",
+      "language": "tr",
+      "kind": "distractor",
+      "installed_profile": "turkish-academia+core",
+      "expected": "alterlab-trdizin",
+      "acceptable": [],
+      "distractors": ["alterlab-dergipark", "alterlab-tr-academic-style"],
+      "note": "Current national-index status check."
+    },
+    {
+      "id": "tr-ethics-committee",
+      "prompt": "Öğretmenlerle yarı yapılandırılmış görüşmeler yapacağım. Hangi etik kurula başvurmalıyım ve başvuru dosyasını nasıl hazırlarım?",
+      "language": "tr",
+      "kind": "distractor",
+      "installed_profile": "turkish-academia+core",
+      "expected": "alterlab-tr-research-ethics",
+      "acceptable": [],
+      "distractors": ["alterlab-kvkk-dmp"],
+      "note": "Committee routing and application; KVKK data plan is the near-miss."
+    },
+    {
+      "id": "tr-ambiguous-kvkk-ethics",
+      "prompt": "Katılımcılardan ses kaydı alacağım bir görüşme çalışması için KVKK'ya uygun aydınlatma metni ve veri yönetim planı hazırlamam gerekiyor; bunları etik kurul başvurusunda da kullanacağım.",
+      "language": "tr",
+      "kind": "ambiguous",
+      "installed_profile": "turkish-academia+core",
+      "expected": "alterlab-kvkk-dmp",
+      "acceptable": ["alterlab-tr-research-ethics"],
+      "distractors": [],
+      "note": "Primary deliverable is the KVKK notice and DMP; the ethics-committee skill is a defensible pick."
+    },
+    {
+      "id": "unavailable-docentlik-essentials",
+      "prompt": "Pre-screen my publication list against the ÜAK doçentlik criteria for the Social Sciences field before the next application term.",
+      "language": "en",
+      "kind": "unavailable",
+      "installed_profile": "essentials",
+      "expected": "alterlab-docentlik-eligibility",
+      "acceptable": [],
+      "distractors": ["alterlab-academic-career", "alterlab-scholar-eval"],
+      "note": "The Turkish-academia plugin is not in essentials; career-document and scholarly-evaluation skills are not substitutes, so none is right."
+    },
+    {
+      "id": "unavailable-tr-dergipark-core",
+      "prompt": "DergiPark'taki eğitim dergilerinden 2023-2025 arası yayımlanmış makalelerin özetlerini toplu olarak indirmek istiyorum.",
+      "language": "tr",
+      "kind": "unavailable",
+      "installed_profile": "core-only",
+      "expected": "alterlab-dergipark",
+      "acceptable": [],
+      "distractors": ["alterlab-deep-research"],
+      "note": "Bulk OAI-PMH harvesting needs the DergiPark skill; deep-research is a research-report engine, not a harvester."
+    },
+    {
+      "id": "unavailable-tubitak-essentials-fallback",
+      "prompt": "TÜBİTAK 1001 proje önerisi yazıyorum; özgün değer, yöntem ve iş paketleri bölümlerine yardım eder misin?",
+      "language": "tr",
+      "kind": "unavailable",
+      "installed_profile": "essentials",
+      "expected": "alterlab-tubitak-proposal",
+      "acceptable": ["alterlab-research-grants"],
+      "distractors": ["alterlab-paper-writer"],
+      "note": "The TÜBİTAK skill is missing; generic grant writing is a named acceptable fallback; none is also correct."
+    },
+    {
+      "id": "unavailable-pubmed-tr-core-fallback",
+      "prompt": "Run a MeSH-term PubMed search for \"Hypertension\"[MeSH] AND Turkey, limited to 2020 onwards, and list the PMIDs.",
+      "language": "en",
+      "kind": "unavailable",
+      "installed_profile": "turkish-academia+core",
+      "expected": "alterlab-pubmed",
+      "acceptable": ["alterlab-deep-research"],
+      "distractors": ["alterlab-dergipark", "alterlab-trdizin"],
+      "note": "The PubMed connector is not installed; deep-research (which searches PubMed) is an acceptable fallback; Turkish indexes are wrong."
+    },
+    {
+      "id": "unavailable-matplotlib-core",
+      "prompt": "Make a matplotlib scatter plot of these two columns with a fitted regression line and 95% confidence band.",
+      "language": "en",
+      "kind": "unavailable",
+      "installed_profile": "core-only",
+      "expected": "alterlab-matplotlib",
+      "acceptable": [],
+      "distractors": ["alterlab-paper-writer"],
+      "note": "No plotting skill installed; paper-writer has a figure agent but is a manuscript pipeline."
+    },
+    {
+      "id": "unavailable-reviewer-visualization",
+      "prompt": "Review my manuscript the way a journal panel would and give me an accept/minor/major/reject decision.",
+      "language": "en",
+      "kind": "unavailable",
+      "installed_profile": "visualization-only",
+      "expected": "alterlab-paper-reviewer",
+      "acceptable": [],
+      "distractors": ["alterlab-figure-qa"],
+      "note": "Only figure tools are installed; figure-qa proofs figures, not manuscripts."
+    }
+  ]
+}

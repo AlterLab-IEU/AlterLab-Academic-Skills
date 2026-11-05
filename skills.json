@@ -1,7 +1,7 @@
 {
   "summary": {
-    "version": "4.0.0",
-    "generated_at": "2026-11-04",
+    "version": "4.1.0",
+    "generated_at": "2026-11-05",
     "total": 241,
     "per_domain": {
       "bioinformatics": 38,
@@ -1421,9 +1421,9 @@
     {
       "name": "alterlab-citation-verifier",
       "domain": "core",
-      "description": "Verifies that every bibliography entry actually exists by cross-checking Crossref, Semantic Scholar, Europe PMC, and arXiv, with Open Library for books (no API key required), plus doi.org DOI registration, fuzzy-matching title and authors (difflib ratio >= 0.70), flagging retractions recorded by Crossref (including Retraction Watch data), and emitting per-entry JSON verdicts in the AlterLab citation-hallucination taxonomy (TF/PAC/IH/PH/SH); a companion script scores whether a cited abstract supports a claim (SH). Accepts BibTeX, DOI/arXiv lists, or pasted references, and reports unverified instead of passing anything it could not check. Use when the request mentions verify citations, check references, fabricated or hallucinated references, fake DOI, retraction check, bibliography audit, reference existence check, or whether a source supports a claim. For drafting a manuscript prefer alterlab-paper-writer; for dead hyperlinks prefer alterlab-link-health. Part of the AlterLab Academic Skills suite.",
+      "description": "Verifies every bibliography entry actually exists by checking Crossref, Semantic Scholar, Europe PMC, and arXiv, with Open Library for books (no API key required), plus doi.org DOI registration, fuzzy-matching title and authors, flagging retractions recorded by Crossref (incl. Retraction Watch), and emitting per-entry JSON verdicts in the AlterLab citation-hallucination taxonomy (PAC/IH/PH/SH/ID_INVALID; index absence is NOT_FOUND, never fabrication); a companion script scores whether a cited abstract supports a claim (SH). Accepts BibTeX, DOI/arXiv lists, or pasted references, and reports unverified instead of passing anything it could not check. Use when the request mentions verify citations, check references, fabricated or hallucinated references, fake DOI, retraction check, bibliography audit, reference existence check, or whether a source supports a claim. For drafting a manuscript prefer alterlab-paper-writer; for dead hyperlinks prefer alterlab-link-health. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.2.5",
+      "version": "1.3.0",
       "compatibility": "No API key required — stdlib Python (`requests` optional) via `uv run python` against Crossref, Semantic Scholar, Europe PMC, arXiv, Open Library and the doi.org Handle API; optional S2_API_KEY only raises Semantic Scholar's rate limit; offline runs return 'unverified' verdicts",
       "allowed_tools": [
         "Read",
@@ -1436,7 +1436,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 353,
+      "body_lines": 392,
       "references": []
     },
     {
@@ -1444,7 +1444,7 @@
       "domain": "core",
       "description": "Runs a 13-agent deep research pipeline for rigorous academic work on any topic across 7 modes (full research, quick brief, paper review, lit-review, fact-check, Socratic guided research dialogue, and systematic review with optional meta-analysis), covering research-question formulation, Socratic mentoring, methodology design, systematic literature search, source verification, cross-source synthesis, risk-of-bias assessment, meta-analysis, APA 7.0 report compilation, editorial and devil's-advocate review, ethics review, and post-research literature monitoring. Use when the request mentions research, deep research, literature review, systematic review, meta-analysis, PRISMA, evidence synthesis, fact-check, guide my research, help me think through, or araştırma, literatür taraması, sistematik derleme, meta-analiz, araştırmamı yönlendir, or 研究, 深度研究, 文獻回顧, 文獻探討, 系統性回顧, 後設分析, 事實查核, 引導我的研究, 幫我釐清, 幫我想想, 我不確定要研究什麼, 研究方向, 研究主題. Part of the AlterLab Academic Skills suite.",
       "license": "CC-BY-NC-4.0",
-      "version": "2.4.3",
+      "version": "2.4.4",
       "compatibility": "Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -1532,7 +1532,7 @@
       "domain": "core",
       "description": "Drafts and revises academic papers through a 12-agent pipeline with hardened LaTeX output (apa7 class, PDF compiled from LaTeX), supporting IMRaD, literature review, theoretical, case study, policy brief, and conference paper structures, APA 7.0 (default), Chicago, MLA, IEEE, and Vancouver citation formats, bilingual abstracts (English plus the author's language, e.g. Turkish or Traditional Chinese), and multi-format output (LaTeX, DOCX, PDF, Markdown). Use when the request mentions write paper, academic paper, paper outline, write abstract, revise paper, check citations, convert to LaTeX, guide my paper, parse reviews, revision roadmap, or makale yaz, akademik makale, özet yaz, makaleyi revize et, hakem yorumları, or 寫論文, 學術論文, 論文大綱, 寫摘要, 修改論文, 檢查引用, 引導我寫論文, 審查意見, 修訂路線圖. Its citation-check mode formats and inserts citations while drafting; for a standalone anti-hallucination check that cited references actually exist prefer alterlab-citation-verifier instead. Part of the AlterLab Academic Skills suite.",
       "license": "CC-BY-NC-4.0",
-      "version": "2.6.3",
+      "version": "2.6.4",
       "compatibility": "Uses built-in Claude tools only; optional LaTeX toolchain (apa7 document class) required for PDF compilation; no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -1567,7 +1567,7 @@
       "domain": "core",
       "description": "Orchestrates the full academic research pipeline (research, write, integrity check, review, revise, re-review, re-revise, final integrity check, finalize), coordinating alterlab-deep-research, alterlab-paper-writer, and alterlab-paper-reviewer into a seamless 10-stage workflow with mandatory integrity verification, two-stage peer review, and reproducible quality gates. Use when the request mentions academic pipeline, research to paper, full paper workflow, paper pipeline, end-to-end paper, research-to-publication, or complete paper workflow. Part of the AlterLab Academic Skills suite.",
       "license": "CC-BY-NC-4.0",
-      "version": "2.7.2",
+      "version": "2.7.3",
       "compatibility": "Orchestrates alterlab-deep-research, alterlab-paper-writer, and alterlab-paper-reviewer; uses built-in Claude tools only; no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -4490,7 +4490,7 @@
       "domain": "research-tools",
       "description": "Look up current research and scholarly papers by auto-routing each query to the best backend and saving every result with citations to sources/. Keyless by default — paper searches go to the built-in scholarly backend (Crossref, Europe PMC, arXiv and Semantic Scholar index records with real DOIs, venues and citation counts) and general questions to Claude's WebSearch and WebFetch; the Parallel Chat API and Perplexity sonar-pro-search via OpenRouter are optional backends used when their keys are set. Use when finding papers, gathering research data, verifying scientific claims, or assembling citation lists and unsure which search backend fits. For plain general web search or extracting content from a known URL prefer alterlab-parallel-web; to call Perplexity directly with a chosen Sonar model prefer alterlab-perplexity. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.2.2",
+      "version": "1.3.0",
       "compatibility": "No API key required. The scholarly backend is stdlib Python that queries Crossref, Europe PMC, arXiv and (best effort) Semantic Scholar keyless; general web questions use Claude's WebSearch/WebFetch. Optional backends, used only when their keys are set or forced - PARALLEL_API_KEY (Parallel Chat API, openai package) and OPENROUTER_API_KEY (Perplexity, requests package) - send queries to those services.",
       "allowed_tools": [
         "Read",
@@ -4502,8 +4502,9 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 401,
+      "body_lines": 413,
       "references": [
+        "search_semantics.md",
         "troubleshooting.md"
       ]
     },
@@ -5450,7 +5451,7 @@
       "domain": "workflows",
       "description": "Runs AlterLab's packaged multi-agent academic workflows — citation audit, peer-review panel of separate reviewers, claim stress-test, PRISMA dual-screening for systematic reviews, point-by-point rebuttal, grant mock panel, and literature map. In Claude Code they run as dynamic workflows (/alterlab-workflows:<name>) with separate agent contexts, adversarial re-checks, tallies computed in code, and an explicit complete/partial/blocked status; on claude.ai, the API, or anywhere without the Workflow runtime this skill runs the same stages as a staged playbook. Use when a research task needs many separate readers or a second, adversarial opinion at scale — auditing every citation in a manuscript, dual-screening hundreds of records, simulating a review panel or study section, drafting a response to reviewers, or mapping a field before a proposal. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.3",
+      "version": "1.1.4",
       "compatibility": "No API key required. Claude Code with dynamic workflows (paid plans or API access; v2.1.203+) runs the /alterlab-workflows:* commands; installing this plugin also installs alterlab-core, whose skills the workflows call. Other surfaces use the staged playbooks in references/. Database-backed stages use keyless public scholarly APIs (Crossref, Semantic Scholar, Europe PMC, PubMed, arXiv) and need network access.",
       "allowed_tools": [
         "Read",
@@ -5463,7 +5464,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 160,
+      "body_lines": 161,
       "references": [
         "citation-audit.md",
         "claim-stress-test.md",
@@ -5606,7 +5607,7 @@
       "domain": "writing-tools",
       "description": "Conducts comprehensive, systematic literature reviews across multiple academic databases (PubMed, arXiv, bioRxiv, Semantic Scholar), with PRISMA 2020 flow tracking, study screening (title/abstract and full-text), evidence-table extraction, and risk-of-bias assessment (RoB 2, ROBINS-I, AMSTAR 2), producing professionally formatted markdown documents and PDFs with verified citations in multiple styles (APA, Nature, Vancouver). Use when running a systematic or scoping literature review, research synthesis, or broad literature search, building a PRISMA flow diagram, screening studies, extracting an evidence table, or assessing risk of bias across biomedical, scientific, and technical domains. For quantitative pooling of effect sizes (forest/funnel plots) use alterlab-meta-analysis; for an open-ended multi-agent investigation, fact-check, or Socratic research-question work use alterlab-deep-research. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.2",
+      "version": "1.1.3",
       "compatibility": "Needs network access to PubMed, arXiv, bioRxiv, and Semantic Scholar (searches follow the Entrez/Biopython and REST snippets in the references); verify_citations.py needs requests; PDF output requires pandoc and xelatex (check with --check-deps)",
       "allowed_tools": [
         "Read",
@@ -5754,7 +5755,7 @@
       "domain": "writing-tools",
       "description": "Builds slide decks for research talks with no API key — editable PowerPoint generated from a deck plan (python-pptx) or LaTeX Beamer, slide visuals drawn as code and rendered locally, plus slide structure, design templates, timing guidance, and visual validation of every page. Optional AI-generated full-slide images (Nano Banana Pro via OpenRouter) when OPENROUTER_API_KEY is set. Use when making conference presentations, seminar talks, research presentations, thesis-defense slides, or any scientific talk deck. For a research poster use alterlab-latex-posters or alterlab-pptx-posters; to auto-generate a narrated video from a paper use alterlab-paper-2-web. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.2",
+      "version": "1.2.0",
       "compatibility": "No API key required. PowerPoint output via `uv run --python \\\">=3.11\\\" --with python-pptx --with pillow`; LaTeX Beamer needs pdflatex; LibreOffice (soffice) exports PPTX to PDF for review; validation helpers use pymupdf, pypdf and Pillow; code-drawn visuals render with cairosvg. Optional AI slide images: OPENROUTER_API_KEY (prompts and attached figures go to Google Gemini models via OpenRouter).",
       "allowed_tools": [
         "Read",
@@ -5764,7 +5765,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 136,
+      "body_lines": 137,
       "references": [
         "beamer_guide.md",
         "core_capabilities.md",

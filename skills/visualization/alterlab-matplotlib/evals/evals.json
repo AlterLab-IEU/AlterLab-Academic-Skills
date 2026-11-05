@@ -14,6 +14,25 @@
           "type": "behavior",
           "value": "Reaches for matplotlib's fine-grained layout control (GridSpec or subplot_mosaic) rather than a high-level wrapper, because the panel arrangement is non-standard."
         }
+      ],
+      "artifact_checks": [
+        {
+          "path": "out/multipanel.png",
+          "type": "png",
+          "description": "the three-panel figure, exported as a 300 DPI PNG",
+          "checks": [
+            {
+              "kind": "png_dpi",
+              "expected": 300,
+              "tolerance": 1
+            },
+            {
+              "kind": "png_min_size",
+              "min_width": 900,
+              "min_height": 600
+            }
+          ]
+        }
       ]
     },
     {
@@ -47,6 +66,36 @@
         {
           "type": "output_contains",
           "value": "savefig"
+        }
+      ],
+      "artifact_checks": [
+        {
+          "path": "out/sine_cosine.pdf",
+          "type": "pdf",
+          "description": "the vector PDF export",
+          "checks": [
+            {
+              "kind": "pdf_min_pages",
+              "min": 1
+            }
+          ]
+        },
+        {
+          "path": "out/sine_cosine.png",
+          "type": "png",
+          "description": "the 300 DPI PNG export",
+          "checks": [
+            {
+              "kind": "png_dpi",
+              "expected": 300,
+              "tolerance": 1
+            },
+            {
+              "kind": "png_min_size",
+              "min_width": 600,
+              "min_height": 400
+            }
+          ]
         }
       ]
     },

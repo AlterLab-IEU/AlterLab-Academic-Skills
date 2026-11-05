@@ -1,0 +1,129 @@
+{
+  "synthetic_example": true,
+  "synthetic_note": "SYNTHETIC example record for testing scripts/aggregate_results.py. Every skill name, commit, hash, answer and outcome here is invented; this is not a result of any skill.",
+  "schema_version": 1,
+  "kind": "behavioral",
+  "model": "claude-opus-5-5",
+  "model_source": "default",
+  "endpoint": "claude-cli-login",
+  "collect_only": true,
+  "claude_cli_version": "0.0.0-synthetic (Claude Code)",
+  "repo_commit": "0000000000000000000000000000000000000001",
+  "repo_dirty": false,
+  "python": "3.13.0",
+  "platform": "linux",
+  "runs_per_arm": 1,
+  "timeout_s": 600,
+  "isolation": {
+    "cli_flags": [
+      "--safe-mode",
+      "--disable-slash-commands",
+      "--strict-mcp-config",
+      "--no-session-persistence"
+    ],
+    "confinement": {
+      "mode": "namespace",
+      "hidden_paths": 1,
+      "why_not_namespace": null,
+      "tripwire": "checkout fingerprinted before the run and after every case; a change aborts the run"
+    }
+  },
+  "selection": {
+    "skill_filter": null,
+    "skill_dir": null,
+    "shard": null,
+    "cases": null
+  },
+  "started_at": "2026-10-02T09:00:00+00:00",
+  "finished_at": "2026-10-02T09:10:00+00:00",
+  "status": "collected",
+  "status_reasons": [],
+  "summary": {
+    "selected": 1,
+    "attempted": 1,
+    "answered": 1,
+    "usable_verdicts": 0,
+    "coverage": 0.0,
+    "skilled": {
+      "PASS": 0,
+      "FAIL": 0,
+      "INCONCLUSIVE": 1,
+      "REFUSED": 0,
+      "INFRA_ERROR": 0,
+      "NOT_RUN": 0
+    },
+    "bare": {
+      "PASS": 0,
+      "FAIL": 0,
+      "INCONCLUSIVE": 1,
+      "REFUSED": 0,
+      "INFRA_ERROR": 0,
+      "NOT_RUN": 0
+    }
+  },
+  "usage": {
+    "calls": 2,
+    "cost_note": "synthetic"
+  },
+  "cases": [
+    {
+      "case_id": "alterlab-example-gamma:trigger-1",
+      "skill": "alterlab-example-gamma",
+      "skill_version": "1.0.0",
+      "eval_id": "trigger-1",
+      "fixtures": [],
+      "allowed_tools": [
+        "Read"
+      ],
+      "skilled": {
+        "outcome": "INCONCLUSIVE",
+        "reason": "collect-only: answer saved, not judged",
+        "assertion_verdict": "NA",
+        "rubric_majority": "NA",
+        "answered_runs": 1,
+        "runs": [
+          {
+            "run": 1,
+            "call_outcome": "answer",
+            "error": null,
+            "duration_ms": 1000,
+            "num_turns": 1,
+            "permission_denials": 0,
+            "denied_tools": [],
+            "cost_usd": null,
+            "usage": null,
+            "rubric_verdict": "NA",
+            "assertions": [],
+            "response_excerpt": "Synthetic answer.",
+            "response": "Synthetic answer."
+          }
+        ]
+      },
+      "bare": {
+        "outcome": "INCONCLUSIVE",
+        "reason": "collect-only: answer saved, not judged",
+        "assertion_verdict": null,
+        "rubric_majority": "NA",
+        "answered_runs": 1,
+        "runs": [
+          {
+            "run": 1,
+            "call_outcome": "answer",
+            "error": null,
+            "duration_ms": 1000,
+            "num_turns": 1,
+            "permission_denials": 0,
+            "denied_tools": [],
+            "cost_usd": null,
+            "usage": null,
+            "rubric_verdict": "NA",
+            "assertions": [],
+            "response_excerpt": "Synthetic answer.",
+            "response": "Synthetic answer."
+          }
+        ]
+      },
+      "rubric_delta": "rubric: INCONCLUSIVE (bare=NA, skilled=NA)"
+    }
+  ]
+}

@@ -277,6 +277,8 @@ uv run --python ">=3.11" --with pymupdf --with pypdf --with python-pptx \
     python scripts/validate_presentation.py presentation.pdf --duration 15
 # Reports: slide count vs. recommended range, file size warnings, slide dimensions,
 # font size issues (PowerPoint and PDF), text past a slide edge (PDF), compilation (Beamer)
+# Status / exit code: valid 0, invalid 1, blocked 2 (a required check could not run),
+# partial 3 (an optional check skipped or coverage incomplete). Only "valid" is a pass.
 ```
 
 **Manual Validation Checklist:**

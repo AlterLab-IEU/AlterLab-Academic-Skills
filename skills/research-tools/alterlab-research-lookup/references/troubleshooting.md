@@ -38,7 +38,21 @@ in `scripts/research_lookup.py` is the full interface (batch, force-backend, JSO
 - **"every source failed"** — no network to the indexes; check connectivity
   (`curl -sS "https://api.crossref.org/works?rows=1"`).
 - **"no records matched"** — the routing-word filter left too little or too much; pass
-  `--terms` with the field's own vocabulary (quoted phrases and `OR` work in Europe PMC).
+  `--terms` with the field's own vocabulary (quoted phrases, `AND`/`OR`/`NOT`, parentheses).
+  With `--since`/`--until`, the message also says how many records fell outside the window.
+- **"unbalanced double quote" / "unbalanced parentheses" / "OR … needs a term on both sides" /
+  "only excluded terms" / "lowercase 'or'"** — `--terms` could not be parsed; nothing was
+  searched. Fix the expression (operators in capitals; `a NOT b`, not `NOT b` alone).
+- **"skipped: crossref, semanticscholar"** — the expression excludes terms (`NOT` or `-word`),
+  which those two indexes cannot express, so they were not queried (not "no results"). Drop
+  the exclusion to include them, or rely on Europe PMC and arXiv.
+- **"crossref: approximate"** — Crossref and Semantic Scholar have no boolean or phrase search;
+  they received the words as relevance-ranked keywords. Records marked "approximate query
+  only" may not satisfy your `OR`/`AND`/phrase; check them.
+- **"date unknown"** — the record has no publication date in that index, so `--since/--until`
+  could not be checked; it was kept. Check the date before relying on it.
+- **"--terms … apply only to the scholarly backend"** — a scholarly-only option was combined
+  with `--force-backend parallel|perplexity`; drop it or use `--force-backend scholarly`.
 - **Classic paper missing from the list** — keyword ranking is not citation-network search; use
   `--rank cited`, add its title to `--terms`, or confirm it by DOI
   (`https://api.crossref.org/works/<DOI>`). For the network around a known paper use

@@ -1,0 +1,106 @@
+{
+  "_status": "Labels assigned by the implementing agent; awaiting independent human review. Not an independently reviewed relevance set.",
+  "_about": "Offline relevance fixture for the keyless scholarly backend's ordering (scripts/scholarly_backend.py). Every record is SYNTHETIC: titles, authors and venues are invented, DOIs use Crossref's test prefix 10.5555, arXiv ids use the impossible month 00, and citation counts are illustrative numbers, not values retrieved from any index. 'order' gives each index's relevance order as a canned response; the fixture was written to reproduce one observed failure mode (a highly cited but off-topic paper outranking directly relevant ones), so scores on it illustrate that case and do not measure search quality.",
+  "grading": {"0": "not relevant", "1": "marginal", "2": "relevant", "3": "directly relevant"},
+  "k": 5,
+  "queries": [
+    {
+      "id": "retrieval-practice",
+      "query": "retrieval practice in classroom learning",
+      "records": {
+        "R1": {"title": "Retrieval practice improves retention of classroom science content in middle school",
+               "authors": ["Arslan, M."], "year": 2019, "venue": "Journal of Classroom Learning (synthetic)",
+               "doi": "10.5555/fixture.rp.r1", "cites": {"crossref": 85, "europepmc": 40, "semanticscholar": 110}},
+        "R2": {"title": "Spaced retrieval practice and learning in undergraduate courses: a randomized classroom study",
+               "authors": ["Moreno, L."], "year": 2021, "venue": "Synthetic Review of Higher Education",
+               "doi": "10.5555/fixture.rp.r2", "cites": {"crossref": 30}},
+        "R3": {"title": "The testing effect in the classroom: a meta-analysis",
+               "authors": ["Okafor, C."], "year": 2017, "venue": "Synthetic Educational Psychology Review",
+               "doi": "10.5555/fixture.rp.r3", "cites": {"crossref": 400, "semanticscholar": 520}},
+        "R4": {"title": "Retrieval-induced forgetting in eyewitness memory",
+               "authors": ["Lindqvist, A."], "year": 2010, "venue": "Synthetic Applied Memory",
+               "doi": "10.5555/fixture.rp.r4", "cites": {"crossref": 300}},
+        "R5": {"title": "Retrieval practice with feedback in medical education",
+               "authors": ["Haddad, S."], "year": 2015, "venue": "Synthetic Medical Teacher",
+               "doi": "10.5555/fixture.rp.r5", "pmid": "90000005", "cites": {"crossref": 120, "europepmc": 80}},
+        "A1": {"title": "A computational model of retrieval practice effects in classroom quizzing",
+               "authors": ["Novak, P."], "year": 2022, "venue": "arXiv preprint",
+               "arxiv_id": "2200.00001", "cites": {}},
+        "E1": {"title": "Memory retrieval during exposure therapy reduces fear relapse",
+               "authors": ["Brandt, K."], "year": 2008, "venue": "Synthetic Journal of Anxiety Treatment",
+               "doi": "10.5555/fixture.rp.e1", "pmid": "90000001",
+               "cites": {"crossref": 1500, "europepmc": 900, "semanticscholar": 2600}},
+        "I1": {"title": "Information retrieval practice in web search engines",
+               "authors": ["Kowalski, T."], "year": 2003, "venue": "Synthetic Information Systems",
+               "doi": "10.5555/fixture.rp.i1", "cites": {"crossref": 2200}}
+      },
+      "order": {
+        "crossref": ["R1", "R2", "R3", "I1", "E1", "R4"],
+        "europepmc": ["R1", "R5", "E1"],
+        "arxiv": ["A1"],
+        "semanticscholar": ["R3", "R1", "E1"]
+      },
+      "labels": {"R1": 3, "R2": 3, "R3": 2, "R5": 2, "A1": 2, "R4": 1, "E1": 0, "I1": 0}
+    },
+    {
+      "id": "placenta-microplastics",
+      "query": "microplastics in human placenta",
+      "records": {
+        "P1": {"title": "First evidence of microplastic particles in human placental tissue",
+               "authors": ["Rossi, G."], "year": 2021, "venue": "Synthetic Environment and Health",
+               "doi": "10.5555/fixture.mp.p1", "pmid": "90000011",
+               "cites": {"crossref": 900, "europepmc": 600, "semanticscholar": 1100}},
+        "P2": {"title": "Microplastic particles in placentas from term deliveries: a multicentre survey",
+               "authors": ["Chen, Y."], "year": 2023, "venue": "Synthetic Perinatal Research",
+               "doi": "10.5555/fixture.mp.p2", "cites": {"crossref": 60, "semanticscholar": 75}},
+        "P3": {"title": "Nanoplastics cross the placental barrier in an ex vivo perfusion model",
+               "authors": ["Weber, F."], "year": 2020, "venue": "Synthetic Placenta Journal",
+               "doi": "10.5555/fixture.mp.p3", "pmid": "90000013", "cites": {"crossref": 150, "europepmc": 90}},
+        "P4": {"title": "Placental microplastics and birth weight in a prospective cohort",
+               "authors": ["Dubois, M."], "year": 2024, "venue": "Synthetic Epidemiology Letters",
+               "pmid": "90000014", "cites": {"europepmc": 12}},
+        "M1": {"title": "Microplastics in marine ecosystems: a global review",
+               "authors": ["Andersen, H."], "year": 2015, "venue": "Synthetic Marine Science",
+               "doi": "10.5555/fixture.mp.m1", "cites": {"crossref": 3000, "semanticscholar": 4200}},
+        "M2": {"title": "Human exposure to microplastics via diet",
+               "authors": ["Silva, R."], "year": 2019, "venue": "Synthetic Food Safety",
+               "doi": "10.5555/fixture.mp.m2", "pmid": "90000016", "cites": {"crossref": 800, "europepmc": 300}}
+      },
+      "order": {
+        "crossref": ["P1", "P2", "M2", "P3", "M1"],
+        "europepmc": ["P1", "P4", "P3", "M2"],
+        "arxiv": [],
+        "semanticscholar": ["P1", "M1", "P2"]
+      },
+      "labels": {"P1": 3, "P2": 3, "P3": 2, "P4": 2, "M2": 1, "M1": 0}
+    },
+    {
+      "id": "oz-yeterlik",
+      "query": "öz-yeterlik öğretmen adayları",
+      "records": {
+        "T1": {"title": "Öğretmen adaylarının öz-yeterlik inançları: bir meta-analiz",
+               "authors": ["Yılmaz, Ö."], "year": 2018, "venue": "Sentetik Eğitim Dergisi",
+               "doi": "10.5555/fixture.tr.t1", "cites": {"crossref": 40, "semanticscholar": 55}},
+        "T2": {"title": "Öğretmen adaylarının öz-yeterlik algıları ve mesleğe yönelik tutumları",
+               "authors": ["Kaya, Ş."], "year": 2016, "venue": "Sentetik Öğretmen Eğitimi",
+               "doi": "10.5555/fixture.tr.t2", "cites": {"crossref": 120, "semanticscholar": 140}},
+        "T3": {"title": "Öz-yeterlik ve akademik başarı: lise öğrencileri üzerine bir çalışma",
+               "authors": ["Demir, A."], "year": 2020, "venue": "Sentetik Eğitim Bilimleri",
+               "doi": "10.5555/fixture.tr.t3", "cites": {"crossref": 15}},
+        "T4": {"title": "Öğretmen adaylarının mesleki kaygıları ve öz-yeterlikleri",
+               "authors": ["Çelik, İ."], "year": 2022, "venue": "Sentetik Eğitim Araştırmaları",
+               "doi": "10.5555/fixture.tr.t4", "cites": {"crossref": 5}},
+        "G1": {"title": "Validation of a general self-efficacy scale across cultures",
+               "authors": ["Novak, J."], "year": 1995, "venue": "Synthetic Psychometrics",
+               "doi": "10.5555/fixture.tr.g1", "cites": {"crossref": 5000, "semanticscholar": 9000}}
+      },
+      "order": {
+        "crossref": ["T1", "T4", "T3", "T2", "G1"],
+        "europepmc": [],
+        "arxiv": [],
+        "semanticscholar": ["T1", "G1", "T2"]
+      },
+      "labels": {"T1": 3, "T2": 3, "T4": 2, "T3": 1, "G1": 0}
+    }
+  ]
+}

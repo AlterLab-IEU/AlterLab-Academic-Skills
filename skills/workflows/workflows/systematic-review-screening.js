@@ -268,6 +268,38 @@ async function deliver(path, prompt, label, expected, extras, effort) {
   return d
 }
 
+// The report was told to open with the status known before its read-back. When that read-back
+// (a missing companion file, a status mismatch) makes the run worse, the file must not keep a
+// better status than the payload: one agent amends the status line, and a second read-back
+// confirms it. If the amendment cannot be confirmed, the payload says the file is stale.
+async function amendReportStatus(path, status, why) {
+  const want = status.toUpperCase()
+  const edited = await tryAgent(
+    `Edit the file ${path}. Change only its opening status line so that it reads exactly "Status: ${want}", and ` +
+      `directly below it add one short paragraph saying the run is ${want} for these reasons: ${JSON.stringify(why)}. ` +
+      'Do not change anything else in the file.',
+    { label: 'amend report status', effort: 'low' },
+    true,
+  )
+  const check = edited === null
+    ? null
+    : await withRetry(
+      `Read the file ${path} from disk and describe what is there now: whether it exists, its size in bytes, its first ` +
+        'Markdown heading, and which run status (COMPLETE, PARTIAL, or BLOCKED) its opening lines state. Only read: do ' +
+        'not create, edit, or rewrite any file.',
+      { schema: CONFIRM, effort: 'low', label: 'confirm amended status' },
+      null,
+      true,
+    )
+  const ok = Boolean(check && check.states_status === want)
+  coverage.report.status_amended = ok
+  coverage.report.amended_read_back = check
+  if (!ok) {
+    why.push(`${path} still opens with status ${check ? check.states_status : 'COMPLETE (amendment not confirmed)'}; ` +
+      `this payload's status (${status}) is authoritative`)
+  }
+}
+
 const coverage = {}
 function finish(status, fields) {
   coverage.agents = spawned
@@ -570,6 +602,7 @@ if (delivered.mismatch) reasons.push(delivered.mismatch)
 const fileOk = (p, n) => delivered.others[p] && delivered.others[p].exists && delivered.others[p].lines === n
 if (!fileOk(INCLUDED_FILE, included.length)) reasons.push(`${INCLUDED_FILE} was not read back with ${plural(included.length, 'line')}`)
 if (!fileOk(UNRESOLVED_FILE, unresolvedList.length)) reasons.push(`${UNRESOLVED_FILE} was not read back with ${plural(unresolvedList.length, 'line')}`)
+if (reasons.length && workStatus === 'complete') await amendReportStatus(delivered.report, 'partial', reasons)
 return finish(reasons.length ? 'partial' : 'complete', {
   report: delivered.report,
   files: { included: fileOk(INCLUDED_FILE, included.length) ? INCLUDED_FILE : null, unresolved: fileOk(UNRESOLVED_FILE, unresolvedList.length) ? UNRESOLVED_FILE : null },

@@ -22,6 +22,11 @@
     "false_accusation_name": "real, correctly cited reference flagged as a problem"
   },
   "ground_truth_note": "Real entries were checked against the Crossref REST API on 2026-10-14 (api.crossref.org/works/<doi>). The fabricated DOI 10.1177/07356331211093847 returned HTTP 404 from Crossref and a Crossref title search for R4's title returned no close match on the same date. The obscure-and-subtle case was checked the same way on 2026-10-14: Crossref records for 10.32955/neuissar2024311035, 10.26466/opus.470118, 10.17719/jisr.2018.2486, 10.1038/nature14539, 10.1371/journal.pmed.0020124 and 10.31592/aeusbed.1801544; doi.org's Handle API returned responseCode 100 (handle not found) for 10.15390/EB.2022.11234 and a Crossref title search for O6's title returned no close match.",
+  "evidence_checks": {
+    "min_quote_chars": 20,
+    "item_region": "entry_prefix",
+    "note": "Deterministic evidence checks only (scoring schema 2): quote_in_fixture and quote_in_item_region, the item region being the reference-list entry that starts '<item id>.'. Most citation evidence cites external records (Crossref, doi.org), which no deterministic check can confirm, so expect many needs_review items."
+  },
   "cases": [
     {
       "id": "mixed-bibliography",

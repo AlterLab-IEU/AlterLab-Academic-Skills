@@ -6,7 +6,7 @@ allowed-tools: Read Write Edit Bash WebFetch WebSearch
 compatibility: Uses built-in Claude tools only; optional LaTeX toolchain (apa7 document class) required for PDF compilation; no external API key or account required
 metadata:
   skill-author: AlterLab
-  version: "2.6.3"
+  version: "2.6.4"
   last_updated: "2026-11-02"
 ---
 

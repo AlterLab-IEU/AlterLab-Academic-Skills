@@ -39,7 +39,16 @@ Two modes:
   REFUSED (runner usage-policy refusal), INFRA_ERROR (CLI/auth/timeout/missing fixture), or
   NOT_RUN (run aborted). Exit codes: 0 = passed (EVERY selected case PASS); 1 = a case
   failed; 2 = blocked (no usable verdict at all); 3 = partial (some cases unverdicted). JSON
-  results go to ``eval-results/`` (``--results-dir``).
+  results (schema_version 2, see docs/evals.md) go to ``eval-results/`` (``--results-dir``).
+
+  Grading (schema v2): both arms are graded on IDENTICAL substantive criteria — the
+  ``expected_output`` rubric, ``behavior`` clauses and substantive ``output_contains`` — by the
+  judge chosen with ``--judge`` (default ``substance``). Routing (``should_trigger`` /
+  ``should_not_trigger``, skilled arm only), skill-vocabulary assertions (needles that only name
+  internal skills or apparatus; reported, never gating) and declared ``artifact_checks`` (files
+  the arm had to write, checked before its workspace is deleted; scripts/artifact_checks.py)
+  are separate dimensions. ``--regrade`` re-judges saved answers with the same rules and the
+  same exit codes; ``--audit-rubrics`` lists rubrics that require internal names (no model).
 
 Dependency-light by design: standard library ``json`` / ``subprocess`` plus ``jsonschema``.
 ``jsonschema`` is optional — if it is not importable the validator falls back to an
@@ -50,11 +59,12 @@ equivalent built-in structural check, so the script runs in a bare ``uv run`` en
     uv run --with jsonschema python scripts/run_evals.py --strict   # full schema validation
     uv run python scripts/run_evals.py --behavioral                 # skill-injected grading (needs claude CLI)
     uv run python scripts/run_evals.py --behavioral --skill citation-verifier --runs 3
+    uv run python scripts/run_evals.py --regrade eval-results/behavioral-*.json --judge substance
+    uv run python scripts/run_evals.py --audit-rubrics              # static; no model calls
 """
 from __future__ import annotations
 
 import argparse
-import ast
 import hashlib
 import json
 import os
@@ -70,6 +80,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
+if str(Path(__file__).resolve().parent) not in sys.path:  # sibling module, also when imported
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+import artifact_checks  # noqa: E402  (scripts/artifact_checks.py)
+
 SKILLS = REPO / "skills"
 SCHEMA_PATH = REPO / "docs" / "evals.schema.json"
 
@@ -144,7 +158,18 @@ def schema_errors(data: object) -> list[str]:
     for e in errs:
         loc = "/".join(str(p) for p in e.path) or "<root>"
         out.append(f"{loc}: {e.message}")
-    return out
+    # Cross-field artifact rules (a check kind must suit the file type, csv number_within needs
+    # a row selector, ...) are beyond the JSON Schema; both validators apply them.
+    return out + [x for x in _artifact_errors(data) if x not in out]
+
+
+def _artifact_errors(data: object) -> list[str]:
+    if not isinstance(data, dict) or not isinstance(data.get("evals"), list):
+        return []
+    return [err for i, e in enumerate(data["evals"]) if isinstance(e, dict)
+            and "artifact_checks" in e
+            for err in artifact_checks.declaration_errors(e["artifact_checks"],
+                                                          f"evals/{i}/artifact_checks")]
 
 
 _KEBAB = __import__("re").compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -216,7 +241,7 @@ def _structural_errors(data: object) -> list[str]:
                 isinstance(r, str) and _REQ.match(r) for r in req)):
             errs.append(f"evals/{i}/requires: each entry must look like env:NAME, cmd:NAME, "
                         "net:HOST or mcp:NAME")
-    return errs
+    return errs + _artifact_errors(data)
 
 
 # --- Convention check -------------------------------------------------------------------
@@ -906,6 +931,8 @@ def build_prompt(eval_obj: dict, fixture_paths: list[str]) -> str:
             f"The following input file(s) have been provided for this task; read them as "
             f"needed:\n{listing}"
         )
+    if eval_obj.get("artifact_checks"):  # same note for both arms: where to save, never the checks
+        prompt += artifact_checks.prompt_note(eval_obj["artifact_checks"])
     return prompt
 
 
@@ -1009,7 +1036,98 @@ or
 VERDICT: FAIL
 followed by one sentence naming the requirement that decided it."""
 
-JUDGES = {"literal": None, "substance": _RUBRIC_JUDGE_SUBSTANCE}  # None = _RUBRIC_JUDGE
+JUDGES = {"literal": _RUBRIC_JUDGE, "substance": _RUBRIC_JUDGE_SUBSTANCE}
+# Bump a version whenever its template text changes; the sha256 is recorded with every run.
+JUDGE_PROMPT_VERSIONS = {"literal": "literal-v1", "substance": "substance-v1"}
+TRIGGER_PROMPT_VERSION = "trigger-v1"
+# --behavioral / --regrade default: the substance judge. It is the one that agreed with every
+# hand label in docs/judge_calibration.json (literal 7/8 on 2026-10-15: it failed a correct
+# answer that asked for missing input), and v2 already reports skill vocabulary as its own
+# dimension, so the rubric judge should grade substance only. --judge literal reproduces the
+# v1 rubric judge for comparisons with older runs (the outcome rule is still v2's).
+DEFAULT_JUDGE = "substance"
+
+
+def judge_record(name: str, applied: bool = True) -> dict:
+    """What graded a run: the rubric judge's name, prompt version and prompt hash, and the hash
+    of the trigger (routing) judge prompt. ``applied`` is False for a collect-only run."""
+    return {"name": name, "prompt_version": JUDGE_PROMPT_VERSIONS[name],
+            "prompt_sha256": _sha256_bytes(JUDGES[name].encode("utf-8")),
+            "trigger_prompt_version": TRIGGER_PROMPT_VERSION,
+            "trigger_prompt_sha256": _sha256_bytes(_TRIGGER_JUDGE.encode("utf-8")),
+            "applied": applied}
+
+
+# --- Assertion dimensions -------------------------------------------------------------------
+# Every assertion is scored in exactly one dimension:
+#   routing           should_trigger / should_not_trigger (skilled arm only: the bare arm has no
+#                     skill to engage or decline);
+#   skill_vocabulary  an output_contains whose EVERY needle is an internal name (rule below) —
+#                     a bare arm can never write it, so it is reported but never gates;
+#   substantive       everything else: behavior clauses and output_contains of user-visible
+#                     content (numbers, identifiers, API names, public tools and libraries).
+# A needle is an internal name when, lower-cased and stripped (a leading "/" and an
+# "alterlab-workflows:" prefix removed), it
+#   (a) contains an ``alterlab-<name>`` identifier, or
+#   (b) equals a suite skill's short name that contains a hyphen ("citation-mgmt") and is not
+#       also a public name or ordinary hyphenated term (_PUBLIC_HYPHENATED: "scikit-learn",
+#       "meta-analysis", ...), or
+#   (c) equals a hyphenated packaged-workflow name ("citation-audit"; the one-word "rebuttal"
+#       stays substantive), or
+#   (d) equals an internal apparatus term (_APPARATUS_TERMS) or one of the citation verifier's
+#       own taxonomy codes (_TAXONOMY_CODES).
+# When in doubt a needle stays substantive, so the classifier can only relax gating for needles
+# that name the suite itself — never for content a correct answer must contain.
+_APPARATUS_TERMS = ("iron law", "excuse-vs-reality", "excuse vs reality", "excuse-vs-reality table",
+                    "revision roadmap", "chapter plan", "design passport", "insight collection",
+                    "rq brief", "methodology blueprint", "fully_addressed",
+                    "partially_addressed", "not_addressed", "made_worse")
+_TAXONOMY_CODES = ("tf", "pac", "ih", "ph", "sh")  # alterlab-citation-verifier's labels
+_PUBLIC_HYPHENATED = frozenset({
+    "scikit-bio", "scvi-tools", "scikit-learn", "scikit-survival", "pytorch-lightning",
+    "stable-baselines3", "torch-geometric", "string-db", "meta-analysis", "peer-review",
+    "text-as-data", "causal-inference", "missing-data", "mixed-methods", "open-science"})
+_ALTERLAB_ID = re.compile(r"alterlab-[a-z0-9]+(?:-[a-z0-9]+)*")
+_VOCAB_CACHE: dict = {}
+
+
+def _internal_names() -> frozenset[str]:
+    if "names" not in _VOCAB_CACHE:
+        short = {d.name[len("alterlab-"):] for d in skill_dirs() if d.name.startswith("alterlab-")}
+        wf_dir = SKILLS / "workflows" / "workflows"
+        flows = {p.stem for p in wf_dir.glob("*.js")} if wf_dir.is_dir() else set()
+        _VOCAB_CACHE["names"] = frozenset(
+            n for n in short | flows if "-" in n and n not in _PUBLIC_HYPHENATED)
+    return _VOCAB_CACHE["names"]
+
+
+def vocabulary_reason(needle: object) -> str | None:
+    """Why ``needle`` is an internal name (rule a-d above), or None when it is substantive."""
+    if not isinstance(needle, str):
+        return None
+    n = needle.strip().lower().lstrip("/")
+    n = n[len("alterlab-workflows:"):] if n.startswith("alterlab-workflows:") else n
+    if _ALTERLAB_ID.search(n):
+        return "names an alterlab- skill"
+    if n in _internal_names():
+        return "a suite skill or workflow name"
+    if n in _APPARATUS_TERMS:
+        return "an internal apparatus term"
+    if n in _TAXONOMY_CODES:
+        return "a skill-internal taxonomy code"
+    return None
+
+
+def assertion_dimension(a: dict) -> str:
+    """'routing', 'skill_vocabulary' or 'substantive' for one assertion (see the rule above)."""
+    atype, aval = a.get("type"), a.get("value")
+    if atype in _TRIGGER_TYPES:
+        return "routing"
+    if atype == "output_contains":
+        needles = aval if isinstance(aval, list) else [aval]
+        if needles and all(vocabulary_reason(x) for x in needles):
+            return "skill_vocabulary"
+    return "substantive"
 
 
 def _judge_rubric(rubric: str, response: str, model: str, timeout: int,
@@ -1054,47 +1172,127 @@ def _contains_hit(value: object, response: str) -> bool:
     return any(isinstance(n, str) and n and n.lower() in low for n in needles)
 
 
-def grade_assertions(eval_obj: dict, skill: str, response: str,
-                     model: str, timeout: int) -> list[tuple[str, str, str]]:
-    """Grade every assertion on one response. Returns (label, 'PASS'|'FAIL'|'NA', detail) list.
+DIMENSIONS = ("substantive", "routing", "skill_vocabulary", "artifacts")
+_GATING = ("substantive", "routing", "artifacts")  # skill_vocabulary is reported, never gating
 
-    * ``output_contains``  -> deterministic case-insensitive substring check (no LLM).
-    * ``should_trigger``  -> the response must ENGAGE the skill's workflow (LLM-judged).
-    * ``should_not_trigger`` -> the response must NOT engage (decline/defer); paired
-      ``output_contains`` assertions independently verify the right sibling is named.
-    * ``behavior``  -> prose rubric clause, LLM-judged.
+
+def _grade_run(eval_obj: dict, skill: str, response: str, model: str, timeout: int, *,
+               skilled: bool, template: str | None = None, collect: bool = False,
+               saved: dict | None = None) -> tuple[str, str, list[tuple]]:
+    """Grade one answer. Returns (rubric_verdict, rubric_detail, items); each item is
+    (label, dimension, 'PASS'|'FAIL'|'NA', detail, judged) in the eval's assertion order.
+
+    * ``output_contains``  -> deterministic case-insensitive substring check (both arms).
+    * ``behavior`` and the ``expected_output`` rubric -> the rubric judge ``template`` (both arms).
+    * ``should_trigger`` / ``should_not_trigger`` -> the trigger judge: the response must (not)
+      ENGAGE the skill's workflow; skilled arm only. ``saved`` maps a label to verdicts kept
+      from an earlier grading (``--regrade`` reuses them instead of re-asking the judge).
+    ``collect`` (collect-only runs) skips every judge call; deterministic checks still run.
     """
-    results: list[tuple[str, str, str]] = []
     answered = _is_answer(response)
+    items: list[tuple] = []
     for a in eval_obj.get("assertions", []) or []:
         if not isinstance(a, dict):
             continue
         atype, aval = a.get("type"), a.get("value")
+        dim = assertion_dimension(a)
         if atype == "output_contains":
+            label = f"output_contains[{aval!r}]"
             if not answered:
-                results.append((f"output_contains[{aval!r}]", "NA", "no answer"))
+                items.append((label, dim, "NA", "no answer", False))
             else:
                 hit = _contains_hit(aval, response)
-                results.append((
-                    f"output_contains[{aval!r}]",
-                    "PASS" if hit else "FAIL",
-                    "substring present" if hit else "substring absent",
-                ))
-        elif atype in ("should_trigger", "should_not_trigger"):
-            engaged, detail = _judge_engaged(
-                skill, eval_obj["prompt"], eval_obj.get("expected_output", ""),
-                response, model, timeout,
-            )
-            if engaged == "NA":
-                results.append((atype, "NA", detail))
+                items.append((label, dim, "PASS" if hit else "FAIL",
+                              "substring present" if hit else "substring absent", False))
+        elif atype in _TRIGGER_TYPES:
+            if not skilled:
+                continue
+            kept = (saved or {}).get(atype) or []
+            prev = kept.pop(0) if kept else None
+            if prev and prev[0] in (PASS, FAIL):
+                items.append((atype, dim, prev[0], prev[1], False))
+            elif collect:
+                items.append((atype, dim, "NA", "collect-only: not judged", False))
             else:
-                want_engaged = atype == "should_trigger"
-                ok = (engaged == "YES") == want_engaged
-                results.append((atype, "PASS" if ok else "FAIL", detail))
+                engaged, detail = _judge_engaged(skill, eval_obj["prompt"],
+                                                 eval_obj.get("expected_output", ""),
+                                                 response, model, timeout)
+                if engaged == "NA":
+                    items.append((atype, dim, "NA", detail, answered))
+                else:
+                    ok = (engaged == "YES") == (atype == "should_trigger")
+                    items.append((atype, dim, "PASS" if ok else "FAIL", detail, True))
         elif atype == "behavior" and isinstance(aval, str):
-            verdict, detail = _judge_rubric(aval, response, model, timeout)
-            results.append(("behavior", verdict, detail))
-    return results
+            if collect:
+                items.append(("behavior", dim, "NA", "collect-only: not judged", False))
+            else:
+                verdict, detail = _judge_rubric(aval, response, model, timeout, template)
+                items.append(("behavior", dim, verdict, detail, answered))
+    if collect:
+        return "NA", "collect-only: answer saved, not judged", items
+    rv, rd = _judge_rubric(eval_obj.get("expected_output", ""), response, model, timeout, template)
+    return rv, rd, items
+
+
+def grade_assertions(eval_obj: dict, skill: str, response: str,
+                     model: str, timeout: int) -> list[tuple[str, str, str]]:
+    """Grade every assertion on one skilled-arm response with the literal judge, as
+    (label, 'PASS'|'FAIL'|'NA', detail). Kept for callers of the v1 API; the runner uses
+    ``_grade_run``."""
+    _rv, _rd, items = _grade_run(eval_obj, skill, response, model, timeout, skilled=True,
+                                 template=_RUBRIC_JUDGE)
+    return [(label, v, d) for (label, _dim, v, d, _j) in items]
+
+
+def _rollup(per_run: list[list[str]]) -> str:
+    """Per criterion (by position) the majority across runs; FAIL if any criterion's majority
+    is FAIL, PASS if all are PASS, else NA."""
+    width = max((len(r) for r in per_run), default=0)
+    if not width:
+        return "NA"
+    majorities = [_majority([r[i] for r in per_run if i < len(r)]) for i in range(width)]
+    if FAIL in majorities:
+        return FAIL
+    return PASS if all(m == PASS for m in majorities) else "NA"
+
+
+def _dimensions(per_run: list[dict], *, skilled: bool, eval_obj: dict) -> dict:
+    """Roll each dimension up over the runs. ``None`` = the dimension does not apply to this
+    arm/case (bare-arm routing, no vocabulary assertions, no artifact_checks)."""
+    applies = {
+        "substantive": True,
+        "routing": skilled and any(isinstance(a, dict) and a.get("type") in _TRIGGER_TYPES
+                                   for a in eval_obj.get("assertions", []) or []),
+        "skill_vocabulary": any(isinstance(a, dict) and assertion_dimension(a) ==
+                                "skill_vocabulary" for a in eval_obj.get("assertions", []) or []),
+        "artifacts": bool(eval_obj.get("artifact_checks")),
+    }
+    return {d: (_rollup([r.get(d, []) for r in per_run]) if per_run else "NA")
+            if applies[d] else None for d in DIMENSIONS}
+
+
+def _gated_verdict(dims: dict) -> str:
+    """The v2 arm verdict: substantive + routing + artifacts (those that apply). Any FAIL ->
+    FAIL; all PASS -> PASS; otherwise NA. skill_vocabulary never gates."""
+    gating = [dims[d] for d in _GATING if dims.get(d) is not None]
+    if FAIL in gating:
+        return FAIL
+    return PASS if gating and all(v == PASS for v in gating) else "NA"
+
+
+def _run_criteria(rv: str, items: list[tuple], artifacts: list[dict]) -> dict:
+    crit: dict[str, list[str]] = {"substantive": [rv], "routing": [], "skill_vocabulary": [],
+                                  "artifacts": artifact_checks.verdicts(artifacts)}
+    for (_label, dim, v, _d, _j) in items:
+        crit[dim].append(v)
+    return crit
+
+
+def _unrun_dimensions(eval_obj: dict | None, skilled: bool) -> dict:
+    """Dimensions of an arm that never ran (NOT_RUN, missing fixture): NA where they apply."""
+    if eval_obj is None:
+        return {d: "NA" if d == "substantive" else None for d in DIMENSIONS}
+    return _dimensions([], skilled=skilled, eval_obj=eval_obj)
 
 
 def _majority(verdicts: list[str]) -> str:
@@ -1152,9 +1350,13 @@ def _arm_outcome(calls: list[CallResult], verdict: str, grading_notes: list[str]
     the graders left (a judge call that itself failed is an infrastructure error, not a tie)."""
     if not any(c.outcome == "answer" for c in calls):
         return REFUSED if any(c.outcome == "refused" for c in calls) else INFRA_ERROR
+    return _answered_outcome(verdict, grading_notes)
+
+
+def _answered_outcome(verdict: str, grading_notes: list[str]) -> str:
     if verdict in (PASS, FAIL):
         return verdict
-    if any(n.startswith(_NO_ANSWER) for n in grading_notes):
+    if any(str(n).startswith(_NO_ANSWER) for n in grading_notes):
         return INFRA_ERROR
     return INCONCLUSIVE
 
@@ -1176,10 +1378,30 @@ def _quiet(cmd: list[str], cwd: Path | None = None) -> str | None:
         return None
 
 
+# Results-record schema. v1 (<= v4.0.0): one combined outcome per arm, literal judge, the bare
+# arm graded on the rubric only. v2: per-arm dimensions, identical substantive criteria for
+# both arms, recorded judge + prompt hashes, artifact checks. See docs/evals.md.
+SCHEMA_VERSION = 2
+SUPPORTED_RESULT_VERSIONS = (1, 2)
+METHODOLOGY = "v2-dimensions"
+
+
+def _sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _runner_record() -> dict:
+    here = Path(__file__).resolve()
+    return {"script": "scripts/run_evals.py", "script_sha256": _sha256_bytes(here.read_bytes()),
+            "artifact_checks_sha256": _sha256_bytes(
+                (here.parent / "artifact_checks.py").read_bytes())}
+
+
 def _run_metadata(kind: str, model: str, runs: int, timeout: int) -> dict:
     return {
-        "schema_version": 1,
+        "schema_version": SCHEMA_VERSION,
         "kind": kind,
+        "runner": _runner_record(),
         "model": model,
         "model_source": "ALTERLAB_MODEL" if os.environ.get("ALTERLAB_MODEL") else "default",
         "endpoint": _endpoint(),
@@ -1203,6 +1425,10 @@ def _run_metadata(kind: str, model: str, runs: int, timeout: int) -> dict:
                             "tripwire": "checkout fingerprinted before the run and after "
                                         "every case; a change aborts the run"},
             "bare_arm_files": ["fixtures/"],
+            "artifact_checks": "declared in evals/evals.json, which is never copied into a "
+                               "workspace; both arms are told only each file's path, type and "
+                               "description, and the files are checked before the workspace "
+                               "is deleted",
         },
     }
 
@@ -1271,25 +1497,39 @@ def skill_allowed_tools(skill_md: str) -> list[str]:
 
 def _run_arm(prompt: str, model: str, timeout: int, runs: int, workspace: Path,
              eval_obj: dict, skill: str, rubric: str, system: str | None,
-             with_assertions: bool, tools: list[str] | None = None) -> dict:
+             skilled: bool, tools: list[str] | None = None, *, judge: str = DEFAULT_JUDGE,
+             artifact_dir: Path | None = None, results_dir: Path | None = None) -> dict:
+    """Run one arm ``runs`` times in ``workspace`` and grade every run (schema v2).
+
+    Both arms are graded on the same substantive criteria; routing assertions only on the
+    skilled arm (``skilled``). Declared ``artifact_checks`` are checked after each run, while
+    the workspace still exists, and the files are copied to ``artifact_dir/run-N/``; outputs a
+    previous run left behind are deleted first so a run is never credited with them.
+    """
     calls: list[CallResult] = []
     per_run_assertions: list[list[tuple[str, str, str]]] = []
+    per_run_criteria: list[dict] = []
     rubric_votes: list[str] = []
     notes: list[str] = []
     run_records: list[dict] = []
+    declared = eval_obj.get("artifact_checks") or []
+    template = JUDGES[judge]
     for i in range(runs):
+        if declared:
+            artifact_checks.clear_artifacts(workspace, declared)
         call = _claude_call(prompt, model, timeout, system=system, cwd=workspace,
                             extra_args=["--allowedTools", *tools] if tools else None)
         calls.append(call)
-        if _COLLECT["on"]:  # answers only; judge later with --regrade
-            assertions, (rv, rd) = [], ("NA", "collect-only: answer saved, not judged")
-        else:
-            assertions = (grade_assertions(eval_obj, skill, call.text, model, timeout)
-                          if with_assertions else [])
-            rv, rd = _judge_rubric(rubric, call.text, model, timeout)
-        if call.outcome == "answer":
-            notes += [d for (_, v, d) in assertions if v == "NA"] + ([rd] if rv == "NA" else [])
-        per_run_assertions.append(assertions)
+        answered = call.outcome == "answer"
+        rv, rd, items = _grade_run(eval_obj, skill, call.text, model, timeout, skilled=skilled,
+                                   template=template, collect=_COLLECT["on"])
+        arts = artifact_checks.check_artifacts(
+            workspace, declared, store_dir=artifact_dir / f"run-{i + 1}" if artifact_dir else None,
+            results_dir=results_dir, graded=answered) if declared else []
+        if answered:
+            notes += [d for (_, _, v, d, _) in items if v == "NA"] + ([rd] if rv == "NA" else [])
+        per_run_assertions.append([(label, v, d) for (label, _dim, v, d, _j) in items])
+        per_run_criteria.append(_run_criteria(rv, items, arts))
         rubric_votes.append(rv)
         run_records.append({
             "run": i + 1,
@@ -1302,45 +1542,89 @@ def _run_arm(prompt: str, model: str, timeout: int, runs: int, workspace: Path,
             "cost_usd": call.cost_usd,
             "usage": call.usage,
             "rubric_verdict": rv,
-            "assertions": [{"assertion": a, "verdict": v, "detail": _redact(str(d))[:300]}
-                           for (a, v, d) in assertions],
-            "response_excerpt": _scrub_emails(call.text[:1500]) if call.outcome == "answer"
-            else None,
+            "assertions": [{"assertion": a, "dimension": dim, "verdict": v,
+                            "detail": _redact(str(d))[:300]} for (a, dim, v, d, _j) in items],
+            "artifacts": arts,
+            "response_excerpt": _scrub_emails(call.text[:1500]) if answered else None,
             # Full text, so a run can be re-graded later (e.g. with a revised judge) without
             # repeating the answer calls.
-            "response": _scrub_emails(call.text) if call.outcome == "answer" else None,
+            "response": _scrub_emails(call.text) if answered else None,
         })
-    rubric_majority = _majority(rubric_votes)
-    if with_assertions and eval_obj.get("assertions"):
-        assertion_verdict = _eval_verdict_from_assertions(per_run_assertions)
-    else:
-        assertion_verdict = "PASS" if with_assertions else "NA"  # no assertions: rubric decides
-    if not with_assertions:
-        verdict = rubric_majority
-    elif FAIL in (assertion_verdict, rubric_majority):
-        verdict = FAIL
-    elif assertion_verdict == PASS and rubric_majority == PASS:
-        verdict = PASS
-    else:
-        verdict = "NA"
-    outcome = _arm_outcome(calls, verdict, notes)
+    dims = _dimensions(per_run_criteria, skilled=skilled, eval_obj=eval_obj)
+    outcome = _arm_outcome(calls, _gated_verdict(dims), notes)
     reason = None
     if outcome not in (PASS, FAIL):
         errs = [c.error for c in calls if c.error]
         reason = (errs or notes or ["judges returned no majority verdict"])[0]
         reason = _redact(str(reason))[:300]
+    has_assertions = any(per_run_assertions)
     return {
         "outcome": outcome,
         "reason": reason,
-        "assertion_verdict": assertion_verdict if with_assertions else None,
-        "rubric_majority": rubric_majority,
+        "dimensions": dims,
+        "assertion_verdict": (_eval_verdict_from_assertions(per_run_assertions)
+                              if has_assertions else None),
+        "rubric_majority": _majority(rubric_votes),
         "answered_runs": sum(c.outcome == "answer" for c in calls),
         "runs": run_records,
         "_calls": calls,
     }
 
 
-def _grade_case(case: dict, model: str, timeout: int, runs: int) -> dict:
+def _rubric_sha256(eval_obj: dict) -> str:
+    """Hash of everything an answer is graded against (canonical JSON)."""
+    body = {"expected_output": eval_obj.get("expected_output"),
+            "assertions": eval_obj.get("assertions", []) or [],
+            "artifact_checks": eval_obj.get("artifact_checks", []) or []}
+    return _sha256_bytes(json.dumps(body, sort_keys=True, separators=(",", ":"),
+                                    ensure_ascii=False).encode("utf-8"))
+
+
+def _fixture_hashes(eval_obj: dict, evals_dir: Path) -> dict:
+    out: dict[str, str | None] = {}
+    for item in eval_obj.get("files", []) or []:
+        if isinstance(item, dict) and item.get("name"):
+            out[item["name"]] = _sha256_bytes(str(item.get("content", "")).encode("utf-8"))
+        elif isinstance(item, str):
+            src = evals_dir / item
+            if src.is_file():
+                out[item] = _sha256_bytes(src.read_bytes())
+            elif src.is_dir():
+                h = hashlib.sha256()
+                for f in sorted(x for x in src.rglob("*") if x.is_file()):
+                    h.update(f.relative_to(src).as_posix().encode() + b"\0"
+                             + _sha256_bytes(f.read_bytes()).encode())
+                out[item] = h.hexdigest()
+            else:
+                out[item] = None
+    return out
+
+
+def _case_hashes(case: dict) -> dict:
+    e = case["eval"]
+    return {"skill_md_sha256": _sha256_bytes(case["skill_md"].encode("utf-8")),
+            "rubric_sha256": _rubric_sha256(e),
+            "fixtures_sha256": _fixture_hashes(e, case["evals_dir"])}
+
+
+def _case_dir_name(case_id: str) -> str:
+    return re.sub(r"[^A-Za-z0-9._-]+", "__", case_id)
+
+
+def _unrun_case(case: dict, outcome: str, reason: str, **extra) -> dict:
+    e = case["eval"]
+    arm = {"outcome": outcome, "reason": reason, "answered_runs": 0, "runs": []}
+    return {"case_id": f"{case['skill']}:{e.get('id', '?')}", "skill": case["skill"],
+            "skill_version": case["skill_version"], "eval_id": e.get("id"),
+            "hashes": _case_hashes(case), **extra,
+            "skilled": {**arm, "dimensions": _unrun_dimensions(e, True)},
+            "bare": {**arm, "dimensions": _unrun_dimensions(e, False)},
+            "rubric_delta": "rubric: INCONCLUSIVE (case not run)"}
+
+
+def _grade_case(case: dict, model: str, timeout: int, runs: int, *,
+                judge: str = DEFAULT_JUDGE, results_dir: Path | None = None,
+                run_stamp: str | None = None) -> dict:
     e = case["eval"]
     record = {
         "case_id": f"{case['skill']}:{e.get('id', '?')}",
@@ -1349,14 +1633,18 @@ def _grade_case(case: dict, model: str, timeout: int, runs: int) -> dict:
         "eval_id": e.get("id"),
         "fixtures": [f if isinstance(f, str) else f.get("name") for f in e.get("files", []) or []],
         "allowed_tools": case.get("allowed_tools", []),
+        "hashes": _case_hashes(case),
     }
     missing = missing_fixtures(e, case["evals_dir"])
     if missing:
         reason = f"missing fixture file(s): {', '.join(missing)}"
         empty = {"outcome": INFRA_ERROR, "reason": reason, "answered_runs": 0, "runs": [],
                  "_calls": []}
-        return {**record, "skilled": dict(empty), "bare": dict(empty),
+        return {**record, "skilled": {**empty, "dimensions": _unrun_dimensions(e, True)},
+                "bare": {**empty, "dimensions": _unrun_dimensions(e, False)},
                 "rubric_delta": "rubric: INCONCLUSIVE (case not run)"}
+    store = (results_dir / "artifacts" / run_stamp / _case_dir_name(record["case_id"])
+             if results_dir is not None and run_stamp and e.get("artifact_checks") else None)
     with tempfile.TemporaryDirectory(prefix="alterlab-eval-", ignore_cleanup_errors=True) as tmp:
         skilled_ws, bare_ws = Path(tmp) / "skilled", Path(tmp) / "bare"
         fixtures = prepare_workspace(skilled_ws, e, case["evals_dir"], case["skill_dir"])
@@ -1364,19 +1652,26 @@ def _grade_case(case: dict, model: str, timeout: int, runs: int) -> dict:
         prompt = build_prompt(e, fixtures)
         skilled = _run_arm(prompt, model, timeout, runs, skilled_ws, e, case["skill"],
                            e["expected_output"], case["skill_md"] + _SKILL_RUNTIME_NOTE, True,
-                           tools=case.get("allowed_tools"))
-        # The bare arm has no skill context, so it cannot carry should_trigger assertions; it is
-        # judged on the overall rubric only, which is what the delta compares.
+                           tools=case.get("allowed_tools"), judge=judge,
+                           artifact_dir=store / "skilled" if store else None,
+                           results_dir=results_dir)
+        # The bare arm has no skill to engage, so it carries no routing assertions; every
+        # substantive criterion (rubric, behavior, substantive output_contains) and every
+        # artifact check is the same as the skilled arm's, which is what the delta compares.
         bare = _run_arm(prompt, model, timeout, runs, bare_ws, e, case["skill"],
-                        e["expected_output"], None, False, tools=case.get("allowed_tools"))
+                        e["expected_output"], None, False, tools=case.get("allowed_tools"),
+                        judge=judge, artifact_dir=store / "bare" if store else None,
+                        results_dir=results_dir)
     return {**record, "skilled": skilled, "bare": bare,
-            "rubric_delta": _delta(bare["rubric_majority"], skilled["rubric_majority"])}
+            "rubric_delta": _delta(bare["dimensions"]["substantive"],
+                                   skilled["dimensions"]["substantive"])}
 
 
 def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
                    shard: tuple[int, int] | None = None, *,
                    results_dir: Path | None = None, skill_dir: Path | None = None,
-                   max_infra_streak: int = 6, case_ids: list[str] | None = None) -> int:
+                   max_infra_streak: int = 6, case_ids: list[str] | None = None,
+                   judge: str = DEFAULT_JUDGE) -> int:
     """Grade each eval by running it in an isolated workspace, skilled arm vs bare arm.
 
     Per case, the skilled arm gets the skill's SKILL.md via --append-system-prompt plus its
@@ -1393,6 +1688,10 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
     started = time.monotonic()
     started_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
     meta = _run_metadata("behavioral", model, runs, timeout)
+    meta["judge"] = judge_record(judge, applied=not _COLLECT["on"])
+    meta["methodology"] = METHODOLOGY
+    run_stamp = f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{os.getpid()}"
+    meta["artifacts_dir"] = f"artifacts/{run_stamp}" if results_dir is not None else None
     meta["selection"] = {"skill_filter": skill_filter, "skill_dir": str(skill_dir) if skill_dir
                          else None, "shard": f"{shard[0]}/{shard[1]}" if shard else None,
                          "cases": sorted(case_ids) if case_ids else None}
@@ -1405,6 +1704,9 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
     print(f"Model: {model} (ALTERLAB_MODEL convention; see skills/core/shared/model_env.md). "
           f"Each case runs {runs}x per arm, skilled vs bare, in isolated temp workspaces "
           f"({' '.join(ISOLATION_FLAGS)}).")
+    if not _COLLECT["on"]:
+        print(f"Judge: {judge} ({JUDGE_PROMPT_VERSIONS[judge]}); both arms graded on the same "
+              "substantive criteria; routing, skill vocabulary and artifacts reported separately.")
 
     if shutil.which("claude") is None:
         reason = "the `claude` CLI is not on PATH; behavioral grading needs it"
@@ -1437,25 +1739,16 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
     streak, aborted, breach = 0, None, None
     for case in cases:
         if aborted:
-            not_run = {"outcome": NOT_RUN, "reason": aborted, "answered_runs": 0, "runs": []}
-            records.append({"case_id": f"{case['skill']}:{case['eval'].get('id', '?')}",
-                            "skill": case["skill"], "skill_version": case["skill_version"],
-                            "eval_id": case["eval"].get("id"), "skilled": dict(not_run),
-                            "bare": dict(not_run), "rubric_delta": "rubric: INCONCLUSIVE "
-                            "(case not run)"})
+            records.append(_unrun_case(case, NOT_RUN, aborted))
             continue
         unmet = unmet_requirements(case["eval"])
         if unmet:
             why = "not runnable here: " + "; ".join(unmet)
-            skip = {"outcome": NOT_RUN, "reason": why, "answered_runs": 0, "runs": []}
-            records.append({"case_id": f"{case['skill']}:{case['eval'].get('id', '?')}",
-                            "skill": case["skill"], "skill_version": case["skill_version"],
-                            "eval_id": case["eval"].get("id"), "requires_unmet": unmet,
-                            "skilled": dict(skip), "bare": dict(skip),
-                            "rubric_delta": "rubric: INCONCLUSIVE (case not run)"})
+            records.append(_unrun_case(case, NOT_RUN, why, requires_unmet=unmet))
             print(f"- {records[-1]['case_id']}: NOT_RUN [{why}]")
             continue
-        rec = _grade_case(case, model, timeout, runs)
+        rec = _grade_case(case, model, timeout, runs, judge=judge, results_dir=results_dir,
+                          run_stamp=run_stamp)
         for call in rec["skilled"].pop("_calls") + rec["bare"].pop("_calls"):
             streak = streak + 1 if call.outcome == "infra_error" else 0
             if streak >= max_infra_streak and not aborted:
@@ -1467,8 +1760,8 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
         mark = {PASS: "✓", FAIL: "✗"}.get(s["outcome"], "?")
         why = f" [{s['reason']}]" if s.get("reason") else ""
         print(f"{mark} {rec['case_id']}: skilled={s['outcome']}{why} "
-              f"(assertions {s.get('assertion_verdict')}, rubric {s.get('rubric_majority')}) | "
-              f"bare={b['outcome']} -> {rec['rubric_delta']}")
+              f"({_dims_text(s['dimensions'])}) | bare={b['outcome']} "
+              f"({_dims_text(b['dimensions'])}) -> {rec['rubric_delta']}")
         records.append(rec)
         if fingerprint is not None and not breach and _repo_fingerprint() != fingerprint:
             changed = ", ".join(_changed_paths()) or "(content of already-modified files)"
@@ -1525,6 +1818,7 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
         "skilled": counts, "bare": bare_counts, "rubric_delta": deltas,
         "skipped_ungradeable_evals": skipped,
         "not_runnable_here": not_runnable,
+        "dimensions": _dimension_counts(records),
     }
     usage = {**_USAGE, "wall_clock_s": round(time.monotonic() - started, 1),
              "cost_note": "total_cost_usd as reported by the claude CLI; on a subscription "
@@ -1565,8 +1859,28 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
     return code
 
 
+def _dims_text(dims: dict) -> str:
+    short = {"substantive": "substantive", "routing": "routing", "skill_vocabulary": "vocab",
+             "artifacts": "artifacts"}
+    return ", ".join(f"{short[d]} {dims.get(d)}" for d in DIMENSIONS if dims.get(d) is not None)
+
+
+def _dimension_counts(records: list[dict]) -> dict:
+    """Per arm and dimension: how many cases scored PASS / FAIL / NA (or not applicable)."""
+    out: dict = {}
+    for arm in ("skilled", "bare"):
+        out[arm] = {}
+        for d in DIMENSIONS:
+            vals = [((r.get(arm) or {}).get("dimensions") or {}).get(d) for r in records]
+            out[arm][d] = {"PASS": vals.count(PASS), "FAIL": vals.count(FAIL),
+                           "NA": vals.count("NA"), "not_applicable": vals.count(None)}
+    return out
+
+
 def _delta(bare: str, skilled: str) -> str:
-    """One-line characterization of the bare-vs-skill delta on the overall rubric."""
+    """One-line characterization of the bare-vs-skill delta. In v2 the inputs are the arms'
+    ``substantive`` dimensions (identical criteria for both arms); in v1 they were the rubric
+    majorities. The wording is unchanged."""
     if bare == "FAIL" and skilled == "PASS":
         return "rubric: SKILL HELPED (bare FAIL -> skilled PASS)"
     if bare == "PASS" and skilled == "FAIL":
@@ -1590,113 +1904,382 @@ def _find_eval(case: dict, meta: dict) -> dict | None:
     return None
 
 
+def _load_behavioral(path: Path) -> tuple[dict | None, str | None]:
+    """A behavioral results payload, or (None, why it cannot be regraded) — never raises."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        return None, f"unreadable: {exc}"
+    try:
+        src = json.loads(text)
+    except json.JSONDecodeError as exc:
+        return None, f"malformed JSON ({exc.msg} at line {exc.lineno})"
+    if not isinstance(src, dict):
+        return None, "not a results object"
+    kind = src.get("kind")
+    if kind not in ("behavioral", "behavioral-regrade"):
+        return None, f"not a behavioral results file (kind={kind!r})"
+    version = src.get("schema_version", 1)
+    if version not in SUPPORTED_RESULT_VERSIONS:
+        return None, f"unsupported schema_version {version!r} (this runner reads " \
+                     f"{', '.join(map(str, SUPPORTED_RESULT_VERSIONS))})"
+    if not isinstance(src.get("cases"), list):
+        return None, "no cases list"
+    return src, None
+
+
+def _not_regraded(a: dict, why: str) -> None:
+    """An arm with answers that could not be regraded: its old verdict is kept only as
+    ``outcome_original``, never reported as a v2 verdict."""
+    a["outcome_original"] = a.get("outcome")
+    a["outcome"], a["reason"], a["regraded"] = INCONCLUSIVE, f"not regraded: {why}", False
+    a["dimensions"] = {d: "NA" if d == "substantive" else None for d in DIMENSIONS}
+
+
+def _regrade_arm(a: dict, e: dict, skill: str, arm: str, model: str, timeout: int,
+                 template: str, stats: dict) -> tuple[str, str]:
+    """Re-judge one arm's saved runs in place; returns (old outcome, new outcome)."""
+    runs = a["runs"]
+    per_run_assertions, per_run_criteria, rubric_votes, notes = [], [], [], []
+    for r in runs:
+        resp = r.get("response") or ""
+        answered = r.get("call_outcome") == "answer"
+        saved: dict[str, list] = {}
+        original: dict[str, list] = {}
+        for item in r.get("assertions", []) or []:
+            original.setdefault(item.get("assertion"), []).append(item.get("verdict"))
+            if item.get("assertion") in _TRIGGER_TYPES:
+                saved.setdefault(item["assertion"], []).append(
+                    (item.get("verdict"), item.get("detail", "")))
+        if answered:
+            rv, rd, items = _grade_run(e, skill, resp, model, timeout, skilled=arm == "skilled",
+                                       template=template, saved=saved)
+        else:
+            rv, rd, items = "NA", r.get("error") or "no answer", []
+        judged = [v for (_l, _d, v, _x, j) in items if j] + ([rv] if answered else [])
+        stats["judge_calls"] += len(judged)
+        stats["judge_verdicts"] += sum(v in (PASS, FAIL) for v in judged)
+        if answered and rv == "NA" and not stats["first_judge_failure"]:
+            stats["first_judge_failure"] = _redact(str(rd))[:200]
+        r["rubric_verdict_original"] = r.get("rubric_verdict")
+        r["rubric_verdict"] = rv
+        new_items = []
+        for (label, dim, v, d, _j) in items:
+            prev = original.get(label) or []
+            new_items.append({"assertion": label, "dimension": dim, "verdict": v,
+                              "detail": _redact(str(d))[:300],
+                              "verdict_original": prev.pop(0) if prev else None})
+        r["assertions"] = new_items
+        declared = e.get("artifact_checks") or []
+        if declared and "artifacts" not in r:  # a v1 run: its files were never checked
+            arts_v = ["NA"]
+        else:
+            arts_v = artifact_checks.verdicts(r.get("artifacts") or [])
+        crit = _run_criteria(rv, items, [])
+        crit["artifacts"] = arts_v if declared else []
+        per_run_criteria.append(crit)
+        per_run_assertions.append([(x["assertion"], x["verdict"], x["detail"]) for x in new_items])
+        rubric_votes.append(rv)
+        if answered:
+            notes += [d for (_, _, v, d, _) in items if v == "NA"] + ([rd] if rv == "NA" else [])
+    dims = _dimensions(per_run_criteria, skilled=arm == "skilled", eval_obj=e)
+    old = a.get("outcome")
+    if any(r.get("call_outcome") == "answer" for r in runs):
+        new = _answered_outcome(_gated_verdict(dims), notes)
+    else:
+        new = old  # never answered (REFUSED / INFRA_ERROR): nothing to judge
+    a["outcome_original"], a["outcome"] = old, new
+    a["reason"] = None if new in (PASS, FAIL) else (
+        _redact(str((notes or [a.get("reason") or "judges returned no majority verdict"])[0]))[:300])
+    a["dimensions"] = dims
+    a["rubric_majority"] = _majority(rubric_votes)
+    a["assertion_verdict"] = (_eval_verdict_from_assertions(per_run_assertions)
+                              if any(per_run_assertions) else None)
+    a["regraded"] = True
+    return old, new
+
+
 def regrade_results(path: Path, judge: str, timeout: int,
                     results_dir: Path | None = None) -> dict:
-    """Re-judge a behavioral results file's saved responses with another judge template.
+    """Re-judge a behavioral results file's saved responses with the v2 rules and ``judge``.
 
-    Only judge calls are made. Rubric and ``behavior`` verdicts are re-judged, and
-    ``output_contains`` is recomputed; ``should_trigger`` / ``should_not_trigger`` verdicts are
-    kept from the original run (their judge does not grade vocabulary). Runs saved without a
-    full ``response`` (older files) are left as they were and counted as not re-graded.
-    Returns the new results payload, which records every case whose outcome flipped.
+    Only judge calls are made; no answer is regenerated. The rubric, ``behavior`` and
+    ``output_contains`` assertions are graded on BOTH arms (identical substantive criteria);
+    ``should_trigger`` / ``should_not_trigger`` verdicts are kept from the original run when it
+    judged them, and judged now when it did not (collect-only runs). Saved artifact-check
+    verdicts are reused; a v1 run of a case that now declares artifact_checks has an NA
+    artifacts dimension. An arm whose answers were saved without full text is not regraded:
+    it is counted in ``arms_not_regraded`` and reported INCONCLUSIVE (``outcome_original``
+    keeps the old verdict). A file that cannot be read, is malformed, is not a behavioral
+    results file, or has an unknown schema_version is reported, never raised.
+
+    Status (same vocabulary and exit-code meaning as --behavioral): ``failed`` if a regraded
+    case FAILs; ``blocked`` if the judge returned no verdict at all or no case could be
+    regraded; ``partial`` if some cases or arms have no usable regraded verdict; else
+    ``passed``. A v2 payload is written to ``results_dir`` unless the file was unusable.
     """
-    src = json.loads(path.read_text(encoding="utf-8"))
+    src, err = _load_behavioral(path)
+    if err:
+        return {"kind": "behavioral-regrade", "regraded_from": path.name, "status": "blocked",
+                "status_reasons": [err], "file_error": err, "complete": False, "flips": [],
+                "arms_not_regraded": 0, "cases": [],
+                "summary": {"selected": 0, "usable_verdicts": 0}}
     template = JUDGES[judge]
     model = alterlab_model()
+    from_version = src.get("schema_version", 1)
+    stats = {"judge_calls": 0, "judge_verdicts": 0, "first_judge_failure": None,
+             "arms_regraded": 0}
     flips: list[dict] = []
     not_regraded = 0
-    for case in src.get("cases", []):
+    cases = [c for c in src["cases"] if isinstance(c, dict)]
+    for case in cases:
         e = _find_eval(case, src)
+        old_hashes = case.get("hashes") or {}
+        case["hashes"] = {"skill_md_sha256": old_hashes.get("skill_md_sha256"),
+                          "rubric_sha256": _rubric_sha256(e) if e else None,
+                          "fixtures_sha256": old_hashes.get("fixtures_sha256") or {},
+                          "rubric_sha256_at_run": old_hashes.get("rubric_sha256")}
         for arm in ("skilled", "bare"):
-            a = case.get(arm) or {}
+            a = case.get(arm)
+            if not isinstance(a, dict):
+                continue
             runs = a.get("runs") or []
-            if not runs or e is None:
+            answered = [r for r in runs if r.get("call_outcome") == "answer"]
+            if not runs:  # never ran (NOT_RUN, missing fixture): nothing to regrade
+                a["dimensions"] = _unrun_dimensions(e, arm == "skilled")
+                a["regraded"] = False
                 continue
-            if any(r.get("call_outcome") == "answer" and r.get("response") is None for r in runs):
+            if e is None:
+                not_regraded += bool(answered)
+                _not_regraded(a, "its eval no longer exists in evals.json")
+                continue
+            if any(r.get("response") is None for r in answered):
                 not_regraded += 1
+                _not_regraded(a, "a saved answer has no full response text")
                 continue
-            rubric_votes, per_run, notes = [], [], []
-            for r in runs:
-                resp = r.get("response") or ""
-                answered = r.get("call_outcome") == "answer"
-                rv, rd = (_judge_rubric(e["expected_output"], resp, model, timeout, template)
-                          if answered else ("NA", r.get("error") or "no answer"))
-                r["rubric_verdict_original"] = r.get("rubric_verdict")
-                r["rubric_verdict"] = rv
-                rubric_votes.append(rv)
-                new_asserts = []
-                specs = iter([x.get("value") for x in e.get("assertions", [])
-                              if x.get("type") == "behavior"])
-                for item in r.get("assertions", []):
-                    label = item["assertion"]
-                    verdict = item["verdict"]
-                    if answered and label.startswith("output_contains["):
-                        needle = ast.literal_eval(label[len("output_contains["):-1])
-                        verdict = "PASS" if _contains_hit(needle, resp) else "FAIL"
-                    elif label == "behavior":
-                        spec = next(specs, "")  # labels follow the eval's assertion order
-                        if answered:
-                            verdict, _ = _judge_rubric(spec, resp, model, timeout, template)
-                    new_asserts.append({**item, "verdict": verdict,
-                                        "verdict_original": item["verdict"]})
-                    if verdict == "NA":
-                        notes.append(item.get("detail", ""))
-                r["assertions"] = new_asserts
-                per_run.append([(x["assertion"], x["verdict"], x.get("detail", ""))
-                                for x in new_asserts])
-            majority = _majority(rubric_votes)
-            if arm == "skilled" and e.get("assertions"):
-                av = _eval_verdict_from_assertions(per_run)
-                verdict = (FAIL if FAIL in (av, majority) else
-                           PASS if av == PASS and majority == PASS else "NA")
-            else:
-                verdict = majority
-            answered_any = any(r.get("call_outcome") == "answer" for r in runs)
-            new_outcome = (a.get("outcome") if not answered_any else
-                           verdict if verdict in (PASS, FAIL) else INCONCLUSIVE)
-            if new_outcome != a.get("outcome"):
-                flips.append({"case_id": case.get("case_id"), "arm": arm,
-                              "from": a.get("outcome"), "to": new_outcome})
-            a["outcome_original"], a["outcome"] = a.get("outcome"), new_outcome
-            a["rubric_majority"] = majority
-        case["rubric_delta"] = _delta((case.get("bare") or {}).get("rubric_majority", "NA"),
-                                      (case.get("skilled") or {}).get("rubric_majority", "NA"))
-    counts = {o: sum((c.get("skilled") or {}).get("outcome") == o for c in src.get("cases", []))
+            old, new = _regrade_arm(a, e, case.get("skill", ""), arm, model, timeout, template,
+                                    stats)
+            stats["arms_regraded"] += 1
+            if new != old:
+                flips.append({"case_id": case.get("case_id"), "arm": arm, "from": old, "to": new})
+        sub = {arm: ((case.get(arm) or {}).get("dimensions") or {}).get("substantive") or "NA"
+               for arm in ("skilled", "bare")}
+        case["rubric_delta"] = _delta(sub["bare"], sub["skilled"])
+
+    counts = {o: sum((c.get("skilled") or {}).get("outcome") == o for c in cases)
               for o in OUTCOMES}
-    bare = {o: sum((c.get("bare") or {}).get("outcome") == o for c in src.get("cases", []))
-            for o in OUTCOMES}
-    selected = len(src.get("cases", []))
-    status, _code = _behavioral_status(selected, counts[PASS], counts[FAIL])
-    payload = {**src, "kind": "behavioral-regrade", "regraded_from": path.name,
-               "judge": judge, "status": status, "flips": flips,
+    bare = {o: sum((c.get("bare") or {}).get("outcome") == o for c in cases) for o in OUTCOMES}
+    regraded_skilled = [c["skilled"] for c in cases if isinstance(c.get("skilled"), dict)
+                        and c["skilled"].get("regraded")]
+    usable = sum(a["outcome"] in (PASS, FAIL) for a in regraded_skilled)
+    failed = sum(a["outcome"] == FAIL for a in regraded_skilled)
+    selected = len(cases)
+    reasons: list[str] = []
+    judge_dead = stats["judge_calls"] > 0 and stats["judge_verdicts"] == 0
+    if judge_dead:
+        status = "blocked"
+        reasons.append(f"judge unavailable: none of {stats['judge_calls']} judge call(s) "
+                       f"returned a verdict (first: {stats['first_judge_failure']})")
+    elif failed:
+        status = "failed"
+    elif usable == 0:
+        status = "blocked"
+    elif usable < selected or not_regraded:
+        status = "partial"
+    else:
+        status = "passed"
+    if failed:
+        reasons.append(f"{failed} case(s) failed")
+    if usable < selected:
+        reasons.append(f"{selected - usable} of {selected} case(s) have no usable regraded verdict")
+    if not_regraded:
+        reasons.append(f"{not_regraded} arm(s) not regraded (saved answer text missing or eval gone)")
+    deltas = {"helped": 0, "hurt": 0, "no_delta": 0, "inconclusive": 0}
+    for c in cases:
+        d = c.get("rubric_delta", "")
+        deltas["helped" if "HELPED" in d else "hurt" if "HURT" in d
+               else "no_delta" if "NO DELTA" in d else "inconclusive"] += 1
+    payload = {**src, "schema_version": SCHEMA_VERSION, "kind": "behavioral-regrade",
+               "methodology": METHODOLOGY, "regraded_from": path.name,
+               "regraded_from_schema_version": from_version,
+               "regraded_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+               "judge": judge_record(judge), "runner": _runner_record(),
+               "judge_model": model,
+               "status": status, "status_reasons": reasons, "flips": flips,
                "arms_not_regraded": not_regraded,
-               "summary": {**src.get("summary", {}), "skilled": counts, "bare": bare,
-                           "usable_verdicts": counts[PASS] + counts[FAIL]}}
+               "complete": usable == selected and not not_regraded and not judge_dead,
+               "cases": cases,
+               "summary": {**(src.get("summary") or {}), "selected": selected,
+                           "skilled": counts, "bare": bare, "usable_verdicts": usable,
+                           "coverage": round(usable / selected, 4) if selected else 0.0,
+                           "rubric_delta": deltas, "dimensions": _dimension_counts(cases),
+                           "regrade": {k: v for k, v in stats.items()}}}
     _write_results(results_dir, "regrade", payload)
     return payload
+
+
+_STATUS_CODES = {"passed": 0, "failed": 1, "blocked": 2, "partial": 3}
+
+
+def _regrade_overall(payloads: list[dict]) -> tuple[str, int]:
+    """Aggregate per-file regrade statuses: any FAIL -> failed (1); nothing usable anywhere
+    (every file blocked) -> blocked (2); any file not fully regraded -> partial (3); else 0."""
+    if any(p["status"] == "failed" for p in payloads):
+        return "failed", 1
+    if not payloads or all(p["status"] == "blocked" for p in payloads):
+        return "blocked", 2
+    if any(p["status"] != "passed" for p in payloads):
+        return "partial", 3
+    return "passed", 0
+
+
+def _regrade_line(name: str, res: dict) -> str:
+    if res.get("file_error"):
+        return f"{name}: BLOCKED — {res['file_error']}"
+    sm = res["summary"]
+    sk = ", ".join(f"{sm['skilled'][o]} {o}" for o in OUTCOMES if sm["skilled"].get(o))
+    rg = sm.get("regrade", {})
+    line = (f"{name}: {res['status'].upper()} | skilled: {sk or 'no cases'} | usable "
+            f"{sm['usable_verdicts']}/{sm['selected']} | {len(res['flips'])} flip(s) | "
+            f"{res['arms_not_regraded']} arm(s) not regraded | judge verdicts "
+            f"{rg.get('judge_verdicts', 0)}/{rg.get('judge_calls', 0)}")
+    if res["status"] != "passed" and res.get("status_reasons"):
+        line += "\n  " + "; ".join(res["status_reasons"])
+    return line
 
 
 CALIBRATION = REPO / "docs" / "judge_calibration.json"
 
 
 def calibrate_judge(judges: list[str], timeout: int) -> int:
-    """Grade the hand-labelled pairs in docs/judge_calibration.json with each judge; exit 1 if any
-    judge disagrees with a label (or returns no verdict), so an untrustworthy judge is caught
-    before it grades a sweep."""
-    pairs = json.loads(CALIBRATION.read_text(encoding="utf-8"))["pairs"]
+    """Grade the hand-labelled pairs in docs/judge_calibration.json with each judge.
+
+    Exit codes mirror --behavioral: 0 every judge agreed with every label; 1 a judge gave a
+    verdict that contradicts a label; 2 blocked — the calibration file is unusable or no judge
+    call returned a verdict (judge unavailable); 3 partial — no contradiction, but some pairs
+    got no verdict, so the judge is not shown to be trustworthy."""
+    try:
+        pairs = json.loads(CALIBRATION.read_text(encoding="utf-8"))["pairs"]
+        if not isinstance(pairs, list) or not pairs or not all(
+                isinstance(pr, dict) and pr.get("expected") in (PASS, FAIL)
+                and isinstance(pr.get("rubric"), str) and isinstance(pr.get("response"), str)
+                for pr in pairs):
+            raise ValueError("pairs must be a non-empty list of {id, rubric, response, expected}")
+    except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        print(f"BLOCKED: calibration file {CALIBRATION} is unusable ({exc}).", file=sys.stderr)
+        return 2
     model = alterlab_model()
-    bad = 0
+    disagree = no_verdict = verdicts = 0
     for judge in judges:
-        agree = 0
+        agree = missing = 0
         for pr in pairs:
             got, why = _judge_rubric(pr["rubric"], pr["response"], model, timeout, JUDGES[judge])
-            ok = got == pr["expected"]
-            agree += ok
-            if not ok:
-                print(f"  [{judge}] {pr['id']}: expected {pr['expected']}, got {got} — {why[:160]}")
-        bad += len(pairs) - agree
-        print(f"judge {judge}: {agree}/{len(pairs)} agree with the hand labels")
-    return 1 if bad else 0
+            if got == "NA":
+                missing += 1
+                print(f"  [{judge}] {pr.get('id')}: no verdict — {_redact(str(why))[:160]}")
+                continue
+            verdicts += 1
+            if got == pr["expected"]:
+                agree += 1
+            else:
+                disagree += 1
+                print(f"  [{judge}] {pr.get('id')}: expected {pr['expected']}, got {got} — "
+                      f"{why[:160]}")
+        no_verdict += missing
+        print(f"judge {judge}: {agree}/{len(pairs)} agree with the hand labels"
+              + (f", {missing} without a verdict" if missing else ""))
+    if disagree:
+        return 1
+    if not verdicts:
+        print("BLOCKED: no judge call returned a verdict; the judge is unavailable.",
+              file=sys.stderr)
+        return 2
+    return 3 if no_verdict else 0
+
+
+# --- Rubric audit (static) -------------------------------------------------------------------
+def audit_rubrics(out: Path | None = None) -> int:
+    """List rubrics and assertions that require the suite's internal names rather than
+    user-visible outcomes. Static: no model calls; always exits 0 (a report, not a gate).
+
+    * vocabulary assertions: output_contains whose every needle is an internal name (the
+      classifier above) — scored as the skill_vocabulary dimension, never gating;
+    * rubric prose (expected_output / behavior) that names an alterlab- skill or an internal
+      apparatus term — still graded by the rubric judge; the substance judge is told to grade
+      what such a clause stands for, but a rubric that requires naming a sibling skill cannot
+      be met by a bare arm.
+    """
+    rows: list[dict] = []
+    totals = {"skills": 0, "evals": 0, "output_contains": 0, "vocabulary_output_contains": 0,
+              "expected_output_naming_skills": 0, "expected_output_self_invocation": 0,
+              "expected_output_naming_apparatus": 0, "behavior_naming_skills_or_apparatus": 0}
+    prose_terms = [t for t in _APPARATUS_TERMS if len(t) > 4]
+    for d in skill_dirs():
+        try:
+            evals = json.loads(eval_path(d).read_text(encoding="utf-8")).get("evals", []) or []
+        except (OSError, json.JSONDecodeError):
+            continue
+        totals["skills"] += 1
+        for e in evals:
+            if not isinstance(e, dict):
+                continue
+            totals["evals"] += 1
+            for a in e.get("assertions", []) or []:
+                if not isinstance(a, dict):
+                    continue
+                if a.get("type") == "output_contains":
+                    totals["output_contains"] += 1
+                    if assertion_dimension(a) == "skill_vocabulary":
+                        totals["vocabulary_output_contains"] += 1
+                        needles = a["value"] if isinstance(a["value"], list) else [a["value"]]
+                        rows.append({"skill": d.name, "eval_id": e.get("id"),
+                                     "where": "output_contains", "value": a["value"],
+                                     "why": sorted({vocabulary_reason(n) for n in needles})})
+                elif a.get("type") == "behavior" and isinstance(a.get("value"), str):
+                    low = a["value"].lower()
+                    hits = sorted(set(_ALTERLAB_ID.findall(low))) + [t for t in prose_terms
+                                                                      if t in low]
+                    if hits:
+                        totals["behavior_naming_skills_or_apparatus"] += 1
+                        rows.append({"skill": d.name, "eval_id": e.get("id"),
+                                     "where": "behavior", "names": hits})
+            low = str(e.get("expected_output", "")).lower()
+            names = sorted(set(_ALTERLAB_ID.findall(low)))
+            terms = [t for t in prose_terms if t in low]
+            selfinv = f"invokes {d.name}" in low
+            totals["expected_output_naming_skills"] += bool(names)
+            totals["expected_output_self_invocation"] += selfinv
+            totals["expected_output_naming_apparatus"] += bool(terms)
+            if names or terms:
+                rows.append({"skill": d.name, "eval_id": e.get("id"), "where": "expected_output",
+                             "names": names, "apparatus": terms, "self_invocation": selfinv})
+    print("=== RUBRIC AUDIT (static; no model calls) ===")
+    print(f"{totals['skills']} skill(s), {totals['evals']} eval(s)")
+    print(f"output_contains: {totals['output_contains']}, of which "
+          f"{totals['vocabulary_output_contains']} require only internal names "
+          "(skill_vocabulary dimension: reported, not gating)")
+    print(f"expected_output naming an alterlab- skill: {totals['expected_output_naming_skills']} "
+          f"(self-invocation 'Invokes <this skill>': {totals['expected_output_self_invocation']})")
+    print(f"expected_output naming internal apparatus: {totals['expected_output_naming_apparatus']}")
+    print(f"behavior clauses naming skills/apparatus: "
+          f"{totals['behavior_naming_skills_or_apparatus']}")
+    per_skill: dict[str, dict[str, int]] = {}
+    for r in rows:
+        per_skill.setdefault(r["skill"], {}).setdefault(r["where"], 0)
+        per_skill[r["skill"]][r["where"]] += 1
+    print("\nper skill (vocabulary output_contains / expected_output / behavior):")
+    for sk in sorted(per_skill):
+        c = per_skill[sk]
+        print(f"  {sk:42} {c.get('output_contains', 0):3} / {c.get('expected_output', 0):3} / "
+              f"{c.get('behavior', 0):3}")
+    if out is not None:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps({"totals": totals, "rules": {
+            "apparatus_terms": list(_APPARATUS_TERMS), "taxonomy_codes": list(_TAXONOMY_CODES),
+            "public_hyphenated": sorted(_PUBLIC_HYPHENATED)}, "items": rows}, indent=2,
+            ensure_ascii=False) + "\n", encoding="utf-8")
+        print(f"\nfull list: {out}")
+    return 0
 
 
 # --- Activation harness (auto-selection rate) -------------------------------------------
@@ -1971,11 +2554,21 @@ def main(argv: list[str] | None = None) -> int:
                          "'auto' uses it when available, 'none' relies on scoped grants and "
                          "the tripwire only (default auto)")
     ap.add_argument("--regrade", metavar="RESULTS_JSON", nargs="+", default=None,
-                    help="re-judge saved responses in behavioral results file(s); judge calls only")
+                    help="re-judge saved responses in behavioral results file(s) with the v2 "
+                         "rules; judge calls only. Exit codes as --behavioral, over all files")
     ap.add_argument("--calibrate-judge", action="store_true",
-                    help="grade docs/judge_calibration.json with both judges (judge calls only)")
-    ap.add_argument("--judge", choices=sorted(JUDGES), default="substance",
-                    help="(regrade) judge template: substance (default) or literal (original)")
+                    help="grade docs/judge_calibration.json with --judge (default: both judges); "
+                         "judge calls only. 0 all agree, 1 a disagreement, 2 blocked, 3 partial")
+    ap.add_argument("--judge", choices=sorted(JUDGES), default=None,
+                    help=f"(behavioral/regrade/calibrate) rubric judge; default {DEFAULT_JUDGE} "
+                         "for --behavioral and --regrade, both judges for --calibrate-judge. "
+                         "substance grades what a response does; literal is the v1 judge, for "
+                         "comparison with older runs")
+    ap.add_argument("--audit-rubrics", action="store_true",
+                    help="static report: rubrics/assertions that require internal skill names "
+                         "or apparatus rather than user-visible outcomes (no model calls)")
+    ap.add_argument("--audit-out", metavar="FILE", default=None,
+                    help="(audit-rubrics) also write the full list as JSON to FILE")
     ap.add_argument("--shard", metavar="i/n", default=None,
                     help="(behavioral/activation) grade only a deterministic shard of skills "
                          "(e.g. 2/7) to split a long run into several sittings")
@@ -1988,17 +2581,32 @@ def main(argv: list[str] | None = None) -> int:
 
     results_dir = Path(args.results_dir) if args.results_dir else None
     _WAIT["on"] = bool(args.wait_on_limit)  # also for --regrade / --calibrate-judge calls
+    if args.audit_rubrics:
+        return audit_rubrics(Path(args.audit_out) if args.audit_out else None)
     if args.calibrate_judge:
-        return calibrate_judge(sorted(JUDGES), args.timeout)
+        return calibrate_judge([args.judge] if args.judge else sorted(JUDGES), args.timeout)
+    judge = args.judge or DEFAULT_JUDGE
     if args.regrade:
-        flipped = 0
+        payloads = []
+        print(f"=== REGRADE (judge {judge}, {JUDGE_PROMPT_VERSIONS[judge]}; judge calls only) ===")
         for f in args.regrade:
-            res = regrade_results(Path(f), args.judge, args.timeout, results_dir)
-            flipped += len(res["flips"])
-            print(f"{Path(f).name}: {res['status']} | skilled {res['summary']['skilled']} | "
-                  f"{len(res['flips'])} flip(s), {res['arms_not_regraded']} arm(s) not regraded")
-        print(f"total flips: {flipped}")
-        return 0
+            res = regrade_results(Path(f), judge, args.timeout, results_dir)
+            payloads.append(res)
+            print(_regrade_line(Path(f).name, res))
+        status, code = _regrade_overall(payloads)
+        complete = sum(bool(p.get("complete")) for p in payloads)
+        usable = sum(p["summary"].get("usable_verdicts", 0) for p in payloads)
+        selected = sum(p["summary"].get("selected", 0) for p in payloads)
+        print(f"=== REGRADE RESULT: {status.upper()} === {complete} of {len(payloads)} file(s) "
+              f"completely regraded | usable verdicts {usable}/{selected} case(s) | "
+              f"{sum(len(p['flips']) for p in payloads)} flip(s)")
+        if status != "passed":
+            print({"failed": "FAILED: at least one regraded case failed.",
+                   "blocked": "BLOCKED: nothing could be regraded or judged; this verifies "
+                              "NOTHING.",
+                   "partial": "PARTIAL: some files, cases or arms have no usable regraded "
+                              "verdict."}[status], file=sys.stderr)
+        return code
     if args.behavioral and args.activation:
         ap.error("choose one of --behavioral / --activation, not both")
     if args.behavioral or args.activation:
@@ -2011,7 +2619,7 @@ def main(argv: list[str] | None = None) -> int:
                               results_dir=results_dir,
                               skill_dir=Path(args.skill_dir).resolve() if args.skill_dir else None,
                               max_infra_streak=max(1, args.max_infra_errors),
-                              case_ids=args.case)
+                              case_ids=args.case, judge=judge)
     if args.activation:
         if args.runs < 1:
             ap.error("--runs must be >= 1")

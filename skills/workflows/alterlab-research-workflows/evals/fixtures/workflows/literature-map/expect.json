@@ -1,0 +1,25 @@
+{
+  "workflow": "literature-map",
+  "synthetic": false,
+  "_comment": "What a live run of literature-map on a narrow topic must produce. The input is a topic string (no synthetic data); the script plans 4-6 angles, so a run needs at least ~10 agents. 'findings' never change pass/fail.",
+  "args_file": "args.json",
+  "report": "literature-map.md",
+  "mock_agent_count": 12,
+  "status": {"allowed": ["complete", "partial", "blocked"], "target": "complete"},
+  "outputs": [
+    {"path": "literature-map.md", "type": "md", "role": "report"},
+    {"glob": "angle-*.jsonl", "type": "jsonl", "min_count": 1, "allow_empty": true}
+  ],
+  "payload": {
+    "required_keys": ["status", "status_reasons", "report", "coverage"],
+    "required_keys_when_delivered": ["angles", "works", "themes", "open_gaps", "answered_gaps", "unchecked_gaps", "summary"]
+  },
+  "coverage": {"required_stages": ["sweeps", "works", "clustering", "gaps", "report"]},
+  "findings": [
+    {"name": "4-6 angles planned", "path": "coverage.sweeps.requested", "op": "in", "value": [4, 5, 6]},
+    {"name": "key works merged", "path": "works", "op": ">=", "value": 5},
+    {"name": "references carry DOIs", "file": "literature-map.md", "pattern": "10\\.\\d{4,9}/"},
+    {"name": "Mermaid theme diagram", "file": "literature-map.md", "pattern": "```mermaid"},
+    {"name": "testing-effect landmark present", "file": "literature-map.md", "pattern": "Roediger|Karpicke|Dunlosky|Adesope"}
+  ]
+}

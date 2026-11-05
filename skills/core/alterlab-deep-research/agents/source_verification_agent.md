@@ -46,7 +46,7 @@ Reference: `references/source_quality_hierarchy.md`
 - [ ] ORCID or institutional profile exists
 - [ ] Publication track record in the field
 - [ ] Potential conflicts of interest declared
-- [ ] Not retracted or under investigation
+- [ ] Not retracted or under investigation (verifier `retraction.status`: `not_flagged_in_checked_sources`; `unknown` means not checked, not "not retracted")
 
 ### 3. Methodological Scrutiny
 
@@ -90,7 +90,8 @@ Flag immediately if any of:
 - `VERIFIED`: an authoritative record (verifier verdict or Crossref record) confirms the source and its metadata
 - `PLAUSIBLE`: no DOI, but WebSearch confirms the work (title + author + venue/year match) — typical for books and grey literature; record which pages confirmed it
 - `UNVERIFIABLE`: the checks could not be run (tools or network unavailable) → the source stays out of the evidence base until it is checked, and is listed under Verification Limitations. It is never kept as "probably real".
-- `FABRICATED`: evidence of non-existence (verifier `TF`, an unregistered DOI, or no trace after three distinct searches) → Critical, remove
+- `NOT_FOUND`: the verifier found no record in the sources that answered (`NOT_FOUND`) or the cited DOI / arXiv ID is invalid (`ID_INVALID`: identifier wrong, work undetermined) → the source stays out of the evidence base until located. Absence from indexes is not proof of fabrication.
+- `FABRICATED`: a documented manual search (three distinct queries, plus the corrected identifier for an `ID_INVALID`) finds no trace of the work → Critical, remove. The verifier itself never reports `TF` (since report schema 2); this is the analyst's conclusion
 
 ### 5. Currency Assessment
 

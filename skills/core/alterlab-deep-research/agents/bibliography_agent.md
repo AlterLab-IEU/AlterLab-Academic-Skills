@@ -81,13 +81,23 @@ Retraction Watch data). Each entry's JSON `verdict` maps to:
                    record, then re-verify before admitting
   - IH          -> the DOI/arXiv ID resolves to a different paper -> drop the borrowed
                    identifier (or replace the reference), then re-verify
-  - TF          -> NOT_FOUND (Total Fabrication) -> do not admit; discard and find a real source
+  - ID_INVALID  -> the DOI is unregistered / the arXiv ID does not exist -> the identifier is
+                   wrong and the work is undetermined: find the correct identifier by title and
+                   re-verify, or treat the entry as NOT_FOUND
+  - NOT_FOUND   -> absent from every source that answered -> do not admit until the fallback
+                   below locates it; absence is not proof of fabrication (books, grey
+                   literature), so record it as not found, not as fabricated
   - PH          -> an unresolved placeholder -> resolve it to a real source or drop it
   - unverified  -> not checked (offline / sources rate-limited) -> run the fallback below
-  - RETRACTED flag -> admit only with an explicit retraction note, or replace
+  - RETRACTED flag -> admit only with an explicit retraction note, or replace.
+                   retraction.status "unknown" (retracted: null) means the check did not
+                   happen — record it as unchecked, never as "not retracted"
 ```
 
-**Fallback (documented, not silent):** for `unverified` entries, re-run with network
+Since verifier report schema 2 the script never emits `TF` (v1 reported index absence as TF);
+Total Fabrication is a reviewer's conclusion after a documented manual search.
+
+**Fallback (documented, not silent):** for `unverified` and `NOT_FOUND` entries, re-run with network
 access (or later, once Semantic Scholar's shared keyless rate limit has cleared), or else use `WebSearch` with three distinct queries
 (exact title; title + first author; author + venue + year) plus a DOI lookup. A
 reference that neither the script nor the fallback can positively confirm is reported

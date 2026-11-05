@@ -30,7 +30,12 @@ const TOOLING =
   'would pass a memory check. The verifier uses S2_API_KEY from the environment when it is set; keyless Semantic ' +
   'Scholar calls share one rate limit with every other user and answer HTTP 429 when it is busy (its search almost always ' +
   'does), so never require it: a reference with no identifier is NOT_FOUND only when Crossref and at least one other ' +
-  'index answered with no match. If verify_citations.py reports ' +
+  'index answered with no match, and NOT_FOUND means "not found in the sources checked", which is not proof of ' +
+  'fabrication. verify_citations.py (report schema_version 2) maps directly: verified -> VERIFIED, PAC, IH, ID_INVALID ' +
+  '(the cited DOI is unregistered or the arXiv ID does not exist and no title match: the identifier is wrong, the work ' +
+  'itself is undetermined), NOT_FOUND, unverified -> UNVERIFIED; copy each entry\'s retraction.status (flagged / ' +
+  'not_flagged_in_checked_sources / unknown) and list metadata.authors.unsupported authors in a PAC correction. If ' +
+  'verify_citations.py reports ' +
   'status "partial" (exit code 3), the entries it lists under input_accounting as rejected or unsupported were not ' +
   'checked: give those references UNVERIFIED, never VERIFIED. claim_faithfulness.py never verifies a claim: its ' +
   'LEXICAL_MATCH_REQUIRES_REVIEW and MODEL_JUDGED_SUPPORT_REQUIRES_REVIEW labels are leads, so read the source ' +
@@ -87,10 +92,14 @@ const REF_VERDICTS = {
         required: ['id', 'verdict', 'evidence'],
         properties: {
           id: { type: 'string' },
-          verdict: { type: 'string', enum: ['VERIFIED', 'PAC', 'IH', 'NOT_FOUND', 'UNVERIFIED'] },
+          verdict: { type: 'string', enum: ['VERIFIED', 'PAC', 'IH', 'ID_INVALID', 'NOT_FOUND', 'UNVERIFIED'] },
           evidence: { type: 'string', description: 'which source matched or failed, with the resolved DOI/URL and match score' },
           corrected: { type: 'string', description: 'the corrected reference when the verdict is PAC or IH' },
-          retracted: { type: 'boolean' },
+          retraction: {
+            type: 'string',
+            enum: ['flagged', 'not_flagged_in_checked_sources', 'unknown'],
+            description: 'unknown when Crossref (the retraction source) did not answer or holds no record of the work',
+          },
         },
       },
     },
@@ -382,9 +391,12 @@ const refRun = await batched(
   (batch, label) =>
     tryAgent(
       `${TOOLING}\n\nVerify these ${batch.length} references. For each, return VERIFIED (matches an authoritative record), ` +
-        'PAC (real work, but a metadata field is wrong — give the corrected reference), IH (the DOI/arXiv id resolves to a different work), ' +
-        'NOT_FOUND (no source has it after a title search, an author+year search, and identifier resolution), or UNVERIFIED (the lookup ' +
-        'itself failed — network error or rate limit — which is not evidence of fabrication). Flag retractions. Return exactly one result ' +
+        'PAC (real work, but a metadata field is wrong, including an author the record does not list — give the corrected reference), ' +
+        'IH (the DOI/arXiv id resolves to a different work), ID_INVALID (the DOI is not registered / the arXiv id does not exist and ' +
+        'no title match: the identifier is wrong, the work itself undetermined), NOT_FOUND (no source that answered has it after a title ' +
+        'search, an author+year search, and identifier resolution — absence from indexes, not proof of fabrication), or UNVERIFIED (the ' +
+        'lookup itself failed — network error or rate limit). Give retraction as flagged, not_flagged_in_checked_sources, or unknown ' +
+        '(never report a retraction check that did not happen as clear). Return exactly one result ' +
         'per reference, using the id given.\n\n' +
         JSON.stringify(batch, null, 1),
       { schema: REF_VERDICTS, label },
@@ -404,7 +416,7 @@ phase('Faithfulness')
 // NOT_FOUND or IH source are reported with that source; claims citing an id that is not in the
 // reference list (or no id) are listed as not checkable. A claim citing a reference that could not be
 // verified is still checked: the checker looks the source up itself.
-const bad = new Set(['NOT_FOUND', 'IH'])
+const bad = new Set(['NOT_FOUND', 'ID_INVALID', 'IH'])
 const checkable = []
 const notCheckable = []
 for (const c of claims) {
@@ -450,7 +462,7 @@ phase('Challenge')
 // leave the flag provisional. Separate agents of the same model share its blind spots, so surviving
 // both re-checks is a stronger screen, not independent proof.
 const flags = [
-  ...references.filter((r) => refVerdict.has(r.id) && ['PAC', 'IH', 'NOT_FOUND', 'UNVERIFIED'].includes(refVerdict.get(r.id).verdict)).map((r) => ({ kind: 'reference', r: refVerdict.get(r.id) })),
+  ...references.filter((r) => refVerdict.has(r.id) && ['PAC', 'IH', 'ID_INVALID', 'NOT_FOUND', 'UNVERIFIED'].includes(refVerdict.get(r.id).verdict)).map((r) => ({ kind: 'reference', r: refVerdict.get(r.id) })),
   ...checkable.filter((c) => claimVerdict.has(c.id) && ['UNSUPPORTED', 'CONTRADICTED'].includes(claimVerdict.get(c.id).verdict)).map((c) => ({ kind: 'claim', r: claimVerdict.get(c.id) })),
 ]
 const claimById = new Map(claims.map((c) => [c.id, c]))
@@ -491,12 +503,15 @@ const provisional = judged.filter((f) => f.state === 'recheck_incomplete')
 Object.assign(recheck, { flags_stood: stood.length, flags_overturned: overturned.length, flags_recheck_incomplete: provisional.length })
 coverage.rechecks = recheck
 if (provisional.length) {
-  reasons.push(`${provisional.length} of ${flags.length} flags have fewer than ${strategies.length} completed re-checks; they are provisional and excluded from the TF/PAC/IH/SH counts`)
+  reasons.push(`${provisional.length} of ${flags.length} flags have fewer than ${strategies.length} completed re-checks; they are provisional and excluded from the NOT_FOUND/ID_INVALID/PAC/IH/SH counts`)
 }
 
 // ---------------------------------------------------------------- 5. report
 phase('Report')
-const category = (f) => (f.kind === 'claim' ? 'SH' : { NOT_FOUND: 'TF', PAC: 'PAC', IH: 'IH', UNVERIFIED: 'unverified' }[f.r.verdict])
+// Absence from every source, even after two re-checks, is reported as NOT_FOUND — never relabelled as
+// fabrication (TF): that is a human conclusion after a manual search, outside this workflow.
+const category = (f) =>
+  f.kind === 'claim' ? 'SH' : { NOT_FOUND: 'NOT_FOUND', ID_INVALID: 'ID_INVALID', PAC: 'PAC', IH: 'IH', UNVERIFIED: 'unverified' }[f.r.verdict]
 const tally = (list, cat) => list.filter((f) => category(f) === cat).length
 const counts = {
   references: references.length,
@@ -505,13 +520,18 @@ const counts = {
   claims_extracted: claims.length,
   claims_checkable: checkable.length,
   claims_checked: claimRun.stat.completed, // claims with a returned verdict, not claims dispatched
-  TF: tally(stood, 'TF'),
+  NOT_FOUND: tally(stood, 'NOT_FOUND'),
+  ID_INVALID: tally(stood, 'ID_INVALID'),
   PAC: tally(stood, 'PAC'),
   IH: tally(stood, 'IH'),
   PH: placeholders.length,
   SH: tally(stood, 'SH'),
   unverified: tally(stood, 'unverified'),
-  retracted: [...refVerdict.values()].filter((r) => r.retracted).length,
+  retracted: [...refVerdict.values()].filter((r) => r.retraction === 'flagged' || r.retracted === true).length,
+  // found works whose retraction status could not be established: not a clearance
+  retraction_unknown: [...refVerdict.values()].filter(
+    (r) => ['VERIFIED', 'PAC'].includes(r.verdict) && r.retraction !== 'flagged' && r.retraction !== 'not_flagged_in_checked_sources' && r.retracted !== true,
+  ).length,
   claims_uncheckable: [...claimVerdict.values()].filter((v) => v.verdict === 'UNCHECKABLE').length,
   flags_overturned_on_recheck: overturned.length,
   flags_recheck_incomplete: provisional.length,
@@ -535,11 +555,12 @@ const delivered = await deliver(
   `Write a citation-integrity report for ${input.path} to ${OUT} (Markdown). ${statusBrief(workStatus)}\n` +
     'Then a summary table of the counts below; claims_checked is the number of claims that received a verdict, of which ' +
     'claims_uncheckable had no accessible source text. Then one table per ' +
-    'category, each row with its evidence and a concrete fix: TF (NOT_FOUND, and both separate re-checks completed without finding the ' +
-    'work), PAC (corrupted metadata, with the corrected reference), IH (identifier points elsewhere), PH (placeholders), SH (claims the ' +
+    'category, each row with its evidence and a concrete fix: NOT_FOUND (both separate re-checks completed without finding the ' +
+    'work in any source that answered; say plainly that absence from indexes is not proof of fabrication and the author must ' +
+    'supply or locate the source), ID_INVALID (the identifier is wrong; give the correct one if the work was found, else ask), PAC (corrupted metadata, with the corrected reference), IH (identifier points elsewhere), PH (placeholders), SH (claims the ' +
     'cited source does not support or contradicts, with the verbatim evidence and the calibrated rewrite), UNVERIFIED (lookup failed — re-run, ' +
     'not an accusation), and retractions flagged by the verification stage. Then "Provisional flags — re-check incomplete": each flag with ' +
-    'fewer than two completed re-checks and how many completed; do not count these in TF/PAC/IH/SH or call them confirmed. Then "Not checked": ' +
+    'fewer than two completed re-checks and how many completed; do not count these in NOT_FOUND/ID_INVALID/PAC/IH/SH or call them confirmed. Say how many found works have an unknown retraction status (retraction_unknown) — that is not a clearance. Then "Not checked": ' +
     'references without a verdict, claims without a verdict, claims that could not be checked and why, and how many citing sentences were ' +
     `never extracted because of the ${CLAIM_CAP}-claim cap. Then "Overturned on re-check" so authors can see what was cleared. Close with ` +
     "the method (sources queried, today's date); a note that the re-checks are separate passes by agents of the same model, so their " +

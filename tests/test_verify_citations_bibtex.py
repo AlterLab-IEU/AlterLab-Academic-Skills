@@ -6,8 +6,9 @@ tokenizer must handle, actionable diagnostics for malformed input, the rule that
 partial audit can never pass, and conservative network behaviour: the sources are
 Crossref, Semantic Scholar, Europe PMC, arXiv and (for books) Open Library, plus doi.org.
 A rate-limited source is reported as not checked — it never counts as "not found", so it
-can never turn an unresolved entry into a verified one or a TF. A TF without an identifier
-needs Crossref plus at least one other index that actually answered.
+can never turn an unresolved entry into a verified one or a NOT_FOUND. A NOT_FOUND (v1: TF)
+without an identifier needs Crossref plus at least one other index that actually answered;
+since report schema 2 index absence is never reported as fabrication.
 
 No test touches the network: an autouse fixture replaces the HTTP layer with a guard
 that fails the test on any outbound call, and the network tests inject failures.
@@ -788,10 +789,13 @@ def test_only_the_keyless_indexes_are_queried(monkeypatch):
         [r], "", 0.7, False)["config"]
 
 
-def test_no_identifier_and_no_record_in_crossref_and_s2_is_tf(monkeypatch):
+def test_no_identifier_and_no_record_in_crossref_and_s2_is_not_found(monkeypatch):
+    # v2: absence from every index that answered is NOT_FOUND (manual check), never TF —
+    # the evidence bar (Crossref plus a second index answering) is unchanged.
     _fake_sources(monkeypatch, crossref=None, s2=None)
     r = vc.verify_entry(_entry(NO_ID), "", 0.7, False)
-    assert r["verdict"] == "TF" and r["severity"] == "SERIOUS"
+    assert r["verdict"] == "NOT_FOUND" and r["severity"] == "MEDIUM"
+    assert vc.build_report([r], "", 0.7, False)["summary"]["verdict"] == "REVIEW_REQUIRED"
 
 
 def test_rate_limited_semantic_scholar_never_yields_tf(monkeypatch):
@@ -811,26 +815,26 @@ def test_rate_limited_semantic_scholar_never_yields_tf(monkeypatch):
     assert report["summary"]["verdict"] == "UNVERIFIED"
 
 
-def test_tf_via_crossref_and_europe_pmc_while_semantic_scholar_is_rate_limited(monkeypatch):
+def test_not_found_via_crossref_and_europe_pmc_while_semantic_scholar_is_rate_limited(monkeypatch):
     _fake_sources(monkeypatch, crossref=None, s2=_RATE_LIMIT, epmc=_EPMC_EMPTY, openlibrary=_DOWN,
                   arxiv=_DOWN)
     r = vc.verify_entry(_entry(NO_ID), "", 0.7, False)
-    assert r["verdict"] == "TF" and r["severity"] == "SERIOUS"
+    assert r["verdict"] == "NOT_FOUND" and r["existence"]["status"] == "not_found"
     assert r["source_status"]["europepmc"] == "no_record"
     assert r["source_status"]["semanticscholar"].startswith("error: HTTP 429")
-    assert "Answered with no match: crossref, europepmc." in r["detail"]
+    assert "sources that answered: crossref, europepmc." in r["detail"]
     assert "semanticscholar rate-limited (HTTP 429)" in r["detail"]  # named as not checked
 
 
 @pytest.mark.parametrize("second", ["europepmc", "arxiv", "openlibrary", "semanticscholar"])
-def test_any_second_index_that_answered_backs_a_tf(monkeypatch, second):
+def test_any_second_index_that_answered_backs_a_not_found(monkeypatch, second):
     down = {"s2": _RATE_LIMIT, "epmc": _DOWN, "openlibrary": _DOWN, "arxiv": _DOWN}
     answer = {"semanticscholar": ("s2", None), "europepmc": ("epmc", _EPMC_EMPTY),
               "openlibrary": ("openlibrary", _OL_EMPTY), "arxiv": ("arxiv", _ARXIV_EMPTY)}[second]
     down[answer[0]] = answer[1]
     _fake_sources(monkeypatch, crossref=None, **down)
     r = vc.verify_entry(_entry(NO_ID), "", 0.7, False)
-    assert r["verdict"] == "TF" and f"crossref, {second}." in r["detail"]
+    assert r["verdict"] == "NOT_FOUND" and f"crossref, {second}." in r["detail"]
 
 
 @pytest.mark.parametrize("crossref", [_RATE_LIMIT, _DOWN], ids=["crossref-429", "crossref-down"])
@@ -909,9 +913,9 @@ def test_losing_semantic_scholar_never_verifies_an_unresolved_entry(monkeypatch)
     r = vc.verify_entry(_entry(NO_ID), "", 0.7, False)
     assert r["verdict"] == "unverified"
     _fake_sources(monkeypatch, crossref=_cr_items(unrelated), s2=None)
-    assert vc.verify_entry(_entry(NO_ID), "", 0.7, False)["verdict"] == "TF"  # both answered
+    assert vc.verify_entry(_entry(NO_ID), "", 0.7, False)["verdict"] == "NOT_FOUND"  # both answered
     _fake_sources(monkeypatch, crossref=_cr_items(unrelated), s2=_RATE_LIMIT)
-    assert vc.verify_entry(_entry(NO_ID), "", 0.7, False)["verdict"] == "TF"  # EPMC/arXiv/OL answered
+    assert vc.verify_entry(_entry(NO_ID), "", 0.7, False)["verdict"] == "NOT_FOUND"  # EPMC/arXiv/OL answered
 
 
 def test_crossref_match_still_verifies_while_semantic_scholar_is_rate_limited(monkeypatch):
@@ -1125,7 +1129,7 @@ def test_heading_and_prose_never_reach_tf_even_when_every_index_answers(monkeypa
     res = vc.parse_input(text)
     results = [vc.verify_entry(e, "", 0.7, False) for e in res.entries]
     assert [r["input"]["line"] for r in results] == [5]  # the heading and prose were not checked
-    assert [r["verdict"] for r in results] == ["TF"]
+    assert [r["verdict"] for r in results] == ["NOT_FOUND"]
 
 
 @pytest.mark.parametrize("raw", ["1. Install the tool before running it.",
@@ -1144,4 +1148,4 @@ def test_tf_guard_does_not_spare_a_structured_fabrication(monkeypatch):
     _fake_sources(monkeypatch, crossref=None, s2=None)
     (e,) = vc.parse_input("Haverbrook, I. (2019). Mycorrhizal signalling networks predict bond "
                           "default rates. Ecological Finance Letters, 4, 1-9.").entries
-    assert vc._tf_eligible(e) and vc.verify_entry(e, "", 0.7, False)["verdict"] == "TF"
+    assert vc._tf_eligible(e) and vc.verify_entry(e, "", 0.7, False)["verdict"] == "NOT_FOUND"

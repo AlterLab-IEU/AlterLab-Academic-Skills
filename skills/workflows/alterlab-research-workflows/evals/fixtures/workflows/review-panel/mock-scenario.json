@@ -1,0 +1,32 @@
+{
+  "_comment": "MOCK RUNTIME SCENARIO, not live output. Pins agent results in scripts/workflow_dryrun.mjs to the shape the synthetic fixture should produce, for mock-derived agent counts and the checker tests. Says nothing about live model behaviour.",
+  "rules": [
+    {"match": "^field analyst", "return": {
+      "field": "educational psychology", "paper_type": "empirical",
+      "design": "non-randomized two-section quasi-experiment; independent-samples t-test on final-exam scores",
+      "reporting_guideline": "TREND",
+      "lenses": [{"key": "methods", "title": "Methodology reviewer", "focus": "assignment, confounding, blinding, attrition"}]
+    }},
+    {"match": "^Methodology reviewer", "return": {
+      "recommendation": "major_revision",
+      "summary": "A classroom comparison of weekly quizzing and re-reading in two statistics sections.",
+      "strengths": ["common final exam across sections"],
+      "concerns": [
+        {"id": "M1", "severity": "major", "issue": "Sections were not randomized and had different instructors, so instructor is confounded with condition.", "location": "Method, Design", "quote": "Section A was taught by Instructor 1 and Section B by Instructor 2", "suggested_fix": "Model instructor/section or temper the causal language."},
+        {"id": "M2", "severity": "major", "issue": "Graders knew each student's section.", "location": "Method, Outcome", "quote": "graded by teaching assistants who knew each student's section", "suggested_fix": "Re-grade a blinded subsample or report inter-rater agreement."},
+        {"id": "M3", "severity": "minor", "issue": "Prior GPA was collected but not used as a covariate.", "location": "Method, Participants", "suggested_fix": "Adjust for prior GPA."}
+      ]
+    }},
+    {"match": "^Devil's-advocate reviewer", "return": {
+      "recommendation": "major_revision",
+      "summary": "The central causal and generalization claims outrun a single two-section comparison.",
+      "strengths": ["clear effect-size reporting"],
+      "concerns": [
+        {"id": "D1", "severity": "major", "issue": "The abstract says quizzing caused the higher scores, which the non-randomized design cannot support.", "location": "Abstract; Discussion", "quote": "Weekly quizzing caused the higher exam scores", "suggested_fix": "Use associational language."},
+        {"id": "D2", "severity": "major", "issue": "Generalization to every STEM course is unsupported by one statistics course.", "location": "Abstract; Conclusion", "quote": "the effect will generalize to every STEM course", "suggested_fix": "Remove or qualify the claim."}
+      ]
+    }},
+    {"match": "^check: ", "return": {"valid": true, "reason": "the manuscript does not address this", "quote": "Students were not randomized."}},
+    {"match": "^confirm report on disk", "return": {"exists": true, "bytes": 5120, "first_heading": "# Decision package", "states_status": "COMPLETE"}}
+  ]
+}
