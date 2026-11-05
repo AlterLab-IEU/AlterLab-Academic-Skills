@@ -45,6 +45,9 @@ with open(os.environ["FAKE_CLAUDE_LOG"], "a", encoding="utf-8") as log:
                                    __import__("base64").b64decode(
                                        os.environ.get("FAKE_PEEK_B64", "")).decode().split("|")
                                    if p},
+                          "judge": "substance" if "Grade SUBSTANCE" in prompt else "literal"
+                          if "You are grading a model response" in prompt else "trigger"
+                          if "ENGAGED:" in prompt else None,
                           "skilled": skilled, "files": sorted(
                               os.path.relpath(os.path.join(r, f), cwd)
                               for r, _, fs in os.walk(cwd) for f in fs)}) + "\n")
@@ -94,9 +97,12 @@ if mode == "refuse":
     print("API Error: Claude Code is unable to respond to this request, which appears to "
           "violate our Usage Policy")
     sys.exit(1)
-if "Grade SUBSTANCE" in prompt:  # the substance judge (used by --regrade)
-    out("VERDICT: PASS - substance met" if "GOOD-ANSWER" in prompt or mode == "substance_lenient"
-        else "VERDICT: FAIL - wrong")
+if "Grade SUBSTANCE" in prompt:  # the substance judge (the default rubric judge)
+    if mode == "judge_garbage":
+        out("I am not sure.")
+    else:  # judges the RESPONSE part only, like the literal judge below
+        out("VERDICT: PASS - substance met" if "GOOD-ANSWER" in prompt.split("\nRESPONSE:\n")[-1]
+            or mode == "substance_lenient" else "VERDICT: FAIL - wrong")
     sys.exit(0)
 if "You are grading a model response" in prompt:
     if mode == "judge_garbage":
@@ -111,7 +117,7 @@ if "ENGAGED:" in prompt:
 if skilled:
     out("BAD-ANSWER" if mode == "skilled_bad" else "GOOD-ANSWER: done")
 else:
-    out("plain answer")
+    out("GOOD-ANSWER from the bare model" if mode == "bare_good" else "plain answer")
 '''
 
 SKILL_MD = textwrap.dedent("""\
@@ -370,6 +376,121 @@ def test_shipped_calibration_set_is_well_formed() -> None:
     assert len({p["id"] for p in pairs}) == len(pairs) >= 5
     assert {p["expected"] for p in pairs} == {"PASS", "FAIL"}
     assert all(p["rubric"].strip() and p["response"].strip() for p in pairs)
+    allowed = {"id", "rubric", "response", "expected", "labelled_by", "note"}
+    assert all(set(p) <= allowed for p in pairs), "unknown keys in a calibration pair"
+    # The pairs added for the v2 vocabulary-vs-substance split are labelled as provisional,
+    # and cover both directions: correct without the jargon (PASS), wrong with it (FAIL).
+    added = [p for p in pairs if "labelled_by" in p]
+    assert added and all(p["labelled_by"] == "repair agent, pending maintainer review"
+                         for p in added)
+    assert {p["expected"] for p in added} == {"PASS", "FAIL"}
+    jargon = ("iron law", "excuse-vs-reality", "fully_addressed", "revision roadmap")
+    for p in added:
+        uses = any(t in p["response"].lower() for t in jargon)
+        assert uses == (p["expected"] == "FAIL") or "IH" in p["rubric"], p["id"]
+
+
+# --- schema v2: judges, dimensions, hashes ----------------------------------------------------
+def test_judge_is_explicit_and_recorded(fake_cli, tmp_path, monkeypatch):
+    rc, res = _run(tmp_path, [_case("a")], "ok", monkeypatch)
+    calls = [json.loads(x) for x in fake_cli.read_text().splitlines()]
+    assert {c["judge"] for c in calls if c["judge"] in ("literal", "substance")} == {"substance"}
+    j = res["judge"]
+    assert j["name"] == "substance" and j["prompt_version"] == "substance-v1"
+    import hashlib
+    assert j["prompt_sha256"] == hashlib.sha256(
+        run_evals._RUBRIC_JUDGE_SUBSTANCE.encode()).hexdigest()
+    assert j["trigger_prompt_sha256"] == hashlib.sha256(run_evals._TRIGGER_JUDGE.encode()).hexdigest()
+    assert res["schema_version"] == 2 and res["methodology"] == "v2-dimensions"
+    assert res["runner"]["script"] == "scripts/run_evals.py" and len(res["runner"]["script_sha256"]) == 64
+
+
+def test_literal_judge_can_be_selected_for_historical_comparison(fake_cli, tmp_path, monkeypatch):
+    rc, res = _run(tmp_path, [_case("a")], "ok", monkeypatch, judge="literal")
+    calls = [json.loads(x) for x in fake_cli.read_text().splitlines()]
+    assert {c["judge"] for c in calls if c["judge"] in ("literal", "substance")} == {"literal"}
+    assert res["judge"]["name"] == "literal" and rc == 0
+
+
+def test_both_arms_are_graded_on_identical_substantive_criteria(fake_cli, tmp_path, monkeypatch):
+    """The bare arm used to be graded on the rubric only, while the skilled arm also had to
+    meet its assertions — so the delta mixed criteria. Now every substantive assertion is
+    applied to both arms; routing is skilled-only; vocabulary is reported, never gating."""
+    case = _case("a")
+    case["assertions"] += [{"type": "behavior", "value": "GOOD-ANSWER must be given"},
+                           {"type": "output_contains", "value": "alterlab-sibling-skill"}]
+    rc, res = _run(tmp_path, [case], "ok", monkeypatch)
+    c = res["cases"][0]
+    sk, bare = c["skilled"], c["bare"]
+
+    def labels(arm, dims):
+        return [(a["assertion"], a["dimension"]) for a in arm["runs"][0]["assertions"]
+                if a["dimension"] in dims]
+    both = ("substantive", "skill_vocabulary")
+    assert labels(sk, both) == labels(bare, both) == [
+        ("output_contains['GOOD-ANSWER']", "substantive"), ("behavior", "substantive"),
+        ("output_contains['alterlab-sibling-skill']", "skill_vocabulary")]
+    assert labels(sk, ("routing",)) == [("should_trigger", "routing")]
+    assert labels(bare, ("routing",)) == []
+    assert sk["dimensions"] == {"substantive": "PASS", "routing": "PASS",
+                                "skill_vocabulary": "FAIL", "artifacts": None}
+    assert sk["outcome"] == "PASS", "a vocabulary-only miss must not fail the case"
+    assert bare["dimensions"]["substantive"] == "FAIL" and bare["dimensions"]["routing"] is None
+    assert "HELPED" in c["rubric_delta"]
+    assert res["summary"]["dimensions"]["skilled"]["skill_vocabulary"]["FAIL"] == 1
+    h = c["hashes"]
+    assert len(h["skill_md_sha256"]) == len(h["rubric_sha256"]) == 64
+
+
+def test_a_bare_arm_that_meets_every_substantive_criterion_passes(fake_cli, tmp_path, monkeypatch):
+    """Only the routing dimension is skilled-specific; if the bare model says the same correct
+    thing it passes the same substantive bar (no delta)."""
+    rc, res = _run(tmp_path, [_case("a")], "bare_good", monkeypatch)
+    c = res["cases"][0]
+    assert c["bare"]["outcome"] == "PASS" and c["bare"]["dimensions"]["substantive"] == "PASS"
+    assert c["rubric_delta"] == "rubric: NO DELTA (both PASS)"
+
+
+@pytest.mark.parametrize("needle, vocab", [
+    ("alterlab-paper-writer", True), ("defers to alterlab-paper-writer", True),
+    ("/alterlab-workflows:citation-audit", True), ("citation-audit", True),
+    ("citation-mgmt", True), ("research-lookup", True), ("Iron Law", True),
+    ("Revision Roadmap", True), ("FULLY_ADDRESSED", True), ("IH", True),
+    ("rebuttal", False), ("scikit-learn", False), ("meta-analysis", False), ("plotly", False),
+    ("PRISMA", False), ("10.1136/bmj.n71", False), ("183", False), ("scvi-tools", False),
+    ("savefig", False), ("TP53", False),
+])
+def test_vocabulary_classifier_on_corpus_needles(needle, vocab):
+    assert bool(run_evals.vocabulary_reason(needle)) is vocab
+
+
+def test_mixed_needle_lists_stay_substantive():
+    a = {"type": "output_contains", "value": ["clinvar", "alterlab-cosmic", "alterlab-cbioportal"]}
+    assert run_evals.assertion_dimension(a) == "substantive"
+    a = {"type": "output_contains", "value": ["alterlab-cosmic", "alterlab-cbioportal"]}
+    assert run_evals.assertion_dimension(a) == "skill_vocabulary"
+    assert run_evals.assertion_dimension({"type": "should_not_trigger", "value": True}) == "routing"
+    assert run_evals.assertion_dimension({"type": "behavior", "value": "Invokes alterlab-x"}) \
+        == "substantive", "prose clauses go to the judge, which grades substance"
+
+
+def test_audit_rubrics_is_static_and_counts_internal_names(tmp_path, monkeypatch, capsys):
+    def no_model(*a, **k):
+        raise AssertionError("--audit-rubrics must not call a model")
+    monkeypatch.setattr(run_evals, "_claude_call", no_model)
+    monkeypatch.setattr(run_evals, "_claude", no_model)
+    out = tmp_path / "audit.json"
+    assert run_evals.main(["--audit-rubrics", "--audit-out", str(out)]) == 0
+    rep = json.loads(out.read_text())
+    t = rep["totals"]
+    assert t["skills"] == len(run_evals.skill_dirs())
+    assert 0 < t["vocabulary_output_contains"] < t["output_contains"]
+    assert t["expected_output_self_invocation"] > 0
+    vocab = [r for r in rep["items"] if r["where"] == "output_contains"]
+    assert len(vocab) == t["vocabulary_output_contains"]
+    assert not any(r["value"] in ("PRISMA", "savefig") for r in vocab)
+    text = capsys.readouterr().out
+    assert "RUBRIC AUDIT" in text and "require only internal names" in text
 
 
 def test_allowed_tools_keep_spaced_patterns_whole() -> None:

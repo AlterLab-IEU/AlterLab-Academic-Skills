@@ -41,6 +41,36 @@
         {"type": "should_trigger", "value": true},
         {"type": "behavior", "value": "Performs BibTeX cleanup operations (standardize, deduplicate, sort) on the existing file without inventing new references."},
         { "type": "behavior", "value": "Merges the two Hattie & Timperley (2007) entries into one, converts the single-hyphen page ranges to en dashes (--), and orders the entries newest first (2022, 2020, 2007, 1996) without adding references that are not in the file." }
+      ],
+      "artifact_checks": [
+        {
+          "path": "out/cleaned.bib",
+          "type": "bib",
+          "description": "the cleaned, deduplicated and sorted bibliography",
+          "checks": [
+            {
+              "kind": "min_rows",
+              "min": 4,
+              "max": 4
+            },
+            {
+              "kind": "contains_text",
+              "text": "254--284"
+            },
+            {
+              "kind": "contains_text",
+              "text": "81--112"
+            },
+            {
+              "kind": "contains_text",
+              "text": "Braun"
+            },
+            {
+              "kind": "contains_text",
+              "text": "10.3389/fpsyg.2019.03087"
+            }
+          ]
+        }
       ]
     },
     {

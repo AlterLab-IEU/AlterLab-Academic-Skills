@@ -5,7 +5,10 @@
   "description": "Canonical schema for per-skill eval files at skills/<domain>/<skill>/evals/evals.json. One file per skill. Each eval is a realistic researcher ask plus the behavior we expect, encoded as machine-checkable assertions. Validated per-PR by scripts/run_evals.py --strict; behavioral grading (run_evals.py --behavioral) shells to the claude CLI and LLM-judges expected_output.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["skill", "evals"],
+  "required": [
+    "skill",
+    "evals"
+  ],
   "properties": {
     "skill": {
       "type": "string",
@@ -17,14 +20,20 @@
       "type": "array",
       "description": "All eval cases for this skill. Convention: >=3 should_trigger cases and >=1 near-miss should_not_trigger case (an adjacent skill's territory).",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/eval" }
+      "items": {
+        "$ref": "#/$defs/eval"
+      }
     }
   },
   "$defs": {
     "eval": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "prompt", "expected_output"],
+      "required": [
+        "id",
+        "prompt",
+        "expected_output"
+      ],
       "properties": {
         "id": {
           "type": "string",
@@ -54,10 +63,18 @@
               {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["name", "content"],
+                "required": [
+                  "name",
+                  "content"
+                ],
                 "properties": {
-                  "name": { "type": "string", "minLength": 1 },
-                  "content": { "type": "string" }
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "content": {
+                    "type": "string"
+                  }
                 }
               }
             ]
@@ -66,59 +83,268 @@
         "requires": {
           "type": "array",
           "description": "Optional preconditions the case cannot be judged without: env:NAME (an environment variable, e.g. an API key), cmd:NAME (an executable on PATH, e.g. Rscript), net:HOST (a host reachable from the runner), mcp:NAME (an MCP server; never available under the harness's --strict-mcp-config). An unmet requirement makes the case NOT_RUN ('not runnable here'), never FAIL.",
-          "items": { "type": "string", "pattern": "^(env|cmd|net|mcp):[A-Za-z0-9_.:-]+$" }
+          "items": {
+            "type": "string",
+            "pattern": "^(env|cmd|net|mcp):[A-Za-z0-9_.:-]+$"
+          }
         },
         "assertions": {
           "type": "array",
           "description": "Machine-checkable expectations. At minimum every eval carries one should_trigger / should_not_trigger assertion declaring whether this skill should fire on the prompt.",
-          "items": { "$ref": "#/$defs/assertion" }
+          "items": {
+            "$ref": "#/$defs/assertion"
+          }
+        },
+        "artifact_checks": {
+          "type": "array",
+          "description": "Optional files the answer must produce, checked deterministically (scripts/artifact_checks.py) after each run and before the arm's temporary workspace is deleted. Both arms are told each file's path, type and description (never the checks); the eval file itself is never copied into a workspace. A missing, unreadable or unparseable file fails every check declared for it. Expected values are supplied here by the eval author, never computed from the model's output.",
+          "items": {
+            "$ref": "#/$defs/artifact"
+          }
         }
       }
     },
     "assertion": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "value"],
+      "required": [
+        "type",
+        "value"
+      ],
       "properties": {
         "type": {
           "type": "string",
           "description": "should_trigger / should_not_trigger gate skill activation (value is boolean true). output_contains checks the response includes a substring/phrase (value is the string, case-insensitive by convention). behavior is a free-text rubric clause the LLM judge grades (value is the prose criterion).",
-          "enum": ["should_trigger", "should_not_trigger", "output_contains", "behavior"]
+          "enum": [
+            "should_trigger",
+            "should_not_trigger",
+            "output_contains",
+            "behavior"
+          ]
         },
         "value": {
           "description": "Boolean true for should_trigger/should_not_trigger; for output_contains, the required substring or a list of alternatives (any one must occur, e.g. the Turkish and English form of a legal citation); a string for behavior (the rubric clause).",
-          "type": ["string", "boolean", "array"]
+          "type": [
+            "string",
+            "boolean",
+            "array"
+          ]
         }
       },
       "allOf": [
         {
           "if": {
-            "properties": { "type": { "enum": ["should_trigger", "should_not_trigger"] } }
+            "properties": {
+              "type": {
+                "enum": [
+                  "should_trigger",
+                  "should_not_trigger"
+                ]
+              }
+            }
           },
           "then": {
-            "properties": { "value": { "const": true } }
+            "properties": {
+              "value": {
+                "const": true
+              }
+            }
           }
         },
         {
           "if": {
-            "properties": { "type": { "const": "behavior" } }
+            "properties": {
+              "type": {
+                "const": "behavior"
+              }
+            }
           },
           "then": {
-            "properties": { "value": { "type": "string", "minLength": 1 } }
+            "properties": {
+              "value": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
           }
         },
         {
           "if": {
-            "properties": { "type": { "const": "output_contains" } }
+            "properties": {
+              "type": {
+                "const": "output_contains"
+              }
+            }
           },
           "then": {
-            "properties": { "value": { "oneOf": [
-              { "type": "string", "minLength": 1 },
-              { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
-            ] } }
+            "properties": {
+              "value": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                ]
+              }
+            }
           }
         }
       ]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "type"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[^\\\\]+$",
+          "description": "Path relative to the arm's working directory (no leading '/', no '..'), e.g. out/report.json."
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "json",
+            "csv",
+            "png",
+            "pdf",
+            "pptx",
+            "md",
+            "txt",
+            "bib"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the file should contain, as the user would specify it; shown to both arms."
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/artifact_check"
+          },
+          "description": "Checks beyond the implicit exists + parseable. Which kinds suit which type, and the csv row selector rules, are enforced by run_evals.py."
+        }
+      }
+    },
+    "artifact_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "exists",
+            "parseable",
+            "json_keys",
+            "json_path_equals",
+            "csv_columns",
+            "min_rows",
+            "number_within",
+            "contains_text",
+            "png_min_size",
+            "png_dpi",
+            "pdf_min_pages",
+            "pptx_min_slides"
+          ]
+        },
+        "keys": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Dotted JSON path; integer segments index arrays (entries.0.verdict)."
+        },
+        "value": {
+          "description": "json_path_equals: the exact expected JSON value."
+        },
+        "min": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "expected": {
+          "type": "number"
+        },
+        "tolerance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "column": {
+          "type": "string",
+          "minLength": 1
+        },
+        "row": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "number_within on csv: 0-based data-row index."
+        },
+        "match": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "number_within on csv: pick the first row whose named columns equal these values."
+        },
+        "text": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          ]
+        },
+        "min_width": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "min_height": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
     }
   }
 }
