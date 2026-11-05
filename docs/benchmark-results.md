@@ -6,6 +6,15 @@ cases only. It is not a validation of the other 237 skills, and it is not a vali
 five skills beyond the inputs below. The live evaluation of every skill's own eval cases, with
 and without the skill, is in [`behavioral-results.md`](behavioral-results.md).
 
+> **Scoring schema.** Every number on this page was scored under **scoring schema 1**: labels
+> and numbers only, and when an answer gave the same item id twice, the *first* entry was
+> scored and the rest ignored. The evidence each answer gave was asked for but discarded and
+> never checked. The scorer now uses **scoring schema 2** (see
+> [Scoring schema 2](#scoring-schema-2-conflicts-and-evidence) below). The numbers here are
+> kept unchanged as a historical record; they are **not directly comparable** with schema-2
+> results, and no schema-2 run has been reported yet. The raw schema-1 results are not in the
+> repository, so whether any of the 64 answers repeated an item id cannot be checked here.
+
 ## Run
 
 | | |
@@ -16,10 +25,10 @@ and without the skill, is in [`behavioral-results.md`](behavioral-results.md).
 | Runs | 2 runs per arm of each of 16 cases (three per task, plus an offline variant of a citation case) — 64 answers, every one returned and parsed |
 | Isolation | each answer ran in a fresh temporary directory with `--safe-mode --disable-slash-commands --strict-mcp-config --no-session-persistence`; the skilled arm also had the SKILL.md appended and the skill's files (never its `evals/`) in `./skill/` |
 | Tools | the same in both arms: `Read`, `Glob`, `Grep` for every task; plus `Bash(python3:*)` for analysis-check; plus `Bash(python3:*)`, `Bash(uv run:*)`, `WebFetch` for citation-integrity except its offline case (`Read` only) |
-| Scoring | deterministic: each item's label or number against an expected answer with an evidence anchor; no LLM judge |
+| Scoring | scoring schema 1 — deterministic: each item's label or number against an expected answer with an evidence anchor; first entry wins for a repeated item id; evidence not kept or checked; no LLM judge |
 | Raw results | `eval-results/final/benchmark-20261014T1237…T1250Z.json` (git-ignored; regenerate with the command at the end) |
 
-## Results
+## Results (scoring schema 1)
 
 | Task (skill) | Arm | Items | Correct | False approvals | False accusations | Abstained correctly | Abstained unnecessarily | Overconfident on incomplete input | Time per answer | CLI-reported cost |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -125,6 +134,69 @@ file).
 - **Same model as judge of its own fixtures' difficulty:** the ceiling effect on four tasks may
   say as much about the fixtures as about the skills.
 
+## Scoring schema 2: conflicts and evidence
+
+From scoring schema 2 on (`scoring_schema_version: 2` in the results file and in every task's
+entry), `scripts/run_benchmark.py` changes scoring in two ways.
+
+**Repeated item ids.** If the final JSON block gives an item id twice with a different label or
+value (after trimming and upper-casing labels and comparing numbers as numbers), the item is an
+**unresolved conflict**: never counted correct, tallied as `unresolved_conflict`, the case is
+not complete, and every answer given is kept in the item record (`answers`). Repeats with the
+same answer collapse into one (`duplicate_ids_collapsed` counts the extra copies). Ids the case
+does not have are listed per arm (`unknown_ids`), and missing ids in `missing_ids`. When a reply
+holds several JSON blocks the last parseable one is still the answer (drafts, then the final
+answer).
+
+**Evidence.** Each item record keeps the evidence text and two deterministic checks, named for
+exactly what they test. Neither decides whether evidence *supports* a label, and neither
+changes the label score.
+
+| Check | Passes when |
+|---|---|
+| `quote_in_fixture` | the evidence contains a quoted span (`"…"`, `'…'`, `«…»` or `` `…` ``) of at least `min_quote_chars` (20) characters that occurs verbatim in one of the case's fixture files, after normalisation (Unicode NFKC, plain quotes and dashes, `*` and backticks dropped, `L12:` line labels removed, whitespace collapsed, case folded; an ellipsis splits a quote into fragments) |
+| `quote_in_item_region` | such a span occurs inside the item's own region: for analysis-check, docentlik, manuscript-review and screening, the fixture lines the item's anchor cites *directly after naming a fixture file* (e.g. `records_batch_A.txt L16-L22`; free-standing references such as `(L19)` are ignored because in the anchors they sometimes point at a protocol or a skill file); for citation-integrity, the reference-list entry starting `<item id>.` |
+
+Each check reports `pass`, `no_match` (quotes given, none found), `no_quote` (no quote long
+enough) or `not_applicable` (no region: with the current task files, 12 of the 104 items have none —
+11 docentlik items, mostly point totals whose anchors cite no fixture lines, and manuscript
+S4 — so for them only `quote_in_fixture` can pass; all 28 citation items have an entry). The
+item's
+`evidence_status` is the strongest result: `quote_in_item_region`, `quote_in_fixture`,
+`needs_review` (evidence given, no check passed — **not** "wrong"), or `missing` (no evidence
+given). Unresolved conflicts are `not_assessed`. The configuration is in each task's
+`evidence_checks` entry.
+
+What the checks cannot do: a correct paraphrase, a computation, or evidence from an external
+record (most citation-integrity answers cite Crossref or doi.org) passes neither check and goes
+to review; a genuine quote may still be irrelevant to the label. The Markdown table therefore
+shows **label accuracy** and the evidence columns side by side, never combined into one score.
+
+### Reviewing evidence
+
+1. Write the review file, either during the run or later from a saved results file (no model
+   calls):
+
+   ```bash
+   uv run python scripts/run_benchmark.py --runs 2 --export-evidence-review review.jsonl
+   uv run python scripts/run_benchmark.py --from-results eval-results/benchmark-<UTC>.json \
+       --export-evidence-review review.jsonl
+   ```
+
+   Each line is one answered item of one arm and run: `task`, `case`, `arm`, `run`, `item`,
+   `question`, `expected`, `got`, `label_result`, `answers` (conflicts only), `evidence`,
+   `evidence_status`, `deterministic_checks`, `anchor` (the item's expected reasoning from
+   `task.json`), and an empty `review` object. Schema-1 results files are refused (exit 64):
+   they hold no evidence.
+2. A reviewer (a person, or a model given the fixtures and the anchor) reads at least every
+   `needs_review` row against the fixtures and the anchor and fills `review.verdict` with
+   `supports`, `does_not_support` or `unclear`, plus `review.reviewer` and an optional
+   `review.note`. To blind the reviewer to the arm, hide the `arm` column while reviewing and
+   keep the file as the key.
+3. Report the reviewed verdicts as their own table next to the deterministic counts, stating
+   who or what reviewed them. Do not fold them into label accuracy or into the deterministic
+   evidence columns.
+
 ## Reproduce
 
 ```bash
@@ -134,4 +206,6 @@ uv run python scripts/run_benchmark.py --task docentlik --runs 2
 
 Run inside an authenticated Claude Code environment (the harness uses the `claude` CLI's own
 login). Results are written to `eval-results/benchmark-<UTC>.json`; a run exits `0` only when
-every arm of every case returned a parseable answer.
+every arm of every case returned a parseable answer. The current code scores under schema 2, so
+re-running these commands produces schema-2 results, which are not directly comparable with the
+schema-1 numbers above.
