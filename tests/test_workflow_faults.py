@@ -140,11 +140,27 @@ def test_citation_audit_baseline_is_complete() -> None:
     assert res["status"] == "complete"
     assert res["report"] == CA_OUT
     c = res["counts"]
-    assert (c["claims_checked"], c["TF"], c["PAC"], c["IH"], c["SH"]) == (4, 1, 1, 0, 2)
+    # A reference no source has is NOT_FOUND, never relabelled TF (fabrication) by the workflow.
+    assert (c["claims_checked"], c["NOT_FOUND"], c["PAC"], c["IH"], c["SH"]) == (4, 1, 1, 0, 2)
+    assert "TF" not in c and c["ID_INVALID"] == 0
     assert c["claims_total"] == 6 and c["claims_extracted"] == 6 and c["claims_checkable"] == 4
     cov = res["coverage"]
     assert cov["rechecks"]["requested"] == 8 and cov["rechecks"]["completed"] == 8
     assert {x["id"] for x in res["unchecked"]["claims_not_checkable"]} == {"C4", "C6"}
+
+
+def test_citation_audit_invalid_identifier_and_retraction_status_are_counted_honestly() -> None:
+    """ID_INVALID is its own category; a found work whose retraction check did not happen is
+    counted as retraction_unknown, never as cleared."""
+    rules = ca_rules(act("^references ", "set_items", ids=["R3"], values={"verdict": "ID_INVALID"}),
+                     act("^references ", "set_items", ids=["R1"], values={"retraction": "unknown"}),
+                     act("^references ", "set_items", ids=["R2"], values={"retraction": "flagged"}))
+    c = run(CA, CA_ARGS, rules)["result"]["counts"]
+    assert (c["ID_INVALID"], c["NOT_FOUND"]) == (1, 0)
+    assert c["retracted"] == 1
+    # R1 (unknown), R4 (PAC) and R5 (no retraction field at all) are found works without a
+    # retraction answer; R2 is flagged and R3 was not found.
+    assert c["retraction_unknown"] == 3
 
 
 def test_citation_audit_claims_checked_counts_verdicts_not_dispatches() -> None:
@@ -212,10 +228,10 @@ def test_citation_audit_unknown_and_missing_ids() -> None:
 def test_citation_audit_flag_without_completed_rechecks_is_provisional() -> None:
     out = run(CA, CA_ARGS, ca_rules(act("^recheck reference R3 ", "null")), capture="^write integrity report$")
     res = out["result"]
-    assert res["counts"]["TF"] == 0, "a NOT_FOUND flag with no completed re-check must not count as TF"
+    assert res["counts"]["NOT_FOUND"] == 0, "a NOT_FOUND flag with no completed re-check must not be counted"
     assert res["counts"]["flags_recheck_incomplete"] == 1
     [flag] = res["unchecked"]["flags_recheck_incomplete"]
-    assert (flag["id"], flag["category"], flag["rechecks_completed"]) == ("R3", "TF", 0)
+    assert (flag["id"], flag["category"], flag["rechecks_completed"]) == ("R3", "NOT_FOUND", 0)
     rc = res["coverage"]["rechecks"]
     assert (rc["requested"], rc["dispatched"], rc["completed"], rc["failed"], rc["retried"]) == (8, 8, 6, 2, 2)
     assert res["status"] == "partial"
@@ -259,7 +275,7 @@ def test_citation_audit_reference_batch_failure() -> None:
     refs = res["coverage"]["references"]
     assert (refs["requested"], refs["completed"], refs["unresolved"], refs["retried"]) == (5, 0, 5, 1)
     assert res["unchecked"]["references_without_verdict"] == ["R1", "R2", "R3", "R4", "R5"]
-    assert res["counts"]["TF"] == 0 and res["counts"]["PAC"] == 0
+    assert res["counts"]["NOT_FOUND"] == 0 and res["counts"]["PAC"] == 0
     assert res["status"] == "partial"
 
 
@@ -289,7 +305,7 @@ def test_citation_audit_report_must_be_read_back() -> None:
 
 def test_citation_audit_lookups_that_did_not_happen_keep_the_audit_partial() -> None:
     unverified = run(CA, CA_ARGS, ca_rules(act("^references ", "set_items", ids=["R5"], values={"verdict": "UNVERIFIED"}), status="PARTIAL"))["result"]
-    assert unverified["counts"]["unverified"] == 1 and unverified["counts"]["TF"] == 1
+    assert unverified["counts"]["unverified"] == 1 and unverified["counts"]["NOT_FOUND"] == 1
     assert unverified["status"] == "partial" and any("UNVERIFIED" in r for r in unverified["status_reasons"])
     uncheckable = run(CA, CA_ARGS, ca_rules(act("^claims batch", "set_items", ids=["C3"], values={"verdict": "UNCHECKABLE"}), status="PARTIAL"))["result"]
     assert uncheckable["counts"]["claims_checked"] == 4 and uncheckable["counts"]["claims_uncheckable"] == 1

@@ -8,8 +8,19 @@ doi.org Handle API to confirm whether a cited DOI is registered at all. It resol
 identifiers, fuzzy-matches title and authors (difflib SequenceMatcher ratio —
 Ratcliff/Obershelp, not edit-distance — default threshold 0.70), flags retractions
 (Crossref ``updated-by`` / ``update-to`` records, which since 2025 include the
-Retraction Watch database), and emits a JSON verdict
-per entry mapped to the AlterLab citation hallucination taxonomy (TF / PAC / IH / PH / SH).
+Retraction Watch database), and emits a JSON verdict per entry.
+
+Report schema 2 (tool 2.0.0) answers four questions separately for every entry:
+  existence   found | identifier_mismatch | identifier_invalid | not_found | not_determined |
+              unavailable | placeholder | not_checked  (+ which sources answered / failed)
+  identifier  per DOI and arXiv ID: resolves_to_cited_work | resolves_to_other_work |
+              does_not_resolve_to_cited_work | unregistered | registered_unindexed | malformed |
+              not_found | not_cited | unknown
+  metadata    title / authors / year: agrees | disagrees | not_checked (nothing cited) |
+              unknown (the record lacks the field). A cited author the record does not support is
+              listed in metadata.authors.unsupported; "et al." / "and others" is honoured.
+  retraction  flagged | not_flagged_in_checked_sources | unknown, with sources_answered and
+              checked_at. ``retracted`` (v1 key) is true / false / null (null = unknown).
 
 Design constraints:
 - NO API key required. The optional ``S2_API_KEY`` only gives Semantic Scholar a
@@ -23,23 +34,33 @@ Design constraints:
   (search and lookups separately) for the rest of the run. A rate-limited source is
   never read as "not found", and no verdict depends on Semantic Scholar search: a Total
   Fabrication without an identifier needs Crossref plus at least one other index that
-  actually answered (Semantic Scholar, Europe PMC, arXiv or Open Library).
+  actually answered (Semantic Scholar, Europe PMC, arXiv or Open Library) before an entry
+  is reported NOT_FOUND — and NOT_FOUND is never reported as fabrication.
 - NO third-party deps required: uses ``requests`` if present, else the stdlib
   (``urllib``). Mirrors the integrity_verification_agent taxonomy exactly (see
   ../SKILL.md and ../../alterlab-research-pipeline/agents/integrity_verification_agent.md).
 - GRACEFUL DEGRADATION: with no network, or when every source errors (rate limits,
   5xx), the entry gets an ``unverified`` verdict plus manual-verification
-  instructions. It never silently passes an entry, and it never reports a Total
-  Fabrication that rests only on sources that failed to answer.
+  instructions. It never silently passes an entry. One unreachable host is recorded as
+  not checked and the remaining sources are still asked (the host is then paused for
+  HOST_DOWN_PAUSE seconds so it does not stall every entry).
 
-Taxonomy (codes mirror the canonical Five-Type Taxonomy):
-  TF  Total Fabrication           — entry exists in no source
-  PAC Partial Attribute Corruption — entry found but ≥1 metadata field is wrong
-  IH  Identifier Hijacking         — DOI/arXiv ID resolves to an unrelated paper
-  PH  Placeholder Hallucination    — entry is an unresolved template/placeholder
-  SH  Semantic Hallucination       — entry resolves but does not support its claim
-                                      (claim-vs-source check is out of scope here;
-                                       emitted only as an advisory flag)
+Verdict codes (``verdict``; the canonical Five-Type Taxonomy plus two v2 codes):
+  verified    found; every supplied field that could be checked agrees
+  PAC         Partial Attribute Corruption — found, but ≥1 supplied field disagrees
+              (an unsupported author, wrong year, an identifier that points elsewhere)
+  IH          Identifier Hijacking — DOI/arXiv ID resolves to an unrelated paper
+  ID_INVALID  the cited DOI is unregistered / arXiv ID does not exist and no title match was
+              found: the identifier is wrong; whether the work exists is undetermined
+  NOT_FOUND   no source that answered holds a matching record. Absence from indexes is NOT
+              evidence of fabrication (books, grey literature, regional venues); check manually
+  PH          Placeholder Hallucination — an unresolved template/placeholder
+  TF          Total Fabrication — reserved for an analyst's conclusion after a documented
+              manual search; this script never emits it (v1 emitted it for index absence)
+  SH          Semantic Hallucination — advisory; claim support is out of scope here
+  unverified  could not be decided (offline, sources failed, too little structure)
+Run verdict (``summary.verdict``): FAIL > PARTIAL > REVIEW_REQUIRED (a NOT_FOUND entry) >
+UNVERIFIED > PASS_WITH_CONDITIONS > PASS.
 
 Usage:
   uv run python verify_citations.py INPUT [--format auto|bibtex|doi|freeform]
@@ -116,7 +137,8 @@ from typing import Any, Callable, Optional, Sequence
 # HTTP layer — prefer requests, fall back to urllib (stdlib). Keys optional.  #
 # --------------------------------------------------------------------------- #
 
-TOOL_VERSION = "1.4.1"
+TOOL_VERSION = "2.0.0"
+REPORT_SCHEMA_VERSION = 2
 # Contact email for Crossref's polite pool: opt-in (--mailto or ALTERLAB_CONTACT_EMAIL). With
 # none, requests carry no address and use the public pool; no default address is ever sent.
 DEFAULT_MAILTO = os.environ.get("ALTERLAB_CONTACT_EMAIL", "").strip()
@@ -162,6 +184,9 @@ RETRY_POLICY = {"api.semanticscholar.org": (3, 2.0), "api.semanticscholar.org/se
 # After a key's retries are spent on HTTP 429, calls to it fail fast for this long (s),
 # so one busy shared pool cannot stall a long bibliography. Each skipped call is
 # reported as rate-limited (not checked), never as "not found".
+# A host that refused connections or failed DNS is skipped (reported as not checked) for this
+# long, so one unreachable index neither stops the other sources nor stalls every entry.
+HOST_DOWN_PAUSE = 60.0
 RATE_LIMIT_COOLDOWN = {"api.semanticscholar.org": 30.0, "api.semanticscholar.org/search": 300.0}
 _COOLDOWN_UNTIL: dict[str, float] = {}
 
@@ -252,6 +277,9 @@ def _http_get(url: str, mailto: str, accept: str = "application/json",
     """
     host = urllib.parse.urlsplit(url).hostname or ""
     key = _rate_key(url)
+    if time.monotonic() < _COOLDOWN_UNTIL.get("down:" + host, 0.0):
+        raise NetworkUnavailable(f"{host} was unreachable earlier in this run; not retried for "
+                                 f"{HOST_DOWN_PAUSE:.0f} s (other sources are still asked)")
     if time.monotonic() < _COOLDOWN_UNTIL.get(key, 0.0):
         raise SourceError("HTTP 429 — " + _RATE_LIMIT_HINTS.get(host, "rate limited; retry later"))
     retries, base = RETRY_POLICY.get(key, (RETRIES, BACKOFF))
@@ -296,6 +324,7 @@ def _http_get(url: str, mailto: str, accept: str = "application/json",
             if isinstance(exc.reason, (socket.timeout, TimeoutError)):
                 last_exc = exc  # slow source, not an offline machine
             elif reset_retried or attempt >= retries:
+                _COOLDOWN_UNTIL["down:" + host] = time.monotonic() + HOST_DOWN_PAUSE
                 raise NetworkUnavailable(str(exc.reason)) from exc  # DNS / no route
             else:
                 reset_retried, last_exc = True, exc  # a dropped connection: try once more
@@ -311,6 +340,7 @@ def _http_get(url: str, mailto: str, accept: str = "application/json",
                 last_exc = exc
             elif any(k in name for k in ("Connection", "DNS", "SSL")):
                 if reset_retried or attempt >= retries:
+                    _COOLDOWN_UNTIL["down:" + host] = time.monotonic() + HOST_DOWN_PAUSE
                     raise NetworkUnavailable(str(exc)) from exc
                 reset_retried, last_exc = True, exc
             else:
@@ -393,27 +423,139 @@ def title_ratio(a: str, b: str) -> float:
     return best
 
 
-def _surname(name: str) -> str:
-    """Best-effort surname extraction from 'Last, First' or 'First Last'."""
-    name = name.strip()
+# --- Author names ------------------------------------------------------------
+# Surnames are compared token by token after normalisation, never by substring: "Li" must
+# not match "Williams". Accepted variants are explicit and listed here:
+#   * case, Unicode composition, accents and LaTeX accent commands (Müller = Muller);
+#   * the German umlaut transliteration (Müller = Mueller) and a few letters NFKD does not
+#     decompose (ı ø ł đ æ œ ß);
+#   * apostrophes dropped (O'Brien = OBrien); hyphens and spaces equivalent;
+#   * surname particles (van, de, al, ...) are optional, and a compound surname matches one
+#     of its parts (García Márquez ~ Márquez), because indexes often store only the last word;
+#   * organisations match by full name, by acronym (WHO = World Health Organization), or by
+#     near-identical word sets — never by sharing one generic word ("Organization").
+_PARTICLES = frozenset("van von der den de del della degli da das dos du di la le les ter ten "
+                       "bin ibn al el st".split())
+_NAME_LETTERS = str.maketrans({"ı": "i", "ø": "o", "Ø": "O", "ł": "l", "Ł": "L", "đ": "d", "Đ": "D",
+                               "ð": "d", "þ": "th", "æ": "ae", "Æ": "AE", "œ": "oe", "Œ": "OE",
+                               "ß": "ss"})
+_GERMAN_UMLAUTS = str.maketrans({"ä": "ae", "ö": "oe", "ü": "ue", "Ä": "Ae", "Ö": "Oe", "Ü": "Ue"})
+_ORG_WORDS_RE = re.compile(
+    r"(?i)\b(?:organi[sz]ation|association|society|institute|institution|ministry|committee|"
+    r"council|consortium|collaboration|agency|university|office|bureau|department|foundation|"
+    r"commission|group|network|centre|center|board|federation|union|bank|programme|program|"
+    r"administration|authority|team|working party|task force)\b")
+_ACRONYM_RE = re.compile(r"^[A-Z][A-Z&]{1,9}$")
+_ORG_STOP = frozenset("of for and the on in at to".split())
+
+
+def _strip_marks(text: str) -> str:
+    return "".join(c for c in unicodedata.normalize("NFKD", text) if not unicodedata.combining(c))
+
+
+def _name_folds(text: str) -> set[str]:
+    """Normalised spellings of one name (comparison only): accents folded, and with the German
+    umlaut transliteration applied — so 'Müller' yields {'muller', 'mueller'}."""
+    t = text or ""
+    if "\\" in t:
+        t = _fold_latex(t)
+    t = unicodedata.normalize("NFC", t.replace("{", "").replace("}", ""))
+    out = set()
+    for variant in (t, t.translate(_GERMAN_UMLAUTS)):
+        v = _strip_marks(variant.translate(_NAME_LETTERS)).casefold()
+        v = re.sub(r"['’`´]", "", v)
+        v = _WS.sub(" ", re.sub(r"[\W_]+", " ", v)).strip()
+        if v:
+            out.add(v)
+    return out
+
+
+def _is_org_name(name: str) -> bool:
+    n = (name or "").strip()
+    return bool(_ORG_WORDS_RE.search(n) or _ACRONYM_RE.match(n))
+
+
+def _surname_of(name: str) -> str:
+    """The surname part of one cited or indexed name, unnormalised.
+
+    'Last, First' -> Last; 'Roediger HL' (Vancouver) -> Roediger; 'J. D. van der Waals' ->
+    van der Waals; 'Ludwig van Beethoven' -> van Beethoven; an organisation -> its full name.
+    """
+    name = _WS.sub(" ", (name or "").strip(" ,;"))
+    if not name:
+        return ""
+    if _is_org_name(name):
+        return name
     if "," in name:
-        return _normalize(name.split(",", 1)[0])
-    parts = _normalize(name).split()
-    return parts[-1] if parts else ""
+        return name.split(",", 1)[0].strip()
+    tokens = name.split()
+    if len(tokens) > 1 and _is_initials(tokens[-1]):          # "Roediger HL"
+        while len(tokens) > 1 and _is_initials(tokens[-1]):
+            tokens.pop()
+        return " ".join(tokens)
+    while len(tokens) > 1 and _is_initials(tokens[0]):         # "J. D. Smith"
+        tokens.pop(0)
+    i = len(tokens) - 1
+    while i > 0 and tokens[i - 1].lower() in _PARTICLES:       # keep "van der"
+        i -= 1
+    return " ".join(tokens[i:])
+
+
+def _surname(name: str) -> str:
+    """Normalised surname, as used in search queries (lower case, punctuation removed)."""
+    return _normalize(_surname_of(name))
+
+
+def _acronym(tokens: list[str]) -> str:
+    return "".join(t[0] for t in tokens if t and t not in _ORG_STOP)
+
+
+def names_match(cited_surname: str, found_surname: str) -> bool:
+    """True when two surnames (or organisation names) denote the same author under the
+    explicit variants above. Never a substring test."""
+    org = _is_org_name(cited_surname) or _is_org_name(found_surname)
+    for a in _name_folds(cited_surname):
+        for b in _name_folds(found_surname):
+            if a == b or a.replace(" ", "") == b.replace(" ", ""):
+                return True
+            ta, tb = a.split(), b.split()
+            if org:
+                if _acronym(ta) == b.replace(" ", "") or _acronym(tb) == a.replace(" ", ""):
+                    return True
+                sa, sb = set(ta) - _ORG_STOP, set(tb) - _ORG_STOP
+                if sa and sb and len(sa & sb) / len(sa | sb) >= 0.8:
+                    return True
+                continue
+            ca = {t for t in ta if t not in _PARTICLES} or set(ta)
+            cb = {t for t in tb if t not in _PARTICLES} or set(tb)
+            if ca and cb and (ca <= cb or cb <= ca):
+                return True
+    return False
+
+
+def author_support(cited: Sequence[str], found_surnames: Sequence[str]) -> tuple[list[str], list[str]]:
+    """Split the cited authors into (supported, unsupported) by the record's surnames."""
+    found = [s for s in found_surnames if s and s.strip()]
+    supported, unsupported = [], []
+    for a in cited:
+        if not a.strip():
+            continue
+        sn = _surname_of(a)
+        (supported if any(names_match(sn, f) for f in found) else unsupported).append(a)
+    return supported, unsupported
 
 
 def author_overlap(cited: list[str], found_surnames: list[str]) -> Optional[float]:
-    """Fraction of cited author surnames that appear among the found surnames.
+    """Fraction of cited authors whose surname the record's author list supports.
 
     None when either side has no author list: the record can neither confirm nor
     disprove the cited authors, which is different from a 0% overlap.
     """
-    cited_s = {_surname(a) for a in cited if a.strip()}
-    found_s = {_normalize(s) for s in found_surnames if s.strip()}
-    if not cited_s or not found_s:
+    names = [a for a in cited if a.strip()]
+    if not names or not any(s and s.strip() for s in found_surnames):
         return None
-    hits = sum(1 for c in cited_s if any(c and (c in f or f in c) for f in found_s))
-    return hits / len(cited_s)
+    supported, _ = author_support(names, found_surnames)
+    return len(supported) / len(names)
 
 
 def _year_match(entry: "Entry", rec: dict) -> bool:
@@ -480,6 +622,11 @@ class Entry:
     doi: str = ""
     arxiv_id: str = ""
     venue: str = ""
+    # The cited author list is explicitly abbreviated ("et al.", BibTeX "and others", or a
+    # free-form list cut at six names), so record authors missing from it are not an error.
+    authors_et_al: bool = False
+    # A DOI-like string that is not a valid DOI (e.g. "10.12/x"); the identifier is malformed.
+    doi_malformed: str = ""
     # Provenance, for input accounting and diagnostics.
     fmt: str = ""            # "bibtex" | "doi" | "freeform"
     line: int = 0            # 1-based line where the entry starts (0 = unknown)
@@ -549,6 +696,15 @@ class _LineIndex:
 def _first_doi(text: str) -> str:
     m = DOI_RE.search(text or "")
     return m.group(0).rstrip(".,;") if m else ""
+
+
+_DOI_LIKE_RE = re.compile(r"(?i)(?:\bdoi\s*:?\s*|doi\.org/)(10\.[^\s,;]*)")
+
+
+def _malformed_doi(text: str) -> str:
+    """A DOI-like string ('doi: 10.12/x', 'doi.org/10.x') that is not a valid DOI, else ''."""
+    m = _DOI_LIKE_RE.search(text or "")
+    return m.group(1).rstrip(".") if m and not DOI_RE.search(m.group(1)) else ""
 
 
 def _first_arxiv(text: str) -> str:
@@ -972,18 +1128,27 @@ def _bibtex_entry(raw: str, body: str, key: str, kind: str, values: dict[str, st
     ym = re.search(r"(?:19|20)\d{2}", year_raw)
     eprint = g("eprint")
     bare_old = OLD_ARXIV_BARE_RE.match(eprint) if eprint else None
-    return Entry(
+    doi = _first_doi(g("doi") or body)
+    bad_doi = g("doi") if g("doi") and not _first_doi(g("doi")) else ""
+    author_raw = values.get("author", "")
+    entry = Entry(
         raw=raw,
         key=key,
         title=_WS.sub(" ", g("title").replace("{", "").replace("}", "")).strip(),
-        authors=_split_bibtex_names(values.get("author", "")),
+        authors=_split_bibtex_names(author_raw),
+        authors_et_al=bool(re.search(r"(?i)\band\s+others\s*$", _WS.sub(" ", author_raw).strip())),
+        doi_malformed=bad_doi if not doi else "",
         year=ym.group(0) if ym else year_raw,
-        doi=_first_doi(g("doi") or body),
+        doi=doi,
         arxiv_id=bare_old.group(1) if bare_old else _first_arxiv(eprint or body),
         venue=g("journal") or g("journaltitle") or g("booktitle") or g("publisher"),
         fmt="bibtex",
         entry_type=kind,
     )
+    if entry.doi_malformed:
+        entry.warnings.append(f"doi field '{bad_doi}' is not a valid DOI (malformed identifier); "
+                              "the entry is checked by title instead")
+    return entry
 
 
 _MD_HEADING_RE = re.compile(r"^\s{0,3}#{1,6}(?:\s|$)")
@@ -1171,7 +1336,7 @@ def _bib_block_into(text: str, b: _BibBlock, macros: dict[str, str], res: ParseR
         seen_keys[low] = line
     entry = _bibtex_entry(raw, text[i:b.body_end], key, kind, values)
     entry.line = line
-    entry.warnings = warns
+    entry.warnings = warns + entry.warnings
     for w in warns:
         res.warnings.append(_diag("bibtex", line, w, key=key, entry_type=kind))
     res.entries.append(entry)
@@ -1329,19 +1494,30 @@ def _parse_freeform_block(block: str) -> Optional[Entry]:
     title = re.sub(r"\s*\(\s*(?:\d+(?:st|nd|rd|th)|rev(?:ised)?\.?)\s*(?:ed\.?|edition)?\s*\)?\s*$",
                    "", title, flags=re.IGNORECASE)
     authors: list[str] = []
+    et_al = False
     if ym and ym.start() > 0:
         head = block[: ym.start()].strip(" .,(")
         head = re.sub(r"^\s*\[?\d{1,3}[\].)]\s+", "", head)  # drop "12." / "[12]" markers
-        authors = _clean_authors(re.split(r",| & | and ", head))[:6]
-    return Entry(
+        et_al = bool(re.search(r"(?i)\bet\s+al\b", head))
+        names = _clean_authors(re.split(r",| & | and ", head))
+        et_al = et_al or len(names) > 6
+        authors = names[:6]
+    doi = _first_doi(block)
+    bad = "" if doi else _malformed_doi(block)
+    entry = Entry(
         raw=block,
         title=title.strip(" .,"),
         authors=authors,
         year=ym.group(1) if ym else "",
-        doi=_first_doi(block),
+        doi=doi,
+        doi_malformed=bad,
+        authors_et_al=et_al,
         arxiv_id=_first_arxiv(block),
         fmt="freeform",
     )
+    if bad:
+        entry.warnings.append(f"'{bad}' looks like a DOI but is not a valid one (malformed identifier)")
+    return entry
 
 
 def parse_freeform(text: str) -> list[Entry]:
@@ -1472,8 +1648,10 @@ def _crossref_title(msg: dict) -> str:
 
 def _crossref_norm(msg: dict) -> dict:
     # Organisational authors ("OECD") carry `name` instead of `family`.
-    surnames = [a.get("family") or a.get("name") or "" for a in msg.get("author", []) or []]
-    surnames = [s for s in surnames if s]
+    authors = [a for a in msg.get("author", []) or [] if a.get("family") or a.get("name")]
+    surnames = [a.get("family") or a.get("name") for a in authors]
+    full_names = [" ".join(x for x in (a.get("given"), a.get("family")) if x) or a.get("name")
+                  for a in authors]
     years = []
     for key in ("issued", "published-print", "published-online", "published"):
         parts = (msg.get(key, {}) or {}).get("date-parts", [[None]])
@@ -1491,6 +1669,7 @@ def _crossref_norm(msg: dict) -> dict:
         "source": "crossref",
         "title": _crossref_title(msg),
         "authors": surnames,
+        "author_names": full_names,
         "year": year,
         "years": sorted(set(years)),  # online-first vs print years can differ by one
         "doi": (msg.get("DOI") or "").lower(),
@@ -1534,16 +1713,13 @@ def semanticscholar_lookup(entry: Entry, mailto: str) -> Optional[dict]:
 
 
 def _ss_norm(p: dict) -> dict:
-    surnames = []
-    for au in p.get("authors", []) or []:
-        nm = au.get("name", "")
-        if nm:
-            surnames.append(nm.split()[-1])
+    names = [au.get("name", "") for au in p.get("authors", []) or [] if au.get("name")]
     ext = p.get("externalIds", {}) or {}
     return {
         "source": "semanticscholar",
         "title": p.get("title") or "",
-        "authors": surnames,
+        "authors": [_surname_of(n) for n in names],
+        "author_names": names,
         "year": str(p.get("year") or ""),
         "doi": (ext.get("DOI") or "").lower(),
         "retracted": False,  # S2 does not expose a retraction flag
@@ -1599,13 +1775,13 @@ def europepmc_lookup(entry: Entry, mailto: str) -> Optional[dict]:
 
 
 def _epmc_norm(r: dict) -> dict:
-    # authorString: "Roediger HL, Karpicke JD." -> surnames
-    surnames = [a.strip().split(" ")[0] for a in (r.get("authorString") or "").rstrip(".").split(",")
-                if a.strip()]
+    # authorString: "Roediger HL, van der Waals JD." -> surnames (trailing initials dropped)
+    names = [a.strip() for a in (r.get("authorString") or "").rstrip(".").split(",") if a.strip()]
     return {
         "source": "europepmc",
         "title": (r.get("title") or "").strip().rstrip("."),
-        "authors": [s for s in surnames if s],
+        "authors": [s for s in (_surname_of(n) for n in names) if s],
+        "author_names": names,
         "year": str(r.get("pubYear") or ""),
         "doi": (r.get("doi") or "").lower(),
         "retracted": False,  # the lite record carries no retraction flag; Crossref supplies it
@@ -1639,7 +1815,8 @@ def _openlibrary_norm(d: dict) -> dict:
     return {
         "source": "openlibrary",
         "title": title,
-        "authors": [n.split()[-1] for n in d.get("author_name") or [] if n.split()],
+        "authors": [_surname_of(n) for n in d.get("author_name") or [] if n.split()],
+        "author_names": [n for n in d.get("author_name") or [] if n.split()],
         "year": first or (years[0] if years else ""),
         "years": sorted(set(years) | ({first} if first else set())),
         "doi": "",
@@ -1664,17 +1841,16 @@ def arxiv_lookup(entry: Entry, mailto: str) -> Optional[dict]:
         block = block.split("</entry>", 1)[0]
         tm = re.search(r"<title>(.*?)</title>", block, re.DOTALL)
         title = _WS.sub(" ", tm.group(1)).strip() if tm else ""
-        surnames = [
-            _WS.sub(" ", n).strip().split()[-1]
-            for n in re.findall(r"<name>(.*?)</name>", block, re.DOTALL)
-            if n.strip()
-        ]
+        names = [_WS.sub(" ", n).strip() for n in re.findall(r"<name>(.*?)</name>", block, re.DOTALL)
+                 if n.strip()]
+        surnames = [_surname_of(n) for n in names]
         ym = re.search(r"<published>(\d{4})", block)
         aid = re.search(r"<id>.*?abs/([^<]+)</id>", block)
         recs.append({
             "source": "arxiv",
             "title": title,
             "authors": surnames,
+            "author_names": names,
             "year": ym.group(1) if ym else "",
             "doi": "",
             "arxiv_id": aid.group(1) if aid else (entry.arxiv_id or ""),
@@ -1719,39 +1895,63 @@ def doi_registered(doi: str, mailto: str) -> Optional[bool]:
 # Verdict engine                                                              #
 # --------------------------------------------------------------------------- #
 
-# Indexes that, besides Crossref, can back a Total Fabrication for an entry with no
-# identifier when they answer with no match. Semantic Scholar search is one of them but
-# never required: its keyless pool is often spent.
-TF_SECOND_INDEXES = ("semanticscholar", "europepmc", "arxiv", "openlibrary")
+# Indexes that, besides Crossref, must also have answered (with no match) before an entry
+# with no identifier is reported NOT_FOUND. Semantic Scholar search is one of them but never
+# required: its keyless pool is often spent.
+NOT_FOUND_SECOND_INDEXES = ("semanticscholar", "europepmc", "arxiv", "openlibrary")
+TF_SECOND_INDEXES = NOT_FOUND_SECOND_INDEXES  # v1 name, kept for importers
 
 VERDICTS = {
-    "verified": "Entry exists; title+authors match an authoritative record.",
-    "TF": "Total Fabrication — entry found in NO source.",
-    "PAC": "Partial Attribute Corruption — entry found but metadata fields disagree.",
-    "IH": "Identifier Hijacking — DOI/arXiv ID resolves to an unrelated paper.",
+    "verified": "Entry exists; every supplied field that could be checked agrees with an "
+                "authoritative record.",
+    "PAC": "Partial Attribute Corruption — the work was found, but at least one supplied field "
+           "(authors, year, title, identifier) disagrees with the record.",
+    "IH": "Identifier Hijacking — the cited DOI/arXiv ID resolves to a different work.",
+    "ID_INVALID": "Invalid identifier — the cited DOI is not registered with any DOI agency (or the "
+                  "arXiv ID does not exist) and no matching work was found by title. The identifier "
+                  "is wrong; whether the work itself exists is undetermined.",
+    "NOT_FOUND": "Not found in the checked sources — the sources that answered returned no matching "
+                 "record. Absence from these indexes is not evidence of fabrication (books, grey "
+                 "literature and regional venues are often unindexed); verify manually.",
     "PH": "Placeholder Hallucination — unresolved citation template/placeholder.",
+    "TF": "Total Fabrication — an analyst's conclusion after a documented manual search; never "
+          "emitted by this script (index absence is NOT_FOUND).",
     "SH": "Semantic Hallucination — resolves but claim-support unverified (advisory).",
-    "unverified": "Could not verify (offline or all APIs failed); manual check required.",
+    "unverified": "Could not verify (offline, or the required sources failed to answer, or too "
+                  "little structure to decide); manual check required.",
 }
 SEVERITY = {
     "verified": "NONE",
-    "TF": "SERIOUS",
     "PAC": "MEDIUM",
     "IH": "SERIOUS",
+    "ID_INVALID": "SERIOUS",
+    "NOT_FOUND": "MEDIUM",
     "PH": "SERIOUS",
+    "TF": "SERIOUS",
     "SH": "SERIOUS",
     "unverified": "MEDIUM",
 }
 # Run-level verdicts (summary.verdict), most severe first. Only PASS and
 # PASS_WITH_CONDITIONS are passes, and both require a complete audit.
 REPORT_VERDICTS = {
-    "FAIL": "At least one SERIOUS finding (TF / IH / PH / retraction).",
+    "FAIL": "At least one SERIOUS finding (IH / ID_INVALID / PH / retraction).",
     "PARTIAL": ("Not every detected entry was parsed and verified (rejected, unsupported, or "
                 "unprocessed entries; see input_accounting). Not a pass."),
+    "REVIEW_REQUIRED": ("Nothing SERIOUS found, but at least one entry was not found in the checked "
+                        "sources (NOT_FOUND). Absence is not proof of fabrication; check those "
+                        "entries manually. Not a pass."),
     "UNVERIFIED": "Nothing SERIOUS found, but at least one entry could not be checked. Not a pass.",
-    "PASS_WITH_CONDITIONS": "Every entry was checked; only fixable metadata issues (PAC).",
-    "PASS": "Every detected entry was parsed and verified with no flags.",
+    "PASS_WITH_CONDITIONS": "Every entry was found; only fixable metadata issues (PAC).",
+    "PASS": ("Every detected entry was parsed and found, with every checkable field agreeing. "
+             "Retraction status is reported separately (summary.retraction) and may be unknown "
+             "for some entries."),
 }
+EXISTENCE_STATUSES = ("found", "identifier_mismatch", "identifier_invalid", "not_found",
+                      "not_determined", "unavailable", "placeholder", "not_checked")
+RETRACTION_STATUSES = ("flagged", "not_flagged_in_checked_sources", "unknown")
+# The only retraction evidence source: Crossref `updated-by` / `update-to` records, which
+# include publisher notices and (since 2025) the Retraction Watch database.
+RETRACTION_SOURCES = ("crossref",)
 
 
 def _is_placeholder(entry: Entry) -> bool:
@@ -1767,9 +1967,9 @@ def _ref_id(entry: Entry) -> str:
 
 
 def _tf_eligible(entry: Entry) -> bool:
-    """Second safety net behind the parser: a free-form entry can be a Total Fabrication
-    only when it has a title-like segment (two or more words, distinct from the whole
-    text) plus an author or a year. Anything thinner is unverified at most."""
+    """Second safety net behind the parser: a free-form entry can be reported NOT_FOUND only
+    when it has a title-like segment (two or more words, distinct from the whole text) plus
+    an author or a year. Anything thinner is unverified at most. (Named for the v1 TF verdict.)"""
     if entry.fmt != "freeform":
         return True
     title = _normalize(entry.title)
@@ -1777,21 +1977,105 @@ def _tf_eligible(entry: Entry) -> bool:
     return bool(distinct and len(title.split()) >= 2 and (entry.authors or entry.year))
 
 
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def _identifier_block(entry: Entry) -> dict:
+    doi = ({"cited": entry.doi, "status": "not_checked"} if entry.doi else
+           {"cited": entry.doi_malformed, "status": "malformed"} if entry.doi_malformed else
+           {"cited": "", "status": "not_cited"})
+    arxiv = ({"cited": entry.arxiv_id, "status": "not_checked"} if entry.arxiv_id
+             else {"cited": "", "status": "not_cited"})
+    return {"doi": doi, "arxiv": arxiv}
+
+
+def _given_name_tokens(records: Sequence[dict]) -> set[str]:
+    """Folded given-name words of the record authors (full names minus their surnames)."""
+    out: set[str] = set()
+    for m in records:
+        for full in m.get("author_names") or []:
+            sn = _surname_of(full)
+            given = full.replace(sn, " ") if sn and sn in full else ""
+            for g in given.split():
+                out |= _name_folds(g.strip(".,"))
+    return out
+
+
+def _author_metadata(entry: Entry, records: Sequence[dict]) -> dict:
+    """Do the record(s) of this work support each cited author? Never an invented mismatch:
+    no cited authors -> not_checked; no record authors -> unknown."""
+    cited = [a for a in entry.authors if a.strip()]
+    found: list[str] = []
+    for m in records:
+        for s in m.get("authors") or []:
+            if s and not any(names_match(s, f) for f in found):
+                found.append(s)
+    block = {"status": "not_checked", "supported": [], "unsupported": [], "et_al": entry.authors_et_al,
+             "cited_count": len(cited), "record_count": len(found), "omitted_record_authors": 0,
+             "read_as_given_names": []}
+    if not cited:
+        return block
+    if not found:
+        block["status"] = "unknown"
+        return block
+    supported, unsupported = author_support(cited, found)
+    if entry.fmt == "freeform" and unsupported:
+        # Free-form author lists are split heuristically, so "Selwyn, Neil" yields a fragment
+        # "Neil". A single-word fragment that is a record author's given name is not an author.
+        given = _given_name_tokens(records)
+        as_given = [a for a in unsupported if len(a.split()) == 1 and _name_folds(a) & given]
+        unsupported = [a for a in unsupported if a not in as_given]
+        block["read_as_given_names"] = as_given
+    matched = sum(1 for f in found if any(names_match(_surname_of(a), f) for a in supported))
+    block.update(supported=supported, unsupported=unsupported,
+                 status="disagrees" if unsupported else "agrees",
+                 omitted_record_authors=0 if entry.authors_et_al else max(0, len(found) - matched))
+    return block
+
+
+def _retraction_block(same: Sequence[dict], status: dict, found: bool) -> dict:
+    """Flagged / not flagged in the checked sources / unknown, with which sources answered."""
+    block = {"status": "unknown", "sources_answered": [], "checked_at": _now(), "reason": ""}
+    if not found:
+        block["reason"] = "the cited work was not identified, so no retraction check applies"
+        return block
+    cr = [m for m in same if m.get("source") in RETRACTION_SOURCES]
+    if any(m.get("retracted") for m in same):
+        block.update(status="flagged", sources_answered=sorted({m["source"] for m in cr}) or ["crossref"],
+                     reason="Crossref (publisher or Retraction Watch notice) marks this work as retracted")
+    elif cr:
+        block.update(status="not_flagged_in_checked_sources", sources_answered=["crossref"],
+                     reason="Crossref holds a record of this work with no retraction notice; other "
+                            "retraction databases were not checked")
+    elif status.get("crossref") in ("record", "no_record"):
+        block["reason"] = ("Crossref answered but holds no record of this work (common for books, "
+                           "arXiv-only preprints and grey literature), so retraction status is unknown")
+    else:
+        block["reason"] = ("Crossref, the only retraction source checked, did not answer "
+                           f"({status.get('crossref', 'not asked')}), so retraction status is unknown")
+    return block
+
+
 def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> dict:
+    """Verify one entry: does the work exist (existence), is its identifier sound (identifier),
+    do the supplied fields agree with the record (metadata), and is it retracted (retraction).
+
+    ``verdict`` summarises these for v1 consumers; the separate blocks carry the evidence."""
     ref_id = _ref_id(entry)
+    ident = _identifier_block(entry)
 
     # PH check first — placeholders never reach the network.
     if _is_placeholder(entry):
-        return _verdict(entry, ref_id, "PH",
-                        detail="Citation is an unresolved placeholder/template.",
-                        matches=[])
+        return _verdict(entry, ref_id, "PH", detail="Citation is an unresolved placeholder/template.",
+                        matches=[], existence={"status": "placeholder"}, identifier=ident)
 
     if offline:
-        return _unverified(entry, ref_id, reason="offline mode requested (--offline)")
+        return _unverified(entry, ref_id, reason="offline mode requested (--offline)",
+                           existence="not_checked", identifier=ident)
 
     matches: list[dict] = []
     status: dict[str, str] = {}  # source -> record | no_record | error: ... | offline
-    network_failed = False
     has_identifier = bool(entry.doi or entry.arxiv_id)
 
     def _crossref() -> Optional[dict]:
@@ -1814,9 +2098,9 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
         try:
             rec = fn()
         except NetworkUnavailable:
-            network_failed = True
+            # One unreachable host says nothing about the others: record it and keep going.
             status[name] = "offline"
-            break
+            continue
         except SourceError as exc:
             status[name] = f"error: {exc}"
             continue
@@ -1829,10 +2113,21 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
     def answered(name: str) -> bool:
         return status.get(name) in ("record", "no_record")
 
+    def failed() -> list[str]:
+        return [f"{src} {'rate-limited (HTTP 429)' if '429' in st else 'unreachable' if st == 'offline' else 'failed'}"
+                for src, st in status.items() if st.startswith("error") or st == "offline"]
+
+    def existence(state: str, method: Optional[str] = None, matched: Sequence[dict] = ()) -> dict:
+        return {"status": state, "method": method,
+                "matched_in": sorted({m["source"] for m in matched}),
+                "sources_answered": sorted(s for s in status if answered(s)),
+                "sources_not_checked": sorted(s for s, st in status.items()
+                                              if st.startswith("error") or st == "offline")}
+
     # An arXiv ID that no source resolved: settle existence on arxiv.org/abs, and
     # retry the query API once if the ID is real (its feed is sometimes empty).
     arxiv_exists: Optional[bool] = None
-    if entry.arxiv_id and not network_failed and not any(m.get("method") == "id" for m in matches):
+    if entry.arxiv_id and not any(m.get("method") == "id" for m in matches):
         arxiv_exists = arxiv_id_exists(entry.arxiv_id, mailto)
         status["arxiv.org/abs"] = {True: "exists", False: "not_found", None: "error"}[arxiv_exists]
         if arxiv_exists:
@@ -1844,13 +2139,14 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
                 matches.append(rec)
                 status["arxiv"] = "record"
 
-    if network_failed and not matches:
-        return _unverified(entry, ref_id, reason="network unavailable (DNS/connection failure)",
-                           status=status)
-    if not any(answered(s) for s in status):
-        return _unverified(entry, ref_id,
-                           reason="every source failed to answer (rate limits / server errors)",
-                           status=status)
+    lookups = [s for s in status if s != "arxiv.org/abs"]
+    if not any(answered(s) for s in lookups):
+        unreachable = bool(lookups) and all(status[s] == "offline" for s in lookups)
+        reason = ("network unavailable: no source could be reached (DNS/connection failure)"
+                  if unreachable else
+                  "every source failed to answer (rate limits / server errors / unreachable hosts)")
+        return _unverified(entry, ref_id, reason=reason, status=status,
+                           existence=existence("unavailable"), identifier=ident)
 
     id_matches = [m for m in matches if m.get("method") == "id"]
     title_matches = [m for m in matches if m.get("method") == "title"]
@@ -1861,23 +2157,29 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
     # Identifier Hijacking: the cited DOI/arXiv id actually RESOLVED (method=id),
     # but the resolved record's title does not match the cited title.
     # This must be checked against id-resolved records only — a coincidental
-    # title-search hit on a fabricated DOI is NOT hijacking, it is fabrication.
+    # title-search hit on an unregistered DOI is not hijacking.
     if has_identifier and entry.title and id_matches:
         best_id = max(id_matches, key=r_of)
         if best_id["title"]:
             r = r_of(best_id)
             if r < threshold:
+                for k in ("doi", "arxiv"):
+                    if ident[k]["status"] == "not_checked":
+                        ident[k]["status"] = "resolves_to_other_work"
                 return _verdict(entry, ref_id, "IH",
                                 detail=(f"Cited identifier resolved to '{best_id['title']}' "
                                         f"(title ratio {r:.2f} < {threshold:.2f}) — unrelated paper."),
-                                matches=matches, status=status)
+                                matches=matches, status=status,
+                                existence=existence("identifier_mismatch", "id", [best_id]),
+                                identifier=ident)
 
     pac_reasons: list[str] = []
+    flags: list[str] = []
 
-    # The cited identifier resolved nowhere. Decide TF only on authoritative
-    # evidence: doi.org says the DOI is unregistered, or arXiv says the ID does
-    # not exist. A registered DOI that no index returned, or an identifier whose
-    # authoritative source errored, is `unverified` (manual check), never TF.
+    # The cited identifier resolved nowhere. An unregistered DOI (doi.org) or a nonexistent
+    # arXiv ID (arxiv.org/abs 404) is an identifier defect — ID_INVALID — which does not by
+    # itself establish that the work is invented. A registered DOI that no index returned, or
+    # an identifier whose authoritative source errored, is `unverified` (manual check).
     if has_identifier and not id_matches:
         best_loose = max(title_matches, key=r_of, default=None) if entry.title else None
         loose_ok = bool(best_loose and r_of(best_loose) >= threshold)
@@ -1885,29 +2187,51 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
             pac_reasons.append(
                 "cited identifier does not resolve to this work"
                 + (f" (records list DOI {best_loose['doi']})" if best_loose.get("doi") else ""))
+            flags.append("IDENTIFIER_DOES_NOT_RESOLVE")
+            for k in ("doi", "arxiv"):
+                if ident[k]["status"] == "not_checked":
+                    ident[k]["status"] = "does_not_resolve_to_cited_work"
         else:
             if entry.doi:
                 registered = doi_registered(entry.doi, mailto)
                 status["doi.org"] = {True: "registered", False: "not_registered", None: "error"}[registered]
+                ident["doi"]["status"] = {True: "registered_unindexed", False: "unregistered",
+                                          None: "unknown"}[registered]
                 if registered is False:
-                    return _verdict(entry, ref_id, "TF",
+                    return _verdict(entry, ref_id, "ID_INVALID",
                                     detail=(f"DOI {entry.doi} is not registered with any DOI agency "
-                                            "(doi.org Handle API) and no close title match was found "
-                                            "— entry appears fabricated."),
-                                    matches=matches, status=status)
+                                            "(doi.org Handle API), so the identifier is wrong, and no "
+                                            "close title match was found in the sources that answered. "
+                                            "Whether the work itself exists is undetermined: correct the "
+                                            "DOI or check the work manually."
+                                            + (f" Not checked: {', '.join(failed())}." if failed() else "")),
+                                    matches=matches, status=status,
+                                    existence=existence("identifier_invalid"), identifier=ident)
                 why = ("DOI is registered at doi.org but no metadata source returned it "
                        "(non-Crossref DOI or index gap)" if registered
                        else "the cited DOI did not resolve and doi.org could not be reached")
-                return _unverified(entry, ref_id, reason=why, status=status, matches=matches)
+                return _unverified(entry, ref_id, reason=why, status=status, matches=matches,
+                                   existence=existence("not_determined" if registered else "unavailable"),
+                                   identifier=ident)
+            ident["arxiv"]["status"] = {True: "exists_unretrieved", False: "not_found",
+                                        None: "unknown"}[arxiv_exists]
             if arxiv_exists is False:
-                return _verdict(entry, ref_id, "TF",
+                return _verdict(entry, ref_id, "ID_INVALID",
                                 detail=(f"arXiv ID {entry.arxiv_id} does not exist (arxiv.org/abs "
-                                        "returns 404) and no close title match was found — entry "
-                                        "appears fabricated."),
-                                matches=matches, status=status)
+                                        "returns 404) and no close title match was found. The "
+                                        "identifier is wrong; whether the work itself exists is "
+                                        "undetermined."),
+                                matches=matches, status=status,
+                                existence=existence("identifier_invalid"), identifier=ident)
             why = ("the arXiv ID exists but its record could not be retrieved" if arxiv_exists
                    else "arXiv could not be reached to resolve the cited ID")
-            return _unverified(entry, ref_id, reason=why, status=status, matches=matches)
+            return _unverified(entry, ref_id, reason=why, status=status, matches=matches,
+                               existence=existence("not_determined" if arxiv_exists else "unavailable"),
+                               identifier=ident)
+    else:
+        for k in ("doi", "arxiv"):
+            if ident[k]["status"] == "not_checked":
+                ident[k]["status"] = "resolves_to_cited_work"
 
     # Which returned record is the cited work? Rank by title, then authors, then
     # year. A fuzzy search always returns its closest hit, so a hit only counts as
@@ -1923,28 +2247,31 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
         near_mashup = (best is not None and a_overlap is not None and a_overlap >= 0.5
                        and t_ratio >= 0.5)
         if not near_mashup:
-            # TF needs Crossref plus at least one other index that actually answered, with
-            # no match in any of them: Crossref alone misses books and grey literature. A
+            # NOT_FOUND needs Crossref plus at least one other index that actually answered,
+            # with no match in any of them: Crossref alone misses books and grey literature. A
             # source that was rate-limited or failed never counts as having answered.
-            others = [src for src in TF_SECOND_INDEXES if answered(src)]
-            unchecked = [f"{src} {'rate-limited (HTTP 429)' if '429' in st else 'failed'}"
-                         for src, st in status.items() if st.startswith("error") or st == "offline"]
+            others = [src for src in NOT_FOUND_SECOND_INDEXES if answered(src)]
+            unchecked = failed()
             if answered("crossref") and others and not _tf_eligible(entry):
                 return _unverified(entry, ref_id,
                                    reason=("no source returned a matching record, but this free-form "
                                            "entry has too little reference structure (a title plus an "
-                                           "author or a year) to be called fabricated"),
-                                   status=status, matches=matches)
+                                           "author or a year) to report it as not found"),
+                                   status=status, matches=matches,
+                                   existence=existence("not_determined"), identifier=ident)
             if answered("crossref") and others:
                 closest = (f" Closest record: '{best['title']}' (title ratio {t_ratio:.2f})."
                            if best else "")
-                return _verdict(entry, ref_id, "TF",
-                                detail=("No source returned a record matching the cited title and "
-                                        "authors — entry appears fabricated. Answered with no "
-                                        f"match: crossref, {', '.join(others)}."
+                return _verdict(entry, ref_id, "NOT_FOUND",
+                                detail=("No record matching the cited title and authors in the "
+                                        f"sources that answered: crossref, {', '.join(others)}. "
+                                        "Absence from these indexes is not evidence of fabrication "
+                                        "(books, grey literature, theses and regional or non-English "
+                                        "venues are often unindexed); verify the reference manually."
                                         + (f" Not checked: {', '.join(unchecked)}." if unchecked else "")
                                         + closest),
-                                matches=matches, status=status)
+                                matches=matches, status=status,
+                                existence=existence("not_found"), identifier=ident)
             return _unverified(entry, ref_id,
                                reason=("no matching record in the sources that answered, but "
                                        + ("only Crossref answered" if answered("crossref")
@@ -1952,9 +2279,11 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
                                        + ", so books and grey literature cannot be ruled out"
                                        + (" (" + ", ".join(unchecked) + "; see summary.notes)"
                                           if unchecked else "")),
-                               status=status, matches=matches)
+                               status=status, matches=matches,
+                               existence=existence("unavailable"), identifier=ident)
         pac_reasons.append(f"title ratio {t_ratio:.2f} < {threshold:.2f} but the closest record "
                            f"shares the cited authors — possible mashup of real references")
+        flags.append("POSSIBLE_MASHUP")
 
     def same_work(m: dict) -> bool:
         if m is best or m.get("method") == "id":
@@ -1962,42 +2291,62 @@ def verify_entry(entry: Entry, mailto: str, threshold: float, offline: bool) -> 
         return r_of(m) >= threshold and author_overlap(entry.authors, m["authors"]) != 0.0
 
     same = [m for m in matches if same_work(m)]
-    # Retraction / concern flags come only from records of the cited work itself,
-    # never from an unrelated closest hit.
-    retracted = any(m.get("retracted") for m in same)
     concern = any(m.get("concern") for m in same)
+    retraction = _retraction_block(same, status, found=True)
 
-    # Metadata corruption checks (PAC): year, authors.
-    years = {y for m in same for y in (m.get("years") or [m.get("year")]) if y}
-    if entry.year and years and entry.year not in years:
-        pac_reasons.append(f"year cited={entry.year} vs source={'/'.join(sorted(years))}")
-    if a_overlap is not None and a_overlap < 0.5:
-        pac_reasons.append(f"author overlap {a_overlap:.0%} below 50%")
+    # Metadata agreement, field by field. Missing data is not_checked / unknown, never a mismatch.
+    authors_md = _author_metadata(entry, same)
+    if authors_md["status"] == "disagrees":
+        pac_reasons.append("cited author(s) not in the record's author list: "
+                           + "; ".join(authors_md["unsupported"]))
+        flags.append("UNSUPPORTED_AUTHOR")
+    years = sorted({y for m in same for y in (m.get("years") or [m.get("year")]) if y})
+    year_md = {"cited": entry.year, "record": years,
+               "status": ("not_checked" if not entry.year else "unknown" if not years
+                          else "agrees" if entry.year in years else "disagrees")}
+    if year_md["status"] == "disagrees":
+        pac_reasons.append(f"year cited={entry.year} vs source={'/'.join(years)}")
+    title_md = {"ratio": round(t_ratio, 3) if entry.title else None,
+                "status": ("not_checked" if not entry.title or not best or not best.get("title")
+                           else "agrees" if t_ratio >= threshold else "disagrees")}
 
     verdict_code = "verified"
     detail = f"Matched in {', '.join(sorted({m['source'] for m in same}))}."
+    if authors_md["status"] == "unknown":
+        detail += " The record lists no authors, so the cited authors were not checked."
+    # An abbreviated author list without "et al." is recorded in metadata.authors
+    # (omitted_record_authors) but is not an error and does not change the detail line.
     if pac_reasons:
         verdict_code = "PAC"
         detail = "Found but metadata disagrees: " + "; ".join(pac_reasons) + "."
 
-    result = _verdict(entry, ref_id, verdict_code, detail=detail, matches=matches, status=status)
+    method = "id" if id_matches else "title"
+    result = _verdict(entry, ref_id, verdict_code, detail=detail, matches=matches, status=status,
+                      existence=existence("found", method, same), identifier=ident,
+                      metadata={"title": title_md, "authors": authors_md, "year": year_md},
+                      retraction=retraction)
+    result["flags"] = flags
     result["title_ratio"] = round(t_ratio, 3)
     result["author_overlap"] = round(a_overlap, 3) if a_overlap is not None else None
-    result["retracted"] = retracted
-    if retracted:
-        result["flags"] = result.get("flags", []) + ["RETRACTED"]
+    # v1 key: True / False, or None when the retraction status is unknown — never a false "clear".
+    result["retracted"] = {"flagged": True, "not_flagged_in_checked_sources": False}.get(
+        retraction["status"])
+    if retraction["status"] == "flagged":
+        result["flags"] = result["flags"] + ["RETRACTED"]
         # Retraction does not change existence verdict but is a SERIOUS flag.
         result["severity"] = "SERIOUS"
         result["detail"] += (" RETRACTED: Crossref (publisher or Retraction Watch notice) marks "
                              "this work as retracted.")
     if concern:
-        result["flags"] = result.get("flags", []) + ["EXPRESSION_OF_CONCERN"]
+        result["flags"] = result["flags"] + ["EXPRESSION_OF_CONCERN"]
         result["detail"] += " An expression of concern is on record for this work."
     return result
 
 
 def _verdict(entry: Entry, ref_id: str, code: str, detail: str, matches: list[dict],
-             status: Optional[dict] = None) -> dict:
+             status: Optional[dict] = None, *, existence: Optional[dict] = None,
+             identifier: Optional[dict] = None, metadata: Optional[dict] = None,
+             retraction: Optional[dict] = None) -> dict:
     return {
         "ref_id": ref_id,
         "verdict": code,
@@ -2007,10 +2356,21 @@ def _verdict(entry: Entry, ref_id: str, code: str, detail: str, matches: list[di
         "cited": {
             "title": entry.title,
             "authors": entry.authors,
+            "authors_et_al": entry.authors_et_al,
             "year": entry.year,
             "doi": entry.doi,
             "arxiv_id": entry.arxiv_id,
         },
+        # v2: the separate questions behind the verdict.
+        "existence": existence or {"status": "not_checked"},
+        "identifier": identifier or _identifier_block(entry),
+        "metadata": metadata or {
+            "title": {"status": "not_checked", "ratio": None},
+            "authors": {"status": "not_checked", "supported": [], "unsupported": [],
+                        "et_al": entry.authors_et_al, "cited_count": len(entry.authors),
+                        "record_count": 0, "omitted_record_authors": 0, "read_as_given_names": []},
+            "year": {"status": "not_checked", "cited": entry.year, "record": []}},
+        "retraction": retraction or _retraction_block([], status or {}, found=False),
         "sources_checked": sorted(status or {}),
         "source_status": dict(status or {}),
         "matches": [{k: m.get(k) for k in ("source", "method", "title", "year", "doi", "retracted")}
@@ -2027,10 +2387,14 @@ def _verdict(entry: Entry, ref_id: str, code: str, detail: str, matches: list[di
 
 
 def _unverified(entry: Entry, ref_id: str, reason: str, status: Optional[dict] = None,
-                matches: Optional[list[dict]] = None) -> dict:
+                matches: Optional[list[dict]] = None, *, existence: Any = None,
+                identifier: Optional[dict] = None) -> dict:
+    if isinstance(existence, str):
+        existence = {"status": existence}
     r = _verdict(entry, ref_id, "unverified",
                  detail=f"{reason}. NOT confirmed — do not treat as passing.",
-                 matches=matches or [], status=status)
+                 matches=matches or [], status=status,
+                 existence=existence or {"status": "unavailable"}, identifier=identifier)
     r["manual_instructions"] = (
         "Verify manually: (1) search the exact title + first author + year on Google "
         "Scholar; (2) if a DOI is given, resolve https://doi.org/<DOI> and confirm the "
@@ -2121,17 +2485,22 @@ def build_report(results: list[dict], mailto: str, threshold: float, offline: bo
         if s in sev:
             sev[s] += 1
     n = len(results) or 1
-    fabricated = counts["TF"] + counts["IH"] + counts["PH"]
-    fabrication_risk = round(fabricated / n, 3)
+    # Share of entries carrying a fabrication *signal* (a wrong or hijacked identifier, a
+    # placeholder, or absence from every index that answered) — a risk indicator, not proof.
+    signals = counts["TF"] + counts["IH"] + counts["PH"] + counts["ID_INVALID"] + counts["NOT_FOUND"]
+    fabrication_risk = round(signals / n, 3)
     integrity = round((counts["verified"]) / n, 3)
 
-    # SERIOUS findings (TF / IH / PH / retraction) dominate. Otherwise an incomplete
-    # input makes the run PARTIAL, and any entry that could not be checked (or no
-    # entry at all) makes it UNVERIFIED — never a (conditional) pass.
+    # SERIOUS findings (IH / ID_INVALID / PH / retraction) dominate. Otherwise an incomplete
+    # input makes the run PARTIAL, an entry absent from every checked index makes it
+    # REVIEW_REQUIRED, and any entry that could not be checked (or no entry at all) makes it
+    # UNVERIFIED — never a (conditional) pass.
     if sev["SERIOUS"] > 0:
         verdict = "FAIL"
     elif not complete:
         verdict = "PARTIAL"
+    elif counts["NOT_FOUND"]:
+        verdict = "REVIEW_REQUIRED"
     elif counts["unverified"] or not results:
         verdict = "UNVERIFIED"
     elif counts["PAC"] > 0 or sev["MEDIUM"] > 0:
@@ -2161,10 +2530,30 @@ def build_report(results: list[dict], mailto: str, threshold: float, offline: bo
                      "(see input_accounting.ignored_text)")
     if acc.get("warnings"):
         notes.append(f"{len(acc['warnings'])} parser warning(s) (see input_accounting.warnings)")
+    retraction = {k: 0 for k in RETRACTION_STATUSES}
+    existence: dict[str, int] = {}
+    for r in results:
+        st = (r.get("existence") or {}).get("status", "not_checked")
+        existence[st] = existence.get(st, 0) + 1
+        if st == "found":
+            rs = (r.get("retraction") or {}).get("status", "unknown")
+            retraction[rs if rs in retraction else "unknown"] += 1
+    if retraction["unknown"]:
+        notes.append(f"retraction status unknown for {retraction['unknown']} found entr"
+                     f"{'y' if retraction['unknown'] == 1 else 'ies'}: Crossref, the only retraction "
+                     "source checked, did not answer or holds no record of the work. This is not "
+                     "retraction clearance (see each entry's retraction block).")
+    if counts["NOT_FOUND"]:
+        notes.append(f"{counts['NOT_FOUND']} entr{'y was' if counts['NOT_FOUND'] == 1 else 'ies were'} "
+                     "not found in the checked sources; absence from these indexes is not proof of "
+                     "fabrication — check them manually")
 
     return {
         "tool": "alterlab-citation-verifier/verify_citations.py",
         "version": TOOL_VERSION,
+        # 2 = existence / identifier / metadata / retraction blocks per entry, NOT_FOUND and
+        # ID_INVALID verdicts (no TF from index absence), REVIEW_REQUIRED, retracted may be null.
+        "schema_version": REPORT_SCHEMA_VERSION,
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         # "complete" only when every detected entry was parsed and verified.
         "status": "complete" if complete else "partial",
@@ -2186,6 +2575,8 @@ def build_report(results: list[dict], mailto: str, threshold: float, offline: bo
             "citation_integrity_score": integrity,
             "fabrication_risk_score": fabrication_risk,
             "retracted": sum(1 for r in results if r.get("retracted")),
+            "retraction": retraction,
+            "existence": dict(sorted(existence.items())),
             "source_errors": source_errors,
             "notes": notes,
         },
