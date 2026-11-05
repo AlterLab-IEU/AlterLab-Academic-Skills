@@ -350,7 +350,7 @@ dosyalarını taşır. Köken bilgisi: [`PROVENANCE.md`](PROVENANCE.md),
   title   = {AlterLab Academic Skills},
   author  = {{AlterLab Creative Technologies Laboratory, Izmir University of Economics (IEU)}},
   year    = {2026},
-  version = {4.0.0},
+  version = {4.1.0},
   url     = {https://github.com/AlterLab-IEU/AlterLab-Academic-Skills}
 }
 ```

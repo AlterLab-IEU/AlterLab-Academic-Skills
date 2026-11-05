@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [4.1.0] — 2026-11-05
+
 A second reliability repair, prompted by an external review of 4.0.0 (commit `6fa2616`). Every
 finding was reproduced on that commit before it was changed; the mapping of all 20 findings to
 fixes, tests and remaining limits is in
