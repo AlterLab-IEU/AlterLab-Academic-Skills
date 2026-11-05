@@ -1,0 +1,36 @@
+{
+  "workflow": "systematic-review-screening",
+  "synthetic": true,
+  "_comment": "What a live run of systematic-review-screening on 8 synthetic records (one batch per screener) must produce. 'findings' are the answer key and never change pass/fail: S2 duplicates S1 (7 unique records); S1 (RCT, chemistry) and S5 (statistics quasi-experiment) meet every criterion; S7 (nursing OSCE) is borderline and may go forward as unsure; S3 (grade 7), S4 (narrative review), S6 (survey), S8 (crowdworkers) are excluded.",
+  "args_file": "args.json",
+  "report": "prisma-screening.md",
+  "mock_agent_count": 7,
+  "status": {"allowed": ["complete", "partial", "blocked"], "target": "complete"},
+  "outputs": [
+    {"path": "prisma-screening.md", "type": "md", "role": "report"},
+    {"path": "codebook.md", "type": "md"},
+    {"path": "records.jsonl", "type": "jsonl", "count_equals": {"value": "flow.records_after_deduplication"}},
+    {"path": "included.jsonl", "type": "jsonl", "allow_empty": true, "count_equals": {"len": "included_sids"}},
+    {"path": "unresolved.jsonl", "type": "jsonl", "allow_empty": true, "count_equals": {"len": "unresolved"}}
+  ],
+  "payload_files": {
+    "files.included": "included.jsonl",
+    "files.unresolved": "unresolved.jsonl"
+  },
+  "payload": {
+    "required_keys": ["status", "status_reasons", "report", "coverage"],
+    "required_keys_when_delivered": [
+      "flow.identified", "flow.duplicates_removed", "flow.records_after_deduplication", "flow.submitted_for_screening",
+      "flow.screened", "flow.unresolved", "flow.excluded_title_abstract", "flow.excluded_by_criterion",
+      "flow.sought_for_retrieval", "flow.not_screened_this_run", "agreement_percent", "kappa", "kappa_records",
+      "included_sids", "unresolved", "summary", "files"
+    ]
+  },
+  "coverage": {"required_stages": ["screening", "adjudication", "records", "report"]},
+  "findings": [
+    {"name": "one duplicate removed", "path": "flow.duplicates_removed", "op": "==", "value": 1},
+    {"name": "seven unique records", "path": "flow.records_after_deduplication", "op": "==", "value": 7},
+    {"name": "two or three records go forward", "path": "flow.sought_for_retrieval", "op": "in", "value": [2, 3], "note": "S1 and S5, plus S7 if judged unsure"},
+    {"name": "same-model caveat on kappa", "file": "prisma-screening.md", "pattern": "same model"}
+  ]
+}

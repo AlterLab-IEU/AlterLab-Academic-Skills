@@ -1,0 +1,36 @@
+{
+  "workflow": "citation-audit",
+  "synthetic": true,
+  "_comment": "What a live run of citation-audit on the synthetic fixture must produce. Paths in outputs are relative to the caller's OUT_DIR. 'findings' is the answer key; it is reported but never changes the checker's pass/fail. Answer key: [1] Roediger & Karpicke 2006 is real and correctly cited (VERIFIED), but claim C1 overstates it (laboratory retention, not doubled exam grades: SH); [2] Cohen 'A power primer' is real but was published in 1992, not 1994 (PAC); [3] Marchetti-Oyelaran & Lindqvist 2021 is invented (NOT_FOUND, never proof of fabrication).",
+  "args_file": "args.json",
+  "report": "citation-audit.md",
+  "mock_agent_count": 11,
+  "status": {"allowed": ["complete", "partial", "blocked"], "target": "complete"},
+  "outputs": [
+    {"path": "citation-audit.md", "type": "md", "role": "report"}
+  ],
+  "payload": {
+    "required_keys": ["status", "status_reasons", "report", "coverage"],
+    "required_keys_when_delivered": [
+      "summary", "counts.references", "counts.references_with_verdict", "counts.claims_total", "counts.claims_extracted",
+      "counts.claims_checkable", "counts.claims_checked", "counts.NOT_FOUND", "counts.ID_INVALID", "counts.PAC", "counts.IH",
+      "counts.PH", "counts.SH", "counts.unverified", "counts.retracted", "counts.retraction_unknown", "counts.claims_uncheckable",
+      "counts.flags_overturned_on_recheck", "counts.flags_recheck_incomplete", "unchecked.references_without_verdict",
+      "unchecked.claims_without_verdict", "unchecked.claims_not_checkable", "unchecked.claims_not_extracted",
+      "unchecked.flags_recheck_incomplete"
+    ],
+    "forbidden_keys": ["counts.TF"]
+  },
+  "coverage": {"required_stages": ["extraction", "references", "claims", "rechecks", "report"]},
+  "findings": [
+    {"name": "three references extracted", "path": "counts.references", "op": "==", "value": 3},
+    {"name": "wrong year flagged as PAC", "path": "counts.PAC", "op": ">=", "value": 1, "note": "Cohen 'A power primer' is 1992; the fixture says 1994"},
+    {"name": "invented reference not found", "path": "counts.NOT_FOUND", "op": "==", "value": 1, "note": "may instead be provisional if a re-check failed"},
+    {"name": "overstated claim flagged SH", "path": "counts.SH", "op": ">=", "value": 1, "note": "'doubled final-exam grades' is not in Roediger & Karpicke 2006"},
+    {"name": "no false retraction", "path": "counts.retracted", "op": "==", "value": 0},
+    {"name": "report names the invented reference", "file": "citation-audit.md", "pattern": "Marchetti"},
+    {"name": "report gives the corrected year", "file": "citation-audit.md", "pattern": "1992"},
+    {"name": "report does not equate absence with fabrication", "file": "citation-audit.md", "pattern": "not (proof|evidence) of fabrication"},
+    {"name": "AI-assistance disclosure", "file": "citation-audit.md", "pattern": "AI[- ]assist"}
+  ]
+}

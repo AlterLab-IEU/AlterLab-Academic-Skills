@@ -23,6 +23,8 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DRYRUN = REPO_ROOT / "scripts" / "workflow_dryrun.mjs"
 WORKFLOWS = REPO_ROOT / "skills" / "workflows" / "workflows"
+FIXTURE_ROOT = (REPO_ROOT / "skills" / "workflows" / "alterlab-research-workflows" / "evals" / "fixtures"
+                / "workflows")
 NODE = shutil.which("node")
 
 pytestmark = pytest.mark.skipif(NODE is None, reason="Node.js not installed")
@@ -1027,3 +1029,60 @@ def test_failed_report_always_blocks(script: Path) -> None:
     res = run(script.stem, SAMPLE_ARGS[script.stem], [act(writers, "throw")], script=script)["result"]
     assert_payload_shape(res)
     assert res["report"] is None and res["status"] == "blocked"
+
+
+# --------------------------------------------------------------------------- #
+# A status that worsens after the report was written is corrected on disk       #
+# --------------------------------------------------------------------------- #
+# The report is told to open with the status known before the read-back. When the read-back
+# then finds a companion file missing, the payload turns partial; the file must not keep saying
+# COMPLETE. One agent amends the status line and a second read-back confirms it; if that fails,
+# the payload says the file is stale.
+
+RB_MISSING_LOG = [{"path": "rb/change-log.md", "exists": False, "lines": 0},
+                  {"path": "rb/author-actions.md", "exists": True, "lines": 2}]
+
+
+def _amended(status: str) -> dict:
+    return ret("^confirm amended status", {"exists": True, "bytes": 2100, "first_heading": "# Report",
+                                           "states_status": status})
+
+
+def test_rebuttal_status_downgraded_after_writing_is_amended_on_disk() -> None:
+    rules = [confirm("COMPLETE", others=RB_MISSING_LOG), _amended("PARTIAL")] + rb_rules()
+    out = run(RB, RB_ARGS, rules, capture="^amend report status$")
+    res = out["result"]
+    assert res["status"] == "partial"
+    assert "amend report status" in out["calls"]
+    assert "Status: PARTIAL" in prompt_of(out, "^amend report status$")
+    assert res["coverage"]["report"]["status_amended"] is True
+    assert not any("still opens with status" in r for r in res["status_reasons"])
+
+
+def test_rebuttal_amendment_that_cannot_be_confirmed_is_reported() -> None:
+    rules = [confirm("COMPLETE", others=RB_MISSING_LOG), _amended("COMPLETE")] + rb_rules()
+    res = run(RB, RB_ARGS, rules)["result"]
+    assert res["status"] == "partial" and res["coverage"]["report"]["status_amended"] is False
+    assert any("still opens with status COMPLETE" in r and "authoritative" in r for r in res["status_reasons"])
+
+
+def test_rebuttal_complete_run_needs_no_amendment() -> None:
+    out = run(RB, RB_ARGS, rb_rules())
+    assert out["result"]["status"] == "complete"
+    assert "amend report status" not in out["calls"]
+    assert out["result"]["coverage"]["report"].get("status_amended") is None
+
+
+def test_screening_status_downgraded_after_writing_is_amended_on_disk(tmp_path: Path) -> None:
+    script = WORKFLOWS / "systematic-review-screening.js"
+    args = json.loads((FIXTURE_ROOT / "systematic-review-screening" / "args.json").read_text().replace(
+        "${OUT_DIR}", str(tmp_path)))
+    others = [{"path": f"{tmp_path}/included.jsonl", "exists": True, "lines": 999},
+              {"path": f"{tmp_path}/unresolved.jsonl", "exists": True, "lines": 0}]
+    scenario = json.loads((FIXTURE_ROOT / "systematic-review-screening" / "mock-scenario.json").read_text().replace(
+        "${OUT_DIR}", str(tmp_path)))
+    rules = [confirm("COMPLETE", others=others), _amended("PARTIAL")] + scenario["rules"]
+    out = run(None, args, rules, script=script)
+    res = out["result"]
+    assert res["status"] == "partial"
+    assert "amend report status" in out["calls"] and res["coverage"]["report"]["status_amended"] is True

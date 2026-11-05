@@ -1,0 +1,28 @@
+{
+  "workflow": "review-panel",
+  "synthetic": true,
+  "_comment": "What a live run of review-panel on the synthetic manuscript (two supplied lenses, the minimum the script allows short of one) must produce. 'findings' are the answer key and never change pass/fail. Expected major concerns: non-randomized sections with different instructors (instructor confound), graders not blind to section, causal language, and generalization to every STEM course.",
+  "args_file": "args.json",
+  "report": "review-panel.md",
+  "mock_agent_count": 9,
+  "status": {"allowed": ["complete", "partial", "blocked"], "target": "complete"},
+  "outputs": [
+    {"path": "review-panel.md", "type": "md", "role": "report"}
+  ],
+  "payload": {
+    "required_keys": ["status", "status_reasons", "report", "coverage"],
+    "required_keys_when_delivered": [
+      "recommendations", "reviewers.requested", "reviewers.used", "reviewers.completed", "reviewers.missing",
+      "major_concerns.raised", "major_concerns.validated", "major_concerns.unverified", "major_concerns.withdrawn",
+      "concerns.validated", "concerns.unverified", "concerns.withdrawn", "decision"
+    ]
+  },
+  "coverage": {"required_stages": ["reviewers", "concern_checks", "report"]},
+  "findings": [
+    {"name": "both supplied lenses used", "path": "reviewers.used", "op": "==", "value": 2},
+    {"name": "at least two major concerns raised", "path": "major_concerns.raised", "op": ">=", "value": 2},
+    {"name": "no accept recommendation", "path": "recommendations.accept", "op": "absent_or_zero", "note": "absent key means no reviewer recommended accept"},
+    {"name": "confound or non-randomization raised", "file": "review-panel.md", "pattern": "randomi[sz]|confound|instructor"},
+    {"name": "simulated-panel disclosure", "file": "review-panel.md", "pattern": "simulat"}
+  ]
+}

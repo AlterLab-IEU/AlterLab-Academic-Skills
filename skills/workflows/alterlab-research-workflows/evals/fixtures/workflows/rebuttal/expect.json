@@ -1,0 +1,32 @@
+{
+  "workflow": "rebuttal",
+  "synthetic": true,
+  "_comment": "What a live run of rebuttal on the synthetic manuscript and decision letter must produce. 'findings' are the answer key and never change pass/fail: the GPA re-analysis is something only the authors can run (an [AUTHORS: ...] placeholder and an author action, never an invented result); the per-section withdrawals are already in the Method (4 and 8), so that comment is a clarification.",
+  "args_file": "args.json",
+  "report": "response-letter.md",
+  "mock_agent_count": 8,
+  "status": {"allowed": ["complete", "partial", "blocked"], "target": "complete"},
+  "outputs": [
+    {"path": "response-letter.md", "type": "md", "role": "report"},
+    {"path": "change-log.md", "type": "md"},
+    {"path": "author-actions.md", "type": "md"}
+  ],
+  "payload_files": {
+    "files.letter": "response-letter.md",
+    "files.change_log": "change-log.md",
+    "files.author_actions": "author-actions.md"
+  },
+  "payload": {
+    "required_keys": ["status", "status_reasons", "report", "coverage", "out_dir"],
+    "required_keys_when_delivered": [
+      "comments", "actionable", "responded", "unanswered", "consistency_checked", "consistency_issues", "author_actions", "summary", "files"
+    ]
+  },
+  "coverage": {"required_stages": ["responses", "consistency", "report"]},
+  "findings": [
+    {"name": "four actionable comments", "path": "actionable", "op": ">=", "value": 4},
+    {"name": "an author action for the GPA re-analysis", "path": "author_actions", "op": "nonempty"},
+    {"name": "placeholder instead of an invented result", "file": "author-actions.md", "pattern": "AUTHORS|GPA"},
+    {"name": "AI-assistance disclosed in the letter", "file": "response-letter.md", "pattern": "AI"}
+  ]
+}
