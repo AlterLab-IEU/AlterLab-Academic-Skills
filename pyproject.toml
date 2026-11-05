@@ -6,7 +6,13 @@ requires-python = ">=3.12"
 license = "MIT"
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.8"]
+dev = [
+    "pymupdf>=1.24.3,<2",
+    "pypdf>=6.21.4",
+    "pytest>=8",
+    "python-pptx>=1.0.2",
+    "ruff>=0.8",
+]
 
 # [project].version above is the single source of truth for the package version.
 # scripts/gen_marketplace.py reads it from here and propagates it to both

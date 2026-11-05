@@ -101,15 +101,51 @@ python scripts/slides_to_pdf.py slides/ -o presentation.pdf
 uv run --python ">=3.11" --with pymupdf --with pypdf --with python-pptx \
     python scripts/validate_presentation.py presentation.pdf --duration 15
 
-# Checks:
-# - Slide count vs. recommended range
-# - File size warnings
-# - Slide dimensions
-# - Font sizes (PowerPoint; PDF via pymupdf, scaled to a 7.5-inch slide height)
-# - Text past a slide edge (PDF via pymupdf), including a line wholly off the slide
-# - Compilation (Beamer)
-# Exit 1 when text runs off a slide (or the file cannot be read); small fonts are warnings.
+uv run --python ">=3.11" --with pymupdf --with python-pptx \
+    python scripts/validate_presentation.py talk.pptx --duration 15 --render --json
 ```
+
+Checks (R = required, O = optional; `--json` lists each as `{name, required, state, detail}`):
+
+| Format | Checks |
+|--------|--------|
+| all | `file_exists` R, `supported_format` R, `file_size` R, `slide_count` R (only with `--duration`) |
+| .pdf | `pdf_signature` R (stdlib `%PDF-` header), `pdf_pages` R (pypdf, else pymupdf: page count, size, aspect ratio), `pdf_text_layout` R (pymupdf: text past a slide edge, including a line wholly off the slide; font sizes scaled to a 7.5-inch slide height) |
+| .pptx | `pptx_package` R (stdlib: ZIP, `[Content_Types].xml`, `ppt/presentation.xml`, slide parts), `pptx_font_sizes` R (python-pptx), `pptx_bullet_count` R (python-pptx), `rendered_text_layout` O (only with `--render`: LibreOffice render + the PDF text checks) |
+| .tex | `latex_compile` R (pdflatex), then every .pdf check on the compiled PDF (`compiled_pdf:*`) |
+
+Check states: `passed`, `warning` (advisory finding only: small fonts, >6 bullets, slide count),
+`failed` (found an issue), `incomplete` (ran, but could not inspect everything), `skipped`
+(could not run; `detail` says why).
+
+Status and exit code (precedence invalid > blocked > partial > valid):
+
+| Status | Exit | Meaning |
+|--------|------|---------|
+| `valid` | 0 | every requested check completed and found no issue |
+| `invalid` | 1 | a completed check found an issue (text off a slide, unreadable or malformed file, failed compile, file over 100 MB) |
+| `blocked` | 2 | a required check could not run: parser (python-pptx, pymupdf/pypdf) or pdflatex missing, file not found, unsupported format (`.ppt`, `.key`, `.odp`, unknown extension). argparse usage errors also exit 2 |
+| `partial` | 3 | required checks passed, but a requested optional check was skipped, or a check was `incomplete` (PPTX runs with an unresolvable font size; a PDF with no text layer) |
+
+A missing parser never yields `valid`. Without python-pptx a malformed .pptx is still `invalid`
+(the stdlib package check runs); a well-formed one is `blocked`, because the font checks are
+required: they are what the script exists to verify. The JSON result has `schema_version: 2`;
+`valid` is kept for compatibility and is `true` only for status `valid`.
+
+PPTX effective font size: first explicit size wins along run `a:rPr@sz` → paragraph
+`a:pPr/a:defRPr` → the text body's own `a:lstStyle` (level N, then `defPPr`) → placeholders only:
+the layout placeholder with the same idx (else type), then the master placeholder of the same
+family → master `p:txStyles` (`titleStyle` for title/ctrTitle, `bodyStyle` for body-family
+placeholders, `otherStyle` for footer-type placeholders, ordinary shapes and table cells) →
+presentation `p:defaultTextStyle`; then multiplied by the shape's own `a:normAutofit@fontScale`
+(PowerPoint writes it when it shrinks text; a deck never opened in PowerPoint may lack it, so
+LibreOffice/PowerPoint can still shrink further — use `--render` or the exported PDF). A run with
+no size anywhere is counted as unresolved and makes the check `incomplete`, never passing. Group
+shapes are traversed recursively and table cells are checked; the 12 pt footer band (bottom 15%)
+uses absolute positions through group transforms (`off`/`chOff`/`ext`/`chExt`) and table row
+offsets. Approximations: group scaling is not applied to font size (PowerPoint does not scale it
+either), a shape whose position is unknown is held to the 18 pt body minimum, and chart, SmartArt
+and OLE text is not inspected (counted in the detail; check it on the exported PDF).
 
 ## pdf_to_images.py
 

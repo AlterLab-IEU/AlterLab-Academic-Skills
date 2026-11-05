@@ -106,6 +106,7 @@ _DOMAIN_CATEGORY = {
     # Infra / CDN / docs
     "github.com": "Source / infra", "jsdelivr.net": "CDN", "readthedocs.io": "Docs",
     "w3.org": "Standards", "graphdrawing.org": "Standards", "fastmcp.app": "MCP infra",
+    "openxmlformats.org": "Standards (OOXML XML namespaces, never fetched)",
     "labarchives.com": "ELN",
     # Placeholders / local (non-network)
     "example.com": "Placeholder (docs only)", "store": "Placeholder (commented docs)",
