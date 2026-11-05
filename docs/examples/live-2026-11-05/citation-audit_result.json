@@ -1,0 +1,101 @@
+{
+ "status": "complete",
+ "status_reasons": [],
+ "report": "/tmp/claude-0/-home-user-AlterLab-Academic-Skills/0607d841-8c7b-5fe9-b865-017c23f27c78/scratchpad/wf_citation-audit/citation-audit.md",
+ "counts": {
+  "references": 3,
+  "references_with_verdict": 3,
+  "claims_total": 5,
+  "claims_extracted": 5,
+  "claims_checkable": 4,
+  "claims_checked": 4,
+  "NOT_FOUND": 1,
+  "ID_INVALID": 0,
+  "PAC": 1,
+  "IH": 0,
+  "PH": 0,
+  "SH": 2,
+  "unverified": 0,
+  "retracted": 0,
+  "retraction_unknown": 0,
+  "claims_uncheckable": 0,
+  "flags_overturned_on_recheck": 0,
+  "flags_recheck_incomplete": 0
+ },
+ "unchecked": {
+  "references_without_verdict": [],
+  "claims_without_verdict": [],
+  "claims_not_checkable": [
+   {
+    "id": "C3",
+    "reason": "cites a reference judged NOT_FOUND or IH (reported with that reference)"
+   }
+  ],
+  "claims_not_extracted": 0,
+  "flags_recheck_incomplete": []
+ },
+ "summary": "All 3 references and all 4 checkable claims were checked, out of 5 claims extracted with none lost to the 150-claim cap, and all 8 re-checks completed. Every one of the 4 flags stood after two re-checks, none was overturned and none is provisional. The flags are: reference [3] (Marchetti-Oyelaran & Lindqvist, 2021) not found in any source that answered, which is not proof of fabrication; reference [2] (Cohen) dated 1994 instead of 1992; and claims C1 and C4 not supported by their cited sources, with a suggested rewrite for each. Claim C3 could not be checked because its only source is the missing reference [3], and no retractions, wrong identifiers or placeholders were found. Report written to /tmp/claude-0/-home-user-AlterLab-Academic-Skills/0607d841-8c7b-5fe9-b865-017c23f27c78/scratchpad/wf_citation-audit/citation-audit.md",
+ "coverage": {
+  "extraction": {
+   "reference_ids_missing": 0,
+   "reference_ids_duplicated": [],
+   "references_listed": 3,
+   "claims_total": 5,
+   "claims_extracted": 5,
+   "claim_cap": 150,
+   "claims_not_extracted": 0,
+   "placeholders": 0
+  },
+  "references": {
+   "requested": 3,
+   "dispatched": 3,
+   "completed": 3,
+   "failed": 0,
+   "unresolved": 0,
+   "retried": 0
+  },
+  "claims": {
+   "total_in_manuscript": 5,
+   "extracted": 5,
+   "not_checkable": 1,
+   "requested": 4,
+   "dispatched": 4,
+   "completed": 4,
+   "failed": 0,
+   "unresolved": 0,
+   "retried": 0
+  },
+  "rechecks": {
+   "flags": 4,
+   "requested": 8,
+   "dispatched": 8,
+   "completed": 8,
+   "failed": 0,
+   "retried": 0,
+   "flags_stood": 4,
+   "flags_overturned": 0,
+   "flags_recheck_incomplete": 0
+  },
+  "report": {
+   "path": "/tmp/claude-0/-home-user-AlterLab-Academic-Skills/0607d841-8c7b-5fe9-b865-017c23f27c78/scratchpad/wf_citation-audit/citation-audit.md",
+   "confirmed": true,
+   "attempts": 1,
+   "read_back": {
+    "exists": true,
+    "bytes": 9665,
+    "first_heading": "# Citation-Integrity Report: Weekly Low-Stakes Quizzing and Final-Exam Performance (synthetic manuscript)",
+    "states_status": "COMPLETE"
+   }
+  },
+  "agents": 13,
+  "retries": 0,
+  "failed_calls": 0,
+  "failed_call_labels": [],
+  "id_issues": {
+   "duplicate": 0,
+   "conflicting": 0,
+   "unknown": 0,
+   "missing": 0
+  }
+ }
+}

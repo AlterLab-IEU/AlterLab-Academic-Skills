@@ -189,12 +189,15 @@ and unknown ids, caps, failed searches), also in the mock runtime.
 ## Live results
 
 Fill in one row per live run, from the checker's verdict. Do not enter mock-runtime results here.
+Rows still marked "not yet run" have dry-run (mock) evidence only. Live runs used the Workflow
+runtime of a Claude Code session on the maintainer's login; the runtime reports agent counts and
+subagent tokens, not a dollar cost.
 
 | Workflow | Fixture | Live status | Payload status | Checker overall | Agents | Runtime | Cost (USD) | Failed checks | Verdict file |
 |---|---|---|---|---|---|---|---|---|---|
-| citation-audit | `citation-audit/` | not yet run | — | — | — | — | — | — | — |
+| citation-audit | `citation-audit/` | **live, 2026-11-05** | complete | pass (all four answer-key findings met) | 13 | 279 s | not reported (≈1.23 M subagent tokens) | none | [`examples/live-2026-11-05/citation-audit_checker_verdict.json`](examples/live-2026-11-05/citation-audit_checker_verdict.json) |
 | review-panel | `review-panel/` | not yet run | — | — | — | — | — | — | — |
-| claim-stress-test | `claim-stress-test/` | not yet run | — | — | — | — | — | — | — |
+| claim-stress-test | ad-hoc args (1 claim), not this fixture | **live, 2026-11-05** | complete | not checker-verified (different args); hand-checked: file exists (13,886 bytes), opens with the payload's status, 3 / 3 lenses | 5 | 152 s | not reported (≈0.49 M subagent tokens) | — | [`examples/live-2026-11-05/claim-stress-test_result.json`](examples/live-2026-11-05/claim-stress-test_result.json) |
 | rebuttal | `rebuttal/` | not yet run | — | — | — | — | — | — | — |
 | grant-mock-panel | `grant-mock-panel/` | not yet run | — | — | — | — | — | — | — |
 | literature-map | `literature-map/` | not yet run | — | — | — | — | — | — | — |

@@ -43,7 +43,7 @@ behaviour needing clearer documentation*.
 | D5 | Generated files never inspected | evaluation gap | fixed: `scripts/artifact_checks.py`, results keep copies + sha256 | `run_evals.py`, `scripts/artifact_checks.py`, 4 eval cases | unit tests on real files and runner wiring | Only 4 eval cases declare artifact checks; none has been run live with them |
 | D6 | Published summaries not reproducible | evaluation gap | fixed for future runs: `scripts/aggregate_results.py` | `scripts/aggregate_results.py`, `docs/eval-aggregation.md` | unit tests, deterministic output | **The raw records behind the published 4.0.0 totals are not in the repository; those totals cannot be reconstructed from this checkout** |
 | E1 | Activation not validated live; idealised catalog | evaluation gap | harness built and run live | `scripts/activation_eval.py`, `benchmarks/activation/` | live: 39 / 40 (one vote per case) | Description-only proxy, not Claude Code's loader; 40 hand-written cases near ceiling; labels need maintainer review |
-| E2 | Seven workflows not validated live | evaluation gap | fixtures + output checker built; live runs listed below | `scripts/check_workflow_run.py`, `docs/workflow-validation.md` | live: see below; failure/recovery covered by dry-run fault tests (mock) | Workflows not listed as run live remain dry-run only |
+| E2 | Seven workflows not validated live | evaluation gap | fixtures + output checker built; 2 of 7 run live; the harness found and the repair fixed a report that kept `Status: COMPLETE` after its run turned partial (rebuttal, screening) | `scripts/check_workflow_run.py`, `docs/workflow-validation.md`, `rebuttal.js`, `systematic-review-screening.js` | live: citation-audit (checker pass) and claim-stress-test (hand-checked); stale-status fix fail → pass (mock); failure/recovery for all seven only as dry-run fault tests (mock) | review-panel, rebuttal, grant-mock-panel, literature-map and systematic-review-screening have **not** been run live (estimated 45–50 more agents) |
 
 ## Live results
 
@@ -56,6 +56,7 @@ All live runs used the Claude Code CLI login (no API key) or keyless public APIs
 | Research lookup, 6 queries | Turkish query preserved and answered; OR / NOT exact on Europe PMC and arXiv; `--since 2023` applied on three indexes; "recent" disclosed; Greek query returned no records and no error | terminal output only (not saved) |
 | Activation set, 40 cases × 1 vote (+ 14 repeated) | 39 / 40 counted successes; 1 false activation (reproduced); $4.11 | `benchmarks/activation/results/` |
 | Judge calibration, 13 pairs × 2 judges | substance 13 / 13; literal 12 / 13 | `docs/evals.md` |
+| Dynamic workflow `citation-audit`, synthetic 3-reference manuscript fixture | status complete; invented reference → `NOT_FOUND` ("not proof of fabrication"), wrong year → `PAC`, 2 unsupported claims → `SH`, dependent claim listed as not checkable; no `TF` key; 8 / 8 re-checks; `check_workflow_run.py --live` pass; 13 agents, 279 s | [`examples/live-2026-11-05/`](examples/live-2026-11-05/) (payload, report, checker verdict) |
 | Dynamic workflow `claim-stress-test`, 1 claim | status complete; 3 / 3 lenses; report file present (13,886 bytes), opens with the same status as the payload; 5 agents, 152 s | [`examples/live-2026-11-05/`](examples/live-2026-11-05/) (payload and report) |
 
 ## What is not established
@@ -64,7 +65,8 @@ All live runs used the Claude Code CLI login (no API key) or keyless public APIs
   4.0.0 figures (literal judge, v1 grading) stand as published and are not comparable with
   schema-2 runs.
 - The five benchmark tasks were not re-run under scoring schema 2.
-- Workflows other than those marked live in `docs/workflow-validation.md` have only dry-run
-  (mocked) evidence.
+- Five of the seven workflows (review-panel, rebuttal, grant-mock-panel, literature-map,
+  systematic-review-screening) have only dry-run (mocked) evidence; no live failure/recovery
+  scenario was exercised for any workflow.
 - Hand labels added in this repair (relevance fixture, activation cases, five calibration
   pairs) were written by the repair pass and need independent review.

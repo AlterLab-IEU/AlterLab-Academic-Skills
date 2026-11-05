@@ -1,0 +1,230 @@
+{
+ "workflow": "citation-audit",
+ "checker_version": 1,
+ "live": true,
+ "provenance": "live",
+ "mock_markers": [],
+ "payload_status": "complete",
+ "status_reasons": [],
+ "overall": "pass",
+ "checks": [
+  {
+   "name": "payload_schema",
+   "verdict": "PASS",
+   "detail": "required keys present with the right types"
+  },
+  {
+   "name": "status_value",
+   "verdict": "PASS",
+   "detail": "status 'complete'"
+  },
+  {
+   "name": "status_allowed",
+   "verdict": "PASS",
+   "detail": "status 'complete'; this fixture allows ['complete', 'partial', 'blocked']"
+  },
+  {
+   "name": "status_consistent",
+   "verdict": "PASS",
+   "detail": "complete needs no status_reasons and a confirmed report path: 0 reason(s), report='/tmp/claude-0/-home-user-AlterLab-Academic-Skills/0607d841-8c7b-5fe9-b865-017c23f27c78/scratchpad/wf_citation-audit/citation-audit.md'"
+  },
+  {
+   "name": "report_confirmed_matches",
+   "verdict": "PASS",
+   "detail": "coverage.report.confirmed=True, report='/tmp/claude-0/-home-user-AlterLab-Academic-Skills/0607d841-8c7b-5fe9-b865-017c23f27c78/scratchpad/wf_citation-audit/citation-audit.md'"
+  },
+  {
+   "name": "coverage_accounting",
+   "verdict": "PASS",
+   "detail": "every stage: completed <= dispatched <= requested, unresolved and failed add up"
+  },
+  {
+   "name": "ca_references_checked_plus_unchecked",
+   "verdict": "PASS",
+   "detail": "references with a verdict + references without one vs references listed: 3 vs 3"
+  },
+  {
+   "name": "ca_references_verdicts_match_coverage",
+   "verdict": "PASS",
+   "detail": "counts.references_with_verdict vs coverage.references.completed: 3 vs 3"
+  },
+  {
+   "name": "ca_references_match_extraction",
+   "verdict": "PASS",
+   "detail": "counts.references vs coverage.extraction.references_listed: 3 vs 3"
+  },
+  {
+   "name": "ca_claims_checked_match_coverage",
+   "verdict": "PASS",
+   "detail": "counts.claims_checked vs coverage.claims.completed: 4 vs 4"
+  },
+  {
+   "name": "ca_claim_denominators",
+   "verdict": "PASS",
+   "detail": "claims checked 4 <= checkable 4 <= extracted 5 <= total 5"
+  },
+  {
+   "name": "ca_claims_checked_plus_unchecked",
+   "verdict": "PASS",
+   "detail": "claims with a verdict + claims without one vs checkable claims: 4 vs 4"
+  },
+  {
+   "name": "ca_claims_checkable_plus_not_checkable",
+   "verdict": "PASS",
+   "detail": "checkable + not-checkable claims vs extracted claims: 5 vs 5"
+  },
+  {
+   "name": "ca_claims_not_extracted",
+   "verdict": "PASS",
+   "detail": "unchecked.claims_not_extracted vs claims_total - claims_extracted: 0 vs 0"
+  },
+  {
+   "name": "ca_reference_flags_within_verdicts",
+   "verdict": "PASS",
+   "detail": "NOT_FOUND+ID_INVALID+PAC+IH+unverified = 2 <= references with a verdict 3"
+  },
+  {
+   "name": "ca_claim_flags_within_checked",
+   "verdict": "PASS",
+   "detail": "SH 2 and UNCHECKABLE 0 <= claims checked 4"
+  },
+  {
+   "name": "ca_retraction_within_verdicts",
+   "verdict": "PASS",
+   "detail": "retracted 0 + retraction_unknown 0 <= 3"
+  },
+  {
+   "name": "ca_provisional_flags_listed",
+   "verdict": "PASS",
+   "detail": "counts.flags_recheck_incomplete vs flags listed as provisional: 0 vs 0"
+  },
+  {
+   "name": "ca_provisional_flags_match_coverage",
+   "verdict": "PASS",
+   "detail": "counts vs coverage.rechecks.flags_recheck_incomplete: 0 vs 0"
+  },
+  {
+   "name": "ca_flags_partition",
+   "verdict": "PASS",
+   "detail": "stood + overturned + provisional vs flags: 4 vs 4"
+  },
+  {
+   "name": "ca_counted_flags_all_stood",
+   "verdict": "PASS",
+   "detail": "NOT_FOUND+ID_INVALID+PAC+IH+SH+unverified (counted flags) vs flags that stood after both re-checks: 4 vs 4"
+  },
+  {
+   "name": "ca_overturned_matches",
+   "verdict": "PASS",
+   "detail": "counts.flags_overturned_on_recheck vs coverage.rechecks.flags_overturned: 0 vs 0"
+  },
+  {
+   "name": "ca_provisional_flags_lack_rechecks",
+   "verdict": "PASS",
+   "detail": "every provisional flag has fewer than 2 completed re-checks"
+  },
+  {
+   "name": "incomplete_work_visible",
+   "verdict": "PASS",
+   "detail": "no coverage shows failed or unresolved work"
+  },
+  {
+   "name": "file:citation-audit.md",
+   "verdict": "PASS",
+   "detail": "citation-audit.md: 114 lines, has a heading"
+  },
+  {
+   "name": "report_path",
+   "verdict": "PASS",
+   "detail": "report='/tmp/claude-0/-home-user-AlterLab-Academic-Skills/0607d841-8c7b-5fe9-b865-017c23f27c78/scratchpad/wf_citation-audit/citation-audit.md'; expected a path ending in citation-audit.md"
+  },
+  {
+   "name": "report_states_payload_status",
+   "verdict": "PASS",
+   "detail": "the file's opening states 'complete'; the payload says 'complete'"
+  },
+  {
+   "name": "read_back_matches_file",
+   "verdict": "PASS",
+   "detail": "the read-back agent's account matches the file"
+  }
+ ],
+ "findings": [
+  {
+   "name": "three references extracted",
+   "expected": "counts.references == 3",
+   "observed": 3,
+   "met": true,
+   "note": ""
+  },
+  {
+   "name": "wrong year flagged as PAC",
+   "expected": "counts.PAC >= 1",
+   "observed": 1,
+   "met": true,
+   "note": "Cohen 'A power primer' is 1992; the fixture says 1994"
+  },
+  {
+   "name": "invented reference not found",
+   "expected": "counts.NOT_FOUND == 1",
+   "observed": 1,
+   "met": true,
+   "note": "may instead be provisional if a re-check failed"
+  },
+  {
+   "name": "overstated claim flagged SH",
+   "expected": "counts.SH >= 1",
+   "observed": 2,
+   "met": true,
+   "note": "'doubled final-exam grades' is not in Roediger & Karpicke 2006"
+  },
+  {
+   "name": "no false retraction",
+   "expected": "counts.retracted == 0",
+   "observed": 0,
+   "met": true,
+   "note": ""
+  },
+  {
+   "name": "report names the invented reference",
+   "expected": "citation-audit.md matches /Marchetti/",
+   "observed": "match",
+   "met": true,
+   "note": ""
+  },
+  {
+   "name": "report gives the corrected year",
+   "expected": "citation-audit.md matches /1992/",
+   "observed": "match",
+   "met": true,
+   "note": ""
+  },
+  {
+   "name": "report does not equate absence with fabrication",
+   "expected": "citation-audit.md matches /not (proof|evidence) of fabrication/",
+   "observed": "no match",
+   "met": false,
+   "note": ""
+  },
+  {
+   "name": "AI-assistance disclosure",
+   "expected": "citation-audit.md matches /AI[- ]assist/",
+   "observed": "match",
+   "met": true,
+   "note": ""
+  }
+ ],
+ "findings_note": "answer-key expectations about content; reported only, never part of overall",
+ "runtime_s": 279.0,
+ "cost_usd": null,
+ "agents": 13,
+ "agents_reported": 13,
+ "out_dir": "/tmp/claude-0/-home-user-AlterLab-Academic-Skills/0607d841-8c7b-5fe9-b865-017c23f27c78/scratchpad/wf_citation-audit",
+ "files": [
+  {
+   "path": "citation-audit.md",
+   "sha256": "011048674e51e0d1929e9e34c4a67ece669150c6bd78e5d7e8cffa66332242e2",
+   "bytes": 9665
+  }
+ ]
+}
