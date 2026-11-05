@@ -285,7 +285,12 @@ searchable: [alterlab-ieu.github.io/AlterLab-Academic-Skills](https://alterlab-i
 
 - **`alterlab-citation-verifier`** checks that references exist and that their metadata
   agrees with Crossref, Semantic Scholar, Europe PMC, arXiv (Open Library for books), and doi.org,
-  and flags retractions.
+  and flags retractions. Existence and metadata are reported separately: a resolving DOI does
+  not clear an author the record does not list (`PAC`, with the unsupported names). A reference
+  absent from every index that answered is `NOT_FOUND` — a prompt for a manual check, not a
+  finding of fabrication — and an unregistered DOI is `ID_INVALID` (the identifier is wrong; the
+  work is undetermined). Retraction status is `flagged`, `not_flagged_in_checked_sources` or
+  `unknown` (Crossref is the only retraction source checked).
   An entry it could not check is `unverified`, never a pass; input it could not parse makes the
   run `PARTIAL` (exit 3), never a pass.
 - **`claim_faithfulness.py`** compares a claim with the cited work's **abstract only**. It

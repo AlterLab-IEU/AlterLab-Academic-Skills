@@ -364,7 +364,14 @@ On 2026-10-15 (`claude-opus-5-5`, 8 pairs): literal 7/8, substance 8/8. The lite
 a correct answer that asked for the missing abstract instead of inventing one. Five pairs were
 added later for the vocabulary-vs-substance split (a correct answer without the skill's jargon,
 and a wrong answer that recites it); they are marked `"labelled_by": "repair agent, pending
-maintainer review"` and have **not** yet been run against either judge.
+maintainer review"`.
+
+On 2026-11-05 (`claude-opus-5-5`, CLI 2.1.318, all 13 pairs, one judge call per pair and
+judge): literal 12/13, substance 13/13; the literal judge again failed
+`asks-for-missing-input`. Both judges graded the five new pairs as labelled. Two limits: those
+five labels were written by the same repair pass that wrote the classifier, and the substance
+template was written with the original eight pairs in view, so this is a consistency check on a
+small set, not an independent validation of the judge.
 
 #### Re-grading saved answers (`--regrade`)
 

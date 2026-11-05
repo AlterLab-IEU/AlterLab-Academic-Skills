@@ -288,6 +288,11 @@ Tüm beceriler, alana göre: [`docs/CATALOG.md`](docs/CATALOG.md) · aranabilir 
 
 - **`alterlab-citation-verifier`** kaynakların var olduğunu ve künyelerinin Crossref,
   Semantic Scholar, Europe PMC, arXiv (kitaplar için Open Library) ve doi.org kayıtlarıyla uyuştuğunu denetler, geri çekilmeleri işaretler.
+  Varlık ve künye ayrı raporlanır: çözümlenen bir DOI, kayıtta bulunmayan bir yazarı aklamaz
+  (`PAC`, desteklenmeyen adlarla). Yanıt veren hiçbir dizinde bulunamayan bir kaynak `NOT_FOUND`
+  olur — uydurma hükmü değil, elle denetim çağrısıdır; kayıtlı olmayan bir DOI `ID_INVALID` olur
+  (tanımlayıcı yanlıştır; çalışmanın varlığı belirsizdir). Geri çekilme durumu `flagged`,
+  `not_flagged_in_checked_sources` veya `unknown` olarak verilir (denetlenen tek kaynak Crossref'tir).
   Denetleyemediği bir kayıt `unverified` olur, asla geçer sayılmaz; ayrıştıramadığı girdi
   çalıştırmayı `PARTIAL` yapar (çıkış kodu 3).
 - **`claim_faithfulness.py`** bir iddiayı yalnızca atıf yapılan çalışmanın **özetiyle**

@@ -1,0 +1,672 @@
+{
+  "tool": "alterlab-citation-verifier/verify_citations.py",
+  "version": "2.0.0",
+  "schema_version": 2,
+  "timestamp": "2026-11-05T09:46:06+00:00",
+  "status": "complete",
+  "warning": null,
+  "config": {
+    "mailto": "",
+    "threshold": 0.7,
+    "offline": false,
+    "http_backend": "urllib",
+    "s2_api_key": false
+  },
+  "taxonomy": {
+    "verified": "Entry exists; every supplied field that could be checked agrees with an authoritative record.",
+    "PAC": "Partial Attribute Corruption — the work was found, but at least one supplied field (authors, year, title, identifier) disagrees with the record.",
+    "IH": "Identifier Hijacking — the cited DOI/arXiv ID resolves to a different work.",
+    "ID_INVALID": "Invalid identifier — the cited DOI is not registered with any DOI agency (or the arXiv ID does not exist) and no matching work was found by title. The identifier is wrong; whether the work itself exists is undetermined.",
+    "NOT_FOUND": "Not found in the checked sources — the sources that answered returned no matching record. Absence from these indexes is not evidence of fabrication (books, grey literature and regional venues are often unindexed); verify manually.",
+    "PH": "Placeholder Hallucination — unresolved citation template/placeholder.",
+    "TF": "Total Fabrication — an analyst's conclusion after a documented manual search; never emitted by this script (index absence is NOT_FOUND).",
+    "SH": "Semantic Hallucination — resolves but claim-support unverified (advisory).",
+    "unverified": "Could not verify (offline, or the required sources failed to answer, or too little structure to decide); manual check required."
+  },
+  "summary": {
+    "total": 5,
+    "verdict": "FAIL",
+    "verdict_meaning": "At least one SERIOUS finding (IH / ID_INVALID / PH / retraction).",
+    "status": "complete",
+    "input": {
+      "detected": 5,
+      "parsed": 5,
+      "rejected": 0,
+      "unsupported": 0,
+      "processed": 5,
+      "unprocessed": 0
+    },
+    "verdict_counts": {
+      "verified": 2,
+      "PAC": 1,
+      "IH": 0,
+      "ID_INVALID": 1,
+      "NOT_FOUND": 1,
+      "PH": 0,
+      "TF": 0,
+      "SH": 0,
+      "unverified": 0
+    },
+    "severity_counts": {
+      "SERIOUS": 1,
+      "MEDIUM": 2,
+      "MINOR": 0
+    },
+    "citation_integrity_score": 0.4,
+    "fabrication_risk_score": 0.4,
+    "retracted": 0,
+    "retraction": {
+      "flagged": 0,
+      "not_flagged_in_checked_sources": 3,
+      "unknown": 0
+    },
+    "existence": {
+      "found": 3,
+      "identifier_invalid": 1,
+      "not_found": 1
+    },
+    "source_errors": {
+      "semanticscholar": 5
+    },
+    "notes": [
+      "Semantic Scholar rate limit: not checked (which is not 'not found'); the keyless pool is shared by all unauthenticated users, so retry later or set the optional S2_API_KEY",
+      "1 entry was not found in the checked sources; absence from these indexes is not proof of fabrication — check them manually"
+    ]
+  },
+  "input_accounting": {
+    "complete": true,
+    "format_requested": "auto",
+    "format_detected": "bibtex",
+    "detected": 5,
+    "parsed": 5,
+    "rejected": 0,
+    "unsupported": 0,
+    "processed": 5,
+    "unprocessed": 0,
+    "parsed_by_format": {
+      "bibtex": 5
+    },
+    "non_reference_blocks": {},
+    "ignored_text_segments": 0,
+    "rejected_entries": [],
+    "unsupported_entries": [],
+    "unprocessed_entries": [],
+    "skipped_blocks": [],
+    "ignored_text": [],
+    "warnings": []
+  },
+  "entries": [
+    {
+      "ref_id": "invented",
+      "verdict": "PAC",
+      "verdict_meaning": "Partial Attribute Corruption — the work was found, but at least one supplied field (authors, year, title, identifier) disagrees with the record.",
+      "severity": "MEDIUM",
+      "detail": "Found but metadata disagrees: cited author(s) not in the record's author list: Inventedauthor, Alice.",
+      "cited": {
+        "title": "Deep learning",
+        "authors": [
+          "LeCun, Yann",
+          "Bengio, Yoshua",
+          "Inventedauthor, Alice"
+        ],
+        "authors_et_al": false,
+        "year": "2015",
+        "doi": "10.1038/nature14539",
+        "arxiv_id": ""
+      },
+      "existence": {
+        "status": "found",
+        "method": "id",
+        "matched_in": [
+          "crossref",
+          "europepmc"
+        ],
+        "sources_answered": [
+          "arxiv",
+          "crossref",
+          "europepmc"
+        ],
+        "sources_not_checked": [
+          "semanticscholar"
+        ]
+      },
+      "identifier": {
+        "doi": {
+          "cited": "10.1038/nature14539",
+          "status": "resolves_to_cited_work"
+        },
+        "arxiv": {
+          "cited": "",
+          "status": "not_cited"
+        }
+      },
+      "metadata": {
+        "title": {
+          "ratio": 1.0,
+          "status": "agrees"
+        },
+        "authors": {
+          "status": "disagrees",
+          "supported": [
+            "LeCun, Yann",
+            "Bengio, Yoshua"
+          ],
+          "unsupported": [
+            "Inventedauthor, Alice"
+          ],
+          "et_al": false,
+          "cited_count": 3,
+          "record_count": 3,
+          "omitted_record_authors": 1,
+          "read_as_given_names": []
+        },
+        "year": {
+          "cited": "2015",
+          "record": [
+            "2015"
+          ],
+          "status": "agrees"
+        }
+      },
+      "retraction": {
+        "status": "not_flagged_in_checked_sources",
+        "sources_answered": [
+          "crossref"
+        ],
+        "checked_at": "2026-11-05T09:45:40+00:00",
+        "reason": "Crossref holds a record of this work with no retraction notice; other retraction databases were not checked"
+      },
+      "sources_checked": [
+        "arxiv",
+        "crossref",
+        "europepmc",
+        "semanticscholar"
+      ],
+      "source_status": {
+        "crossref": "record",
+        "semanticscholar": "error: HTTP 429 — Semantic Scholar rate limit: not checked (which is not 'not found'); the keyless pool is shared by all unauthenticated users, so retry later or set the optional S2_API_KEY",
+        "europepmc": "record",
+        "arxiv": "record"
+      },
+      "matches": [
+        {
+          "source": "crossref",
+          "method": "id",
+          "title": "Deep learning",
+          "year": "2015",
+          "doi": "10.1038/nature14539",
+          "retracted": false
+        },
+        {
+          "source": "europepmc",
+          "method": "id",
+          "title": "Deep learning",
+          "year": "2015",
+          "doi": "10.1038/nature14539",
+          "retracted": false
+        },
+        {
+          "source": "arxiv",
+          "method": "title",
+          "title": "Deep Learning",
+          "year": "2018",
+          "doi": "",
+          "retracted": false
+        }
+      ],
+      "flags": [
+        "UNSUPPORTED_AUTHOR"
+      ],
+      "input": {
+        "format": "bibtex",
+        "line": 1,
+        "entry_type": "article",
+        "warnings": []
+      },
+      "title_ratio": 1.0,
+      "author_overlap": 0.667,
+      "retracted": false
+    },
+    {
+      "ref_id": "correct",
+      "verdict": "verified",
+      "verdict_meaning": "Entry exists; every supplied field that could be checked agrees with an authoritative record.",
+      "severity": "NONE",
+      "detail": "Matched in crossref, europepmc.",
+      "cited": {
+        "title": "Deep learning",
+        "authors": [
+          "LeCun, Yann",
+          "Bengio, Yoshua",
+          "Hinton, Geoffrey"
+        ],
+        "authors_et_al": false,
+        "year": "2015",
+        "doi": "10.1038/nature14539",
+        "arxiv_id": ""
+      },
+      "existence": {
+        "status": "found",
+        "method": "id",
+        "matched_in": [
+          "crossref",
+          "europepmc"
+        ],
+        "sources_answered": [
+          "arxiv",
+          "crossref",
+          "europepmc"
+        ],
+        "sources_not_checked": [
+          "semanticscholar"
+        ]
+      },
+      "identifier": {
+        "doi": {
+          "cited": "10.1038/nature14539",
+          "status": "resolves_to_cited_work"
+        },
+        "arxiv": {
+          "cited": "",
+          "status": "not_cited"
+        }
+      },
+      "metadata": {
+        "title": {
+          "ratio": 1.0,
+          "status": "agrees"
+        },
+        "authors": {
+          "status": "agrees",
+          "supported": [
+            "LeCun, Yann",
+            "Bengio, Yoshua",
+            "Hinton, Geoffrey"
+          ],
+          "unsupported": [],
+          "et_al": false,
+          "cited_count": 3,
+          "record_count": 3,
+          "omitted_record_authors": 0,
+          "read_as_given_names": []
+        },
+        "year": {
+          "cited": "2015",
+          "record": [
+            "2015"
+          ],
+          "status": "agrees"
+        }
+      },
+      "retraction": {
+        "status": "not_flagged_in_checked_sources",
+        "sources_answered": [
+          "crossref"
+        ],
+        "checked_at": "2026-11-05T09:45:44+00:00",
+        "reason": "Crossref holds a record of this work with no retraction notice; other retraction databases were not checked"
+      },
+      "sources_checked": [
+        "arxiv",
+        "crossref",
+        "europepmc",
+        "semanticscholar"
+      ],
+      "source_status": {
+        "crossref": "record",
+        "semanticscholar": "error: HTTP 429 — Semantic Scholar rate limit: not checked (which is not 'not found'); the keyless pool is shared by all unauthenticated users, so retry later or set the optional S2_API_KEY",
+        "europepmc": "record",
+        "arxiv": "record"
+      },
+      "matches": [
+        {
+          "source": "crossref",
+          "method": "id",
+          "title": "Deep learning",
+          "year": "2015",
+          "doi": "10.1038/nature14539",
+          "retracted": false
+        },
+        {
+          "source": "europepmc",
+          "method": "id",
+          "title": "Deep learning",
+          "year": "2015",
+          "doi": "10.1038/nature14539",
+          "retracted": false
+        },
+        {
+          "source": "arxiv",
+          "method": "title",
+          "title": "Deep Learning",
+          "year": "2018",
+          "doi": "",
+          "retracted": false
+        }
+      ],
+      "flags": [],
+      "input": {
+        "format": "bibtex",
+        "line": 2,
+        "entry_type": "article",
+        "warnings": []
+      },
+      "title_ratio": 1.0,
+      "author_overlap": 1.0,
+      "retracted": false
+    },
+    {
+      "ref_id": "etal",
+      "verdict": "verified",
+      "verdict_meaning": "Entry exists; every supplied field that could be checked agrees with an authoritative record.",
+      "severity": "NONE",
+      "detail": "Matched in crossref, europepmc.",
+      "cited": {
+        "title": "Test-enhanced learning: Taking memory tests improves long-term retention",
+        "authors": [
+          "Roediger, Henry L."
+        ],
+        "authors_et_al": true,
+        "year": "2006",
+        "doi": "10.1111/j.1467-9280.2006.01693.x",
+        "arxiv_id": ""
+      },
+      "existence": {
+        "status": "found",
+        "method": "id",
+        "matched_in": [
+          "crossref",
+          "europepmc"
+        ],
+        "sources_answered": [
+          "arxiv",
+          "crossref",
+          "europepmc"
+        ],
+        "sources_not_checked": [
+          "semanticscholar"
+        ]
+      },
+      "identifier": {
+        "doi": {
+          "cited": "10.1111/j.1467-9280.2006.01693.x",
+          "status": "resolves_to_cited_work"
+        },
+        "arxiv": {
+          "cited": "",
+          "status": "not_cited"
+        }
+      },
+      "metadata": {
+        "title": {
+          "ratio": 1.0,
+          "status": "agrees"
+        },
+        "authors": {
+          "status": "agrees",
+          "supported": [
+            "Roediger, Henry L."
+          ],
+          "unsupported": [],
+          "et_al": true,
+          "cited_count": 1,
+          "record_count": 2,
+          "omitted_record_authors": 0,
+          "read_as_given_names": []
+        },
+        "year": {
+          "cited": "2006",
+          "record": [
+            "2006"
+          ],
+          "status": "agrees"
+        }
+      },
+      "retraction": {
+        "status": "not_flagged_in_checked_sources",
+        "sources_answered": [
+          "crossref"
+        ],
+        "checked_at": "2026-11-05T09:45:48+00:00",
+        "reason": "Crossref holds a record of this work with no retraction notice; other retraction databases were not checked"
+      },
+      "sources_checked": [
+        "arxiv",
+        "crossref",
+        "europepmc",
+        "semanticscholar"
+      ],
+      "source_status": {
+        "crossref": "record",
+        "semanticscholar": "error: HTTP 429 — Semantic Scholar rate limit: not checked (which is not 'not found'); the keyless pool is shared by all unauthenticated users, so retry later or set the optional S2_API_KEY",
+        "europepmc": "record",
+        "arxiv": "no_record"
+      },
+      "matches": [
+        {
+          "source": "crossref",
+          "method": "id",
+          "title": "Test-Enhanced Learning: Taking Memory Tests Improves Long-Term Retention",
+          "year": "2006",
+          "doi": "10.1111/j.1467-9280.2006.01693.x",
+          "retracted": false
+        },
+        {
+          "source": "europepmc",
+          "method": "id",
+          "title": "Test-enhanced learning: taking memory tests improves long-term retention",
+          "year": "2006",
+          "doi": "10.1111/j.1467-9280.2006.01693.x",
+          "retracted": false
+        }
+      ],
+      "flags": [],
+      "input": {
+        "format": "bibtex",
+        "line": 3,
+        "entry_type": "article",
+        "warnings": []
+      },
+      "title_ratio": 1.0,
+      "author_overlap": 1.0,
+      "retracted": false
+    },
+    {
+      "ref_id": "baddoi",
+      "verdict": "ID_INVALID",
+      "verdict_meaning": "Invalid identifier — the cited DOI is not registered with any DOI agency (or the arXiv ID does not exist) and no matching work was found by title. The identifier is wrong; whether the work itself exists is undetermined.",
+      "severity": "SERIOUS",
+      "detail": "DOI 10.9999/nonexistent.2019.123 is not registered with any DOI agency (doi.org Handle API), so the identifier is wrong, and no close title match was found in the sources that answered. Whether the work itself exists is undetermined: correct the DOI or check the work manually. Not checked: semanticscholar rate-limited (HTTP 429).",
+      "cited": {
+        "title": "Mycorrhizal signalling networks predict bond default rates",
+        "authors": [
+          "Haverbrook, Ilse"
+        ],
+        "authors_et_al": false,
+        "year": "2019",
+        "doi": "10.9999/nonexistent.2019.123",
+        "arxiv_id": ""
+      },
+      "existence": {
+        "status": "identifier_invalid",
+        "method": null,
+        "matched_in": [],
+        "sources_answered": [
+          "arxiv",
+          "crossref",
+          "europepmc"
+        ],
+        "sources_not_checked": [
+          "semanticscholar"
+        ]
+      },
+      "identifier": {
+        "doi": {
+          "cited": "10.9999/nonexistent.2019.123",
+          "status": "unregistered"
+        },
+        "arxiv": {
+          "cited": "",
+          "status": "not_cited"
+        }
+      },
+      "metadata": {
+        "title": {
+          "status": "not_checked",
+          "ratio": null
+        },
+        "authors": {
+          "status": "not_checked",
+          "supported": [],
+          "unsupported": [],
+          "et_al": false,
+          "cited_count": 1,
+          "record_count": 0,
+          "omitted_record_authors": 0,
+          "read_as_given_names": []
+        },
+        "year": {
+          "status": "not_checked",
+          "cited": "2019",
+          "record": []
+        }
+      },
+      "retraction": {
+        "status": "unknown",
+        "sources_answered": [],
+        "checked_at": "2026-11-05T09:46:03+00:00",
+        "reason": "the cited work was not identified, so no retraction check applies"
+      },
+      "sources_checked": [
+        "arxiv",
+        "crossref",
+        "doi.org",
+        "europepmc",
+        "semanticscholar"
+      ],
+      "source_status": {
+        "crossref": "record",
+        "semanticscholar": "error: HTTP 429 — Semantic Scholar rate limit: not checked (which is not 'not found'); the keyless pool is shared by all unauthenticated users, so retry later or set the optional S2_API_KEY",
+        "europepmc": "no_record",
+        "arxiv": "no_record",
+        "doi.org": "not_registered"
+      },
+      "matches": [
+        {
+          "source": "crossref",
+          "method": "title",
+          "title": "Lowering Rates of Smoking After Cancer Diagnosis by Targeting Social Networks",
+          "year": "2025",
+          "doi": "10.1200/adn.25.300148",
+          "retracted": false
+        }
+      ],
+      "flags": [],
+      "input": {
+        "format": "bibtex",
+        "line": 4,
+        "entry_type": "article",
+        "warnings": []
+      }
+    },
+    {
+      "ref_id": "grey",
+      "verdict": "NOT_FOUND",
+      "verdict_meaning": "Not found in the checked sources — the sources that answered returned no matching record. Absence from these indexes is not evidence of fabrication (books, grey literature and regional venues are often unindexed); verify manually.",
+      "severity": "MEDIUM",
+      "detail": "No record matching the cited title and authors in the sources that answered: crossref, europepmc, arxiv, openlibrary. Absence from these indexes is not evidence of fabrication (books, grey literature, theses and regional or non-English venues are often unindexed); verify the reference manually. Not checked: semanticscholar rate-limited (HTTP 429). Closest record: 'Maine Youth Drug and Alcohol Use Survey: Technical Report, 2008' (title ratio 0.50).",
+      "cited": {
+        "title": "Regional teacher survey technical report for the eastern provinces",
+        "authors": [
+          "Kalkandelen, Mehmet"
+        ],
+        "authors_et_al": false,
+        "year": "2009",
+        "doi": "",
+        "arxiv_id": ""
+      },
+      "existence": {
+        "status": "not_found",
+        "method": null,
+        "matched_in": [],
+        "sources_answered": [
+          "arxiv",
+          "crossref",
+          "europepmc",
+          "openlibrary"
+        ],
+        "sources_not_checked": [
+          "semanticscholar"
+        ]
+      },
+      "identifier": {
+        "doi": {
+          "cited": "",
+          "status": "not_cited"
+        },
+        "arxiv": {
+          "cited": "",
+          "status": "not_cited"
+        }
+      },
+      "metadata": {
+        "title": {
+          "status": "not_checked",
+          "ratio": null
+        },
+        "authors": {
+          "status": "not_checked",
+          "supported": [],
+          "unsupported": [],
+          "et_al": false,
+          "cited_count": 1,
+          "record_count": 0,
+          "omitted_record_authors": 0,
+          "read_as_given_names": []
+        },
+        "year": {
+          "status": "not_checked",
+          "cited": "2009",
+          "record": []
+        }
+      },
+      "retraction": {
+        "status": "unknown",
+        "sources_answered": [],
+        "checked_at": "2026-11-05T09:46:06+00:00",
+        "reason": "the cited work was not identified, so no retraction check applies"
+      },
+      "sources_checked": [
+        "arxiv",
+        "crossref",
+        "europepmc",
+        "openlibrary",
+        "semanticscholar"
+      ],
+      "source_status": {
+        "crossref": "record",
+        "semanticscholar": "error: HTTP 429 — Semantic Scholar rate limit: not checked (which is not 'not found'); the keyless pool is shared by all unauthenticated users, so retry later or set the optional S2_API_KEY",
+        "europepmc": "no_record",
+        "arxiv": "no_record",
+        "openlibrary": "no_record"
+      },
+      "matches": [
+        {
+          "source": "crossref",
+          "method": "title",
+          "title": "Maine Youth Drug and Alcohol Use Survey: Technical Report, 2008",
+          "year": "2009",
+          "doi": "10.1037/e533092010-001",
+          "retracted": false
+        }
+      ],
+      "flags": [],
+      "input": {
+        "format": "bibtex",
+        "line": 5,
+        "entry_type": "techreport",
+        "warnings": []
+      }
+    }
+  ]
+}
